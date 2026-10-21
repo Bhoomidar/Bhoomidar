@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-cream: #fbf7f0;
+  --color-sand: #f4ece0;
+  --color-copper: #b5622f;
+  --color-copper-dark: #8c4821;
+  --color-copper-light: #d98b52;
+  --color-ink: #1b1511;
+  --color-night: #14100d;
+  --color-night-2: #1d1712;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-script: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-hand: var(--font-dancing), cursive;
+}
+
+/* one shared page gutter so every section lines up left and right */
+@utility container-x {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1440px;
+  padding-inline: 1.5rem;
+  @media (width >= 64rem) {
+    padding-inline: 2.5rem;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 72px;
+}
+
+body {
+  /* a stray wide element must never make the page scroll sideways on phones */
+  overflow-x: clip;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* light motion: page-load fade-up, slow hero zoom, gentle float */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes slow-zoom {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.fade-up {
+  animation: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.float-slow {
+  animation: float 6s ease-in-out infinite;
+}
+.zoom-in-slow {
+  animation: slow-zoom 2.5s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .float-slow,
+  .zoom-in-slow {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* soft top and bottom edges, so a photo band melts into the dark page */
+.fade-edges-y {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+/* themed scrollbar: cream track, copper thumb */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f1e6d4;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #d98b52, #8c4821);
+  border: 2px solid #f1e6d4;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8c4821;
+}
+/* Firefox has no ::-webkit-scrollbar */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #b5622f #f1e6d4;
+  }
+}
