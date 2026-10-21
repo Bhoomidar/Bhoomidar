@@ -62,7 +62,7 @@ export default function Hero({ c }) {
           />
         </>
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 lg:bg-gradient-to-r lg:from-[#060d18]/90 lg:via-[#060d18]/55 lg:to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/80 lg:bg-gradient-to-r lg:from-[#060d18]/90 lg:via-[#060d18]/55 lg:to-transparent" />
       <div className="absolute inset-0 hidden bg-gradient-to-b from-black/50 via-transparent to-transparent lg:block" />
 
       <Navbar />
@@ -79,7 +79,7 @@ export default function Hero({ c }) {
 
           <h1
             style={{ animationDelay: "250ms" }}
-            className="fade-up mt-4 font-display text-[38px] font-bold leading-[1.1] text-white [text-shadow:0_2px_14px_rgba(0,0,0,0.55)] sm:mt-5 sm:text-6xl lg:text-[min(84px,9vh)] lg:leading-[1.06] lg:[text-shadow:none]"
+            className="fade-up mt-4 font-display text-[38px] font-bold leading-[1.1] text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_24px_rgba(0,0,0,0.7)] sm:mt-5 sm:text-6xl lg:text-[min(84px,9vh)] lg:leading-[1.06] lg:[text-shadow:none]"
           >
             {c.hero_title_1}
             <span className="block text-copper-light">{c.hero_title_2}</span>
@@ -88,7 +88,7 @@ export default function Hero({ c }) {
 
           <p
             style={{ animationDelay: "400ms" }}
-            className="fade-up mt-5 max-w-xl whitespace-pre-line text-[17px] font-medium leading-snug text-white sm:text-xl lg:text-[min(26px,2.8vh)]"
+            className="fade-up mt-5 max-w-xl whitespace-pre-line text-[17px] font-medium leading-snug text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.85),0_2px_16px_rgba(0,0,0,0.7)] sm:text-xl lg:text-[min(26px,2.8vh)] lg:[text-shadow:none]"
           >
             {c.hero_lead}
           </p>
