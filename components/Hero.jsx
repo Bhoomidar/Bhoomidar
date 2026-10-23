@@ -2,13 +2,23 @@ import Image from "next/image";
 import { ArrowRight, Building, ChevronRight, Home, MapPin } from "lucide-react";
 import { Building2, Coins, Sprout, Users } from "lucide-react";
 import Navbar from "./Navbar";
+import { isOn, num } from "@/lib/siteContent";
 
 const STAT_ICONS = [Building2, Users, Coins, Sprout];
 
 export default function Hero({ c }) {
-  // Phones can have their own (taller) photo. Without one, the main photo is
-  // used and centred on the house.
+  // Phones can have their own (taller) photo. Without one, the laptop photo is
+  // shown as a band, focused where the admin set it.
   const mobileImage = c.hero_image_mobile;
+  const laptopPos = `${num(c.hero_image_pos_x, 100)}% ${num(c.hero_image_pos_y, 50)}%`;
+  const phonePos = `${num(c.hero_image_mobile_pos_x, 78)}% ${num(c.hero_image_mobile_pos_y, 50)}%`;
+  const laptopDark = num(c.hero_overlay, 0) / 100;
+  const phoneDark = num(c.hero_overlay_mobile, 0) / 100;
+
+  const showBadge = isOn(c.hero_show_badge) && c.hero_badge;
+  const showTagline = isOn(c.hero_show_tagline);
+  const showCard = isOn(c.hero_show_card);
+  const showStats = isOn(c.hero_show_stats);
 
   const cardRows = [
     { icon: MapPin, label: c.hero_card1_label, value: c.hero_card1_value },
@@ -28,6 +38,7 @@ export default function Hero({ c }) {
             fill
             priority
             sizes="100vw"
+            style={{ objectPosition: phonePos }}
             className="zoom-in-slow object-cover lg:hidden"
           />
           <Image
@@ -35,7 +46,8 @@ export default function Hero({ c }) {
             alt=""
             fill
             sizes="100vw"
-            className="zoom-in-slow hidden object-cover object-right lg:block"
+            style={{ objectPosition: laptopPos }}
+            className="zoom-in-slow hidden object-cover lg:block"
           />
         </>
       ) : (
@@ -50,7 +62,8 @@ export default function Hero({ c }) {
               fill
               priority
               sizes="100vw"
-              className="zoom-in-slow object-cover object-[78%_center]"
+              style={{ objectPosition: phonePos }}
+              className="zoom-in-slow object-cover"
             />
           </div>
           <Image
@@ -58,9 +71,22 @@ export default function Hero({ c }) {
             alt=""
             fill
             sizes="100vw"
-            className="zoom-in-slow hidden object-cover object-right lg:block"
+            style={{ objectPosition: laptopPos }}
+            className="zoom-in-slow hidden object-cover lg:block"
           />
         </>
+      )}
+      {phoneDark > 0 && (
+        <div
+          className="absolute inset-0 lg:hidden"
+          style={{ backgroundColor: `rgba(0,0,0,${phoneDark})` }}
+        />
+      )}
+      {laptopDark > 0 && (
+        <div
+          className="absolute inset-0 hidden lg:block"
+          style={{ backgroundColor: `rgba(0,0,0,${laptopDark})` }}
+        />
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/80 lg:bg-gradient-to-r lg:from-[#060d18]/90 lg:via-[#060d18]/55 lg:to-transparent" />
       <div className="absolute inset-0 hidden bg-gradient-to-b from-black/50 via-transparent to-transparent lg:block" />
@@ -69,17 +95,19 @@ export default function Hero({ c }) {
 
       <div className="container-x relative flex flex-1 flex-col justify-between gap-6 pb-5 pt-[88px] lg:block lg:flex-none lg:pb-16 lg:pt-24">
         <div className="max-w-2xl">
-          <span
-            style={{ animationDelay: "100ms" }}
-            className="fade-up inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur"
-          >
-            <Building className="h-3 w-3 text-copper-light" />
-            {c.hero_badge}
-          </span>
+          {showBadge && (
+            <span
+              style={{ animationDelay: "100ms" }}
+              className="fade-up inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur"
+            >
+              <Building className="h-3 w-3 text-copper-light" />
+              {c.hero_badge}
+            </span>
+          )}
 
           <h1
             style={{ animationDelay: "250ms" }}
-            className="fade-up mt-4 font-display text-[38px] font-bold leading-[1.1] text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_24px_rgba(0,0,0,0.7)] sm:mt-5 sm:text-6xl lg:text-[min(84px,9vh)] lg:leading-[1.06] lg:[text-shadow:none]"
+            className={`fade-up ${showBadge ? "mt-4 sm:mt-5" : ""} font-display text-[38px] font-bold leading-[1.1] text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_24px_rgba(0,0,0,0.7)] sm:text-6xl lg:text-[min(84px,9vh)] lg:leading-[1.06] lg:[text-shadow:none]`}
           >
             {c.hero_title_1}
             <span className="block text-copper-light">{c.hero_title_2}</span>
@@ -105,20 +133,25 @@ export default function Hero({ c }) {
             style={{ animationDelay: "650ms" }}
             className="fade-up flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-4 lg:mt-7"
           >
-            <a
-              href="#properties"
-              className="inline-flex w-full items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:brightness-110 sm:w-auto sm:rounded-md sm:py-3.5"
-            >
-              {c.hero_btn1} <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href="/register"
-              className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/80 bg-black/30 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10 sm:w-auto sm:rounded-md sm:py-3.5"
-            >
-              {c.hero_btn2} <ArrowRight className="h-4 w-4" />
-            </a>
+            {c.hero_btn1 && (
+              <a
+                href={c.hero_btn1_link || "#properties"}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:brightness-110 sm:w-auto sm:rounded-md sm:py-3.5"
+              >
+                {c.hero_btn1} <ArrowRight className="h-4 w-4" />
+              </a>
+            )}
+            {c.hero_btn2 && (
+              <a
+                href={c.hero_btn2_link || "/register"}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/80 bg-black/30 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10 sm:w-auto sm:rounded-md sm:py-3.5"
+              >
+                {c.hero_btn2} <ArrowRight className="h-4 w-4" />
+              </a>
+            )}
           </div>
 
+          {showStats && (
           <div
             style={{ animationDelay: "800ms" }}
             className="fade-up mt-5 grid max-w-[1020px] grid-cols-2 gap-x-3 gap-y-3.5 sm:mt-7 sm:grid-cols-4 sm:gap-6 lg:mt-9"
@@ -139,8 +172,10 @@ export default function Hero({ c }) {
               </div>
             ))}
           </div>
+          )}
 
           {/* Phones: the "featured" card sits in the page at the bottom. */}
+          {showCard && (
           <div
             style={{ animationDelay: "950ms" }}
             className="fade-up mt-4 overflow-hidden rounded-2xl bg-white shadow-2xl lg:hidden"
@@ -161,15 +196,19 @@ export default function Hero({ c }) {
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
 
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
         <div className="container-x relative h-full">
-          <div className="absolute right-10 top-24 -rotate-6 whitespace-pre-line text-right font-hand text-4xl font-semibold leading-tight text-[#f0cfa4] drop-shadow-lg">
-            {c.hero_tagline}
-          </div>
+          {showTagline && (
+            <div className="absolute right-10 top-24 -rotate-6 whitespace-pre-line text-right font-hand text-4xl font-semibold leading-tight text-[#f0cfa4] drop-shadow-lg">
+              {c.hero_tagline}
+            </div>
+          )}
 
+          {showCard && (
           <div className="float-slow absolute bottom-24 right-10 w-72 rounded-xl bg-white p-4 shadow-2xl">
             {cardRows.map(({ icon: Icon, label, value }, i) => (
               <div
@@ -186,6 +225,7 @@ export default function Hero({ c }) {
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
 

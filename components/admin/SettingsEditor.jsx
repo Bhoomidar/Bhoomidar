@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { Check, Loader2, RotateCcw, Save } from "lucide-react";
 import { saveSettings, resetSettings } from "@/actions/admin/content";
-import { DEFAULTS } from "@/lib/siteContent";
+import { DEFAULTS, isOn, num } from "@/lib/siteContent";
 import ImageUploader from "./ImageUploader";
+import Switch from "./Switch";
 import ConfirmButton from "./ConfirmButton";
 import { btnPrimary, card, inputCls, labelCls } from "./ui";
 
@@ -89,18 +90,58 @@ export default function SettingsEditor({ tabs, initial }) {
 
         <div className="grid gap-5 sm:grid-cols-2">
           {tab.fields.map((field) => {
-            const wide = field.type !== "text";
+            const wide = !["text", "range", "toggle"].includes(field.type);
+            const isToggle = field.type === "toggle";
             return (
               <div key={field.key} className={wide ? "sm:col-span-2" : ""}>
-                <label className={labelCls} htmlFor={field.key}>
-                  {field.label}
-                </label>
+                {isToggle ? (
+                  <div className="flex items-center justify-between gap-4 rounded-xl border border-black/10 bg-[#fbf7f0] px-4 py-3">
+                    <span>
+                      <span className="block text-sm font-semibold text-ink">{field.label}</span>
+                      <span className="block text-xs text-ink/55">
+                        {isOn(form[field.key]) ? "Shown" : "Hidden"}
+                      </span>
+                    </span>
+                    <Switch
+                      label={field.label}
+                      checked={isOn(form[field.key])}
+                      onChange={(on) => set(field.key, on ? "1" : "0")}
+                    />
+                  </div>
+                ) : (
+                  <label className={labelCls} htmlFor={field.key}>
+                    {field.label}
+                    {field.type === "range" && (
+                      <span className="ml-2 font-bold text-copper">
+                        {num(form[field.key], num(field.default))}
+                        {field.unit}
+                      </span>
+                    )}
+                  </label>
+                )}
+                {field.hint && !isToggle && (
+                  <p className="-mt-0.5 mb-2 text-xs text-ink/50">{field.hint}</p>
+                )}
                 {field.type === "image" ? (
                   <ImageUploader
                     value={form[field.key]}
                     onChange={(url) => set(field.key, url)}
+                    optional={field.optional}
+                    natural
+                    aspect={field.phone ? "aspect-[9/16]" : undefined}
+                    maxWidth={field.phone ? "max-w-[170px]" : undefined}
                   />
-                ) : field.type === "textarea" ? (
+                ) : field.type === "range" ? (
+                  <input
+                    id={field.key}
+                    type="range"
+                    min={field.min}
+                    max={field.max}
+                    value={num(form[field.key], num(field.default))}
+                    onChange={(e) => set(field.key, e.target.value)}
+                    className="w-full accent-copper"
+                  />
+                ) : isToggle ? null : field.type === "textarea" ? (
                   <textarea
                     id={field.key}
                     rows={3}

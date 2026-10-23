@@ -8,10 +8,14 @@ const perks = [
   "Clear rules, clear earnings",
 ];
 
-// Split screen used by the login and register pages.
-export default function AuthShell({ children }) {
+// Page around the login and register forms. By default it is split in two with a
+// picture on the left. `bare` drops the picture and centres a narrow form (login);
+// `wide` drops it and gives the page to a long form (register).
+export default function AuthShell({ children, wide = false, bare = false }) {
+  const noImage = wide || bare;
   return (
-    <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+    <main className={noImage ? "min-h-screen" : "grid min-h-screen lg:grid-cols-[1.05fr_1fr]"}>
+      {!noImage && (
       <aside className="relative hidden overflow-hidden bg-night lg:block">
         <Image
           src="/images/partner.png"
@@ -51,16 +55,23 @@ export default function AuthShell({ children }) {
           </div>
         </div>
       </aside>
+      )}
 
-      <section className="relative flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#fbf6ee] to-[#f6ecdc] px-6 py-10">
+      <section
+        className={`relative flex flex-col items-center overflow-hidden bg-gradient-to-b from-[#fbf6ee] to-[#f6ecdc] px-6 py-10 ${
+          wide ? "min-h-screen" : bare ? "min-h-screen justify-center" : "justify-center"
+        }`}
+      >
         <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-copper-light/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-[#f0c58f]/25 blur-3xl" />
 
-        <div className="relative mb-8 lg:hidden">
+        <div className={`relative mb-8 ${noImage ? "" : "lg:hidden"}`}>
           <Logo dark size="h-20" />
         </div>
 
-        <div className="fade-up relative w-full max-w-md">{children}</div>
+        <div className={`fade-up relative w-full ${wide ? "max-w-3xl" : "max-w-md"}`}>
+          {children}
+        </div>
       </section>
     </main>
   );

@@ -2,17 +2,66 @@ import Image from "next/image";
 import Navbar from "./Navbar";
 
 // Dark photo banner at the top of inner pages. `children` is the heading.
-export default function PageBanner({ image, label, text, actions, children }) {
+// Optional: a separate phone photo (`imageMobile`), where the photo is focused
+// (`position` / `positionMobile`, CSS object-position) and an extra black layer
+// (`darkness` / `darknessMobile`, 0 to 1). See bannerProps() in lib/siteContent.
+export default function PageBanner({
+  image,
+  imageMobile,
+  position = "50% 50%",
+  positionMobile = "50% 50%",
+  darkness = 0,
+  darknessMobile = 0,
+  label,
+  text,
+  actions,
+  children,
+}) {
   return (
     <section className="relative overflow-hidden bg-night">
-      <Image
-        src={image}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="zoom-in-slow object-cover object-center"
-      />
+      {imageMobile ? (
+        <>
+          <Image
+            src={imageMobile}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectPosition: positionMobile }}
+            className="zoom-in-slow object-cover lg:hidden"
+          />
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="100vw"
+            style={{ objectPosition: position }}
+            className="zoom-in-slow hidden object-cover lg:block"
+          />
+        </>
+      ) : (
+        <Image
+          src={image}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          style={{ "--pos-phone": positionMobile, "--pos-laptop": position }}
+          className="zoom-in-slow object-cover [object-position:var(--pos-phone)] lg:[object-position:var(--pos-laptop)]"
+        />
+      )}
+      {darknessMobile > 0 && (
+        <div
+          className="absolute inset-0 lg:hidden"
+          style={{ backgroundColor: `rgba(0,0,0,${darknessMobile})` }}
+        />
+      )}
+      {darkness > 0 && (
+        <div
+          className="absolute inset-0 hidden lg:block"
+          style={{ backgroundColor: `rgba(0,0,0,${darkness})` }}
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-r from-[#060d18]/95 via-[#060d18]/75 to-[#060d18]/35" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
 

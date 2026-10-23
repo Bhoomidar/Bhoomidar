@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }) {
   if (user) redirect(redirectTo);
 
   return (
-    <AuthShell>
+    <AuthShell bare>
       <LoginForm redirectTo={redirectTo} />
     </AuthShell>
   );

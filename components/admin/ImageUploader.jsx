@@ -4,10 +4,18 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 
 // Single image: shows a preview and uploads a new one through /api/admin/upload.
-export default function ImageUploader({ value, onChange, aspect = "aspect-[16/9]" }) {
+export default function ImageUploader({
+  value,
+  onChange,
+  aspect = "aspect-[16/9]",
+  maxWidth = "max-w-sm",
+  optional = false,
+  natural = false, // show the photo at its real ratio instead of cropping to `aspect`
+}) {
   const input = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [size, setSize] = useState(null);
 
   const upload = async (file) => {
     if (!file) return;
@@ -31,9 +39,21 @@ export default function ImageUploader({ value, onChange, aspect = "aspect-[16/9]
   return (
     <div>
       <div
-        className={`relative w-full max-w-sm overflow-hidden rounded-xl border border-black/10 bg-[#f1e6d4] ${aspect}`}
+        className={`relative overflow-hidden rounded-xl border border-black/10 bg-[#f1e6d4] ${
+          natural && value ? "w-fit max-w-full" : `w-full ${maxWidth} ${aspect}`
+        }`}
       >
-        {value ? (
+        {value && natural ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={value}
+            alt=""
+            onLoad={(e) =>
+              setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+            }
+            className="block h-auto max-h-[420px] w-auto max-w-full sm:max-w-md"
+          />
+        ) : value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -48,6 +68,12 @@ export default function ImageUploader({ value, onChange, aspect = "aspect-[16/9]
         )}
       </div>
 
+      {natural && value && size && (
+        <p className="mt-2 text-xs text-ink/50">
+          Actual size: {size.w} × {size.h} px
+        </p>
+      )}
+
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button
           type="button"
@@ -58,6 +84,16 @@ export default function ImageUploader({ value, onChange, aspect = "aspect-[16/9]
           <ImagePlus className="h-4 w-4" />
           {uploading ? "Uploading..." : value ? "Change image" : "Upload image"}
         </button>
+        {optional && value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            disabled={uploading}
+            className="text-sm font-semibold text-ink/60 transition hover:text-rose-700 disabled:opacity-60"
+          >
+            Remove image
+          </button>
+        )}
         {error && <span className="text-sm text-rose-700">{error}</span>}
       </div>
 

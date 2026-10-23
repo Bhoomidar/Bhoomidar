@@ -11,9 +11,11 @@ import {
   LogOut,
   Menu,
   MessageSquareQuote,
+  Network,
   PhoneCall,
   Building2,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import Logo from "../Logo";
@@ -25,6 +27,8 @@ const groups = [
     items: [
       { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
       { icon: Users, label: "Partners", href: "/admin/partners" },
+      { icon: Network, label: "Referral Tree", href: "/admin/network" },
+      { icon: Wallet, label: "Payment Details", href: "/admin/payment" },
       { icon: Inbox, label: "Inquiries", href: "/admin/inquiries", badgeKey: "inquiries" },
     ],
   },

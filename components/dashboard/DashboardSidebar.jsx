@@ -11,6 +11,7 @@ import {
   Menu,
   PhoneCall,
   UserRound,
+  Users,
   Wallet,
   X,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const groups = [
     label: "Menu",
     items: [
       { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+      { icon: Users, label: "My Network", href: "/dashboard/network" },
       { icon: UserRound, label: "My Profile", href: "/dashboard/profile" },
       { icon: Wallet, label: "Commission", href: "/dashboard/commission", badge: "Soon" },
     ],
@@ -37,7 +39,7 @@ const groups = [
   },
 ];
 
-export default function DashboardSidebar({ name, email, initials }) {
+export default function DashboardSidebar({ name, email, initials, avatarUrl }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -121,8 +123,13 @@ export default function DashboardSidebar({ name, email, initials }) {
 
         <div className="border-t border-white/10 p-4">
           <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white">
-              {initials}
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
             </span>
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-sm font-semibold text-white">

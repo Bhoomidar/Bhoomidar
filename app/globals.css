@@ -126,3 +126,47 @@ body {
     scrollbar-color: #b5622f #f1e6d4;
   }
 }
+
+/* a soft light that sweeps across a main call-to-action button */
+@keyframes shimmer {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-shimmer::after {
+    animation: none;
+  }
+}
+
+/* Edge draws its own "show password" eye; we have our own, so hide the browser one */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+/* the bar at the bottom of a toast, running out as the toast's time does */
+@keyframes toast-shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0;
+  }
+}

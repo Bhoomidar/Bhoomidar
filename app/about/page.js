@@ -13,12 +13,12 @@ import {
   Target,
   Users,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import PageBanner from "@/components/PageBanner";
 import Reveal from "@/components/Reveal";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { getContent } from "@/lib/content";
-import { lines } from "@/lib/siteContent";
+import { bannerProps, isOn, lines } from "@/lib/siteContent";
 
 export const metadata = {
   title: "About Us | Bhoomidar",
@@ -35,37 +35,14 @@ export default async function AboutPage() {
   return (
     <main>
       {/* Banner */}
-      <section className="relative overflow-hidden bg-night">
-        <Image
-          src={c.about_image}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="zoom-in-slow object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#060d18]/95 via-[#060d18]/75 to-[#060d18]/35" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
-
-        <Navbar />
-
-        <div className="fade-up container-x relative pb-16 pt-32 sm:pb-28 sm:pt-36 lg:pb-36 lg:pt-44">
-          <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80">
-            <span className="h-px w-8 bg-copper-light" />
-            {c.about_label}
-          </p>
-          <h1 className="mt-4 font-display text-[38px] font-bold leading-[1.15] text-white sm:mt-5 sm:text-6xl lg:text-[64px]">
-            {c.about_title_1}
-            <br />
-            {c.about_title_2} <span className="text-copper-light">{c.about_title_accent}</span>
-          </h1>
-          <p className="mt-6 max-w-lg text-base leading-relaxed text-white/80 lg:text-lg">
-            {c.about_text}
-          </p>
-        </div>
-      </section>
+      <PageBanner {...bannerProps(c, "about")} label={c.about_label} text={c.about_text}>
+        {c.about_title_1}
+        <br />
+        {c.about_title_2} <span className="text-copper-light">{c.about_title_accent}</span>
+      </PageBanner>
 
       {/* Who we are */}
+      {isOn(c.about_show_story) && (
       <section className="bg-cream py-14 sm:py-20 lg:py-28">
         <div className="container-x grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
           <Reveal>
@@ -80,6 +57,7 @@ export default async function AboutPage() {
                   className="object-cover"
                 />
               </div>
+              {isOn(c.about_show_badge) && (
               <div className="float-slow absolute -left-3 bottom-8 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-2xl sm:-left-6">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-b from-copper-light to-copper-dark text-white">
                   <Smile className="h-6 w-6" />
@@ -91,6 +69,7 @@ export default async function AboutPage() {
                   <span className="block text-xs text-ink/60">{c.story_badge_label}</span>
                 </span>
               </div>
+              )}
             </div>
           </Reveal>
 
@@ -130,8 +109,10 @@ export default async function AboutPage() {
           </Reveal>
         </div>
       </section>
+      )}
 
       {/* Numbers */}
+      {isOn(c.about_show_numbers) && (
       <section className="relative overflow-hidden bg-night py-14 lg:py-16">
         <div className="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-copper/20 blur-3xl" />
         <div className="pointer-events-none absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-copper-light/15 blur-3xl" />
@@ -150,8 +131,10 @@ export default async function AboutPage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Mission and vision */}
+      {isOn(c.about_show_mission) && (
       <section className="bg-gradient-to-b from-[#fbf6ee] to-[#f6ecdc] py-14 sm:py-20 lg:py-28">
         <div className="container-x">
           <Reveal className="mx-auto max-w-2xl text-center">
@@ -196,8 +179,10 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Values */}
+      {isOn(c.about_show_values) && (
       <section className="bg-cream py-14 sm:py-20 lg:py-24">
         <div className="container-x">
           <Reveal className="max-w-xl">
@@ -229,8 +214,10 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* How it works */}
+      {isOn(c.about_show_steps) && (
       <section className="bg-gradient-to-b from-[#f6ecdc] to-[#fbf6ee] pb-14 pt-4 sm:pb-20 lg:pb-28">
         <div className="container-x">
           <Reveal className="mx-auto max-w-2xl text-center">
@@ -263,25 +250,32 @@ export default async function AboutPage() {
             ))}
           </div>
 
-          <Reveal className="mt-10 flex flex-col gap-3 sm:mt-14 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
-            <a
-              href="/properties"
-              className="group inline-flex items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
-            >
-              See Properties
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-            </a>
-            <a
-              href="/contact"
-              className="inline-flex items-center justify-center gap-3 rounded-lg border border-copper px-7 py-3.5 text-sm font-semibold text-copper transition hover:bg-copper hover:text-white"
-            >
-              Talk to Us <ArrowRight className="h-4 w-4" />
-            </a>
-          </Reveal>
+          {(c.about_btn1 || c.about_btn2) && (
+            <Reveal className="mt-10 flex flex-col gap-3 sm:mt-14 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+              {c.about_btn1 && (
+                <a
+                  href={c.about_btn1_link || "/properties"}
+                  className="group inline-flex items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+                >
+                  {c.about_btn1}
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </a>
+              )}
+              {c.about_btn2 && (
+                <a
+                  href={c.about_btn2_link || "/contact"}
+                  className="inline-flex items-center justify-center gap-3 rounded-lg border border-copper px-7 py-3.5 text-sm font-semibold text-copper transition hover:bg-copper hover:text-white"
+                >
+                  {c.about_btn2} <ArrowRight className="h-4 w-4" />
+                </a>
+              )}
+            </Reveal>
+          )}
         </div>
       </section>
+      )}
 
-      <CTA c={c} />
+      {isOn(c.about_show_cta) && <CTA c={c} />}
       <Footer />
     </main>
   );

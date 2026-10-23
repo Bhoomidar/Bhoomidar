@@ -6,6 +6,7 @@ import Testimonials from "@/components/Testimonials";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { getContent, getProperties, getTestimonials } from "@/lib/content";
+import { isOn } from "@/lib/siteContent";
 
 export default async function Home() {
   const [c, properties, testimonials] = await Promise.all([
@@ -17,11 +18,11 @@ export default async function Home() {
   return (
     <main>
       <Hero c={c} />
-      <Properties c={c} properties={properties} />
-      <WhyChoose c={c} />
-      <Partner c={c} />
-      <Testimonials c={c} testimonials={testimonials} />
-      <CTA c={c} />
+      {isOn(c.show_properties) && <Properties c={c} properties={properties} />}
+      {isOn(c.show_why) && <WhyChoose c={c} />}
+      {isOn(c.show_partner) && <Partner c={c} />}
+      {isOn(c.show_testimonials) && <Testimonials c={c} testimonials={testimonials} />}
+      {isOn(c.show_cta) && <CTA c={c} />}
       <Footer />
     </main>
   );

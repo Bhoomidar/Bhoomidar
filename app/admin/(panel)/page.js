@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Building2,
+  Clock,
   FileText,
   Home,
   Inbox,
@@ -23,9 +24,10 @@ export default async function AdminDashboard() {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   const head = { count: "exact", head: true };
 
-  const [partners, newPartners, newInquiries, properties, recentPartners, recentInquiries] =
+  const [partners, pendingPartners, newPartners, newInquiries, properties, recentPartners, recentInquiries] =
     await Promise.all([
       count(db.from("profiles").select("id", head)),
+      count(db.from("profiles").select("id", head).is("activated_at", null).eq("is_active", true)),
       count(db.from("profiles").select("id", head).gte("created_at", weekAgo)),
       count(db.from("inquiries").select("id", head).eq("status", "new")),
       count(db.from("properties").select("id", head).eq("is_active", true)),
@@ -45,6 +47,7 @@ export default async function AdminDashboard() {
 
   const stats = [
     { icon: Users, label: "Total partners", value: partners, href: "/admin/partners" },
+    { icon: Clock, label: "Payment pending", value: pendingPartners, href: "/admin/partners" },
     { icon: UserPlus, label: "New this week", value: newPartners, href: "/admin/partners" },
     { icon: Inbox, label: "New messages", value: newInquiries, href: "/admin/inquiries" },
     { icon: Building2, label: "Live properties", value: properties, href: "/admin/properties" },
@@ -65,7 +68,7 @@ export default async function AdminDashboard() {
         text="A quick look at your website."
       />
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map(({ icon: Icon, label, value, href }) => (
           <a
             key={label}
@@ -75,7 +78,7 @@ export default async function AdminDashboard() {
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#3a2a1f] to-[#17110c] text-copper-light shadow-lg ring-4 ring-copper-light/20">
               <Icon className="h-5 w-5" strokeWidth={1.8} />
             </span>
-            <p className="mt-4 font-display text-4xl font-bold text-ink">{value}</p>
+            <p className="mt-4 font-sans text-4xl font-extrabold tabular-nums text-ink">{value}</p>
             <p className="mt-1 text-sm text-ink/60">{label}</p>
           </a>
         ))}

@@ -5,13 +5,32 @@ import Reveal from "./Reveal";
 export default function CTA({ c }) {
   return (
     <section className="relative overflow-hidden bg-night">
-      <Image
-        src={c.cta_image}
-        alt=""
-        fill
-        sizes="100vw"
-        className="object-cover object-[center_45%]"
-      />
+      {c.cta_image_mobile ? (
+        <>
+          <Image
+            src={c.cta_image_mobile}
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover lg:hidden"
+          />
+          <Image
+            src={c.cta_image}
+            alt=""
+            fill
+            sizes="100vw"
+            className="hidden object-cover object-[center_45%] lg:block"
+          />
+        </>
+      ) : (
+        <Image
+          src={c.cta_image}
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-[center_45%]"
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-r from-[#060d18]/90 via-[#060d18]/55 to-transparent" />
 
       <div className="container-x relative flex flex-col items-start justify-between gap-8 py-12 lg:min-h-[280px] lg:flex-row lg:items-center">
