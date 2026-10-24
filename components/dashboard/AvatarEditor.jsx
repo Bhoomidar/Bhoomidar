@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Loader2, X } from "lucide-react";
+import { Camera, Loader2, Trash2, X } from "lucide-react";
+import ConfirmDialog from "../ConfirmDialog";
 
 // Centre square of the chosen photo, shrunk to 512 px. Keeps uploads small and
 // fixes phone photos that are rotated. Falls back to the original file.
@@ -41,6 +42,7 @@ export default function AvatarEditor({ url, initials, overlap = true }) {
   const input = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [asking, setAsking] = useState(false);
 
   const send = async (request) => {
     setBusy(true);
@@ -68,9 +70,9 @@ export default function AvatarEditor({ url, initials, overlap = true }) {
     send(() => fetch("/api/profile/avatar", { method: "POST", body }));
   };
 
-  const remove = () => {
-    if (!window.confirm("Remove your profile photo?")) return;
-    send(() => fetch("/api/profile/avatar", { method: "DELETE" }));
+  const remove = async () => {
+    await send(() => fetch("/api/profile/avatar", { method: "DELETE" }));
+    setAsking(false);
   };
 
   return (
@@ -105,7 +107,7 @@ export default function AvatarEditor({ url, initials, overlap = true }) {
         {url && !busy && (
           <button
             type="button"
-            onClick={remove}
+            onClick={() => setAsking(true)}
             aria-label="Remove profile photo"
             title="Remove photo"
             className="absolute right-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-white text-ink/60 shadow-md ring-1 ring-black/10 transition hover:text-rose-600"
@@ -122,6 +124,18 @@ export default function AvatarEditor({ url, initials, overlap = true }) {
           className="hidden"
         />
       </div>
+      {asking && (
+        <ConfirmDialog
+          tone="danger"
+          icon={Trash2}
+          title="Remove profile photo?"
+          text="Your photo will be removed and your initials will show instead. You can add a new one any time."
+          confirmText="Yes, remove"
+          busy={busy}
+          onConfirm={remove}
+          onCancel={() => setAsking(false)}
+        />
+      )}
       {error && (
         <p role="alert" className="mt-3 max-w-[14rem] text-xs font-medium text-rose-700">
           {error}

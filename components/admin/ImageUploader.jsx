@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
 
 // Single image: shows a preview and uploads a new one through /api/admin/upload.
+// You can click the box or drop a photo on it.
 export default function ImageUploader({
   value,
   onChange,
@@ -16,9 +17,11 @@ export default function ImageUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [size, setSize] = useState(null);
+  const [over, setOver] = useState(false);
 
   const upload = async (file) => {
     if (!file) return;
+    if (!file.type.startsWith("image/")) return setError("Please choose a photo.");
     setUploading(true);
     setError("");
     try {
@@ -37,9 +40,23 @@ export default function ImageUploader({
   };
 
   return (
-    <div>
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        upload(e.dataTransfer.files?.[0]);
+      }}
+      className={`rounded-2xl border-2 border-dashed p-3 transition sm:p-4 ${
+        over ? "border-copper bg-copper/10" : "border-copper/25 bg-white"
+      }`}
+    >
       <div
-        className={`relative overflow-hidden rounded-xl border border-black/10 bg-[#f1e6d4] ${
+        className={`relative overflow-hidden rounded-xl bg-[#f1e6d4] ring-1 ring-black/10 ${
           natural && value ? "w-fit max-w-full" : `w-full ${maxWidth} ${aspect}`
         }`}
       >
@@ -57,9 +74,14 @@ export default function ImageUploader({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-ink/40">
-            No image
-          </div>
+          <button
+            type="button"
+            onClick={() => input.current?.click()}
+            className="flex h-full min-h-[120px] w-full flex-col items-center justify-center gap-2 text-sm text-ink/50 transition hover:text-copper"
+          >
+            <UploadCloud className="h-8 w-8 text-copper/70" />
+            <span className="font-semibold">Click or drop a photo here</span>
+          </button>
         )}
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/70">
@@ -69,7 +91,7 @@ export default function ImageUploader({
       </div>
 
       {natural && value && size && (
-        <p className="mt-2 text-xs text-ink/50">
+        <p className="mt-2 inline-flex rounded-full bg-[#faf1e6] px-3 py-1 text-xs font-semibold text-ink/60 ring-1 ring-black/5">
           Actual size: {size.w} × {size.h} px
         </p>
       )}
@@ -79,7 +101,7 @@ export default function ImageUploader({
           type="button"
           onClick={() => input.current?.click()}
           disabled={uploading}
-          className="inline-flex items-center gap-2 rounded-lg border border-copper px-4 py-2 text-sm font-semibold text-copper transition hover:bg-copper hover:text-white disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-copper/30 transition hover:-translate-y-0.5 disabled:opacity-60"
         >
           <ImagePlus className="h-4 w-4" />
           {uploading ? "Uploading..." : value ? "Change image" : "Upload image"}
@@ -89,12 +111,13 @@ export default function ImageUploader({
             type="button"
             onClick={() => onChange("")}
             disabled={uploading}
-            className="text-sm font-semibold text-ink/60 transition hover:text-rose-700 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2.5 text-sm font-semibold text-ink/60 shadow-sm ring-1 ring-black/10 transition hover:text-rose-700 hover:ring-rose-300 disabled:opacity-60"
           >
-            Remove image
+            <Trash2 className="h-4 w-4" />
+            Remove
           </button>
         )}
-        {error && <span className="text-sm text-rose-700">{error}</span>}
+        {error && <span className="text-sm font-medium text-rose-700">{error}</span>}
       </div>
 
       <input

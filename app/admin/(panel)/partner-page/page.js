@@ -16,7 +16,7 @@ export default async function PartnerCustomizePage() {
         accent="Page"
         text="Change the text and image of the partner page (/opportunities). It is not linked from the public website."
       />
-      <SettingsEditor tabs={PARTNER_TABS} initial={content} />
+      <SettingsEditor tabs={PARTNER_TABS} initial={content} siteHref="/opportunities" siteLabel="Open the Partner page" />
     </>
   );
 }

@@ -81,6 +81,13 @@ export async function getAllProperties() {
   return data ?? [];
 }
 
+export async function getPropertyById(id) {
+  await requireAdmin();
+  if (!/^[0-9a-f-]{36}$/i.test(String(id))) return null;
+  const { data } = await createAdminClient().from("properties").select("*").eq("id", id).maybeSingle();
+  return data ?? null;
+}
+
 // Creates a property when input.id is empty, otherwise updates it.
 export async function saveProperty(input) {
   await requireAdmin();

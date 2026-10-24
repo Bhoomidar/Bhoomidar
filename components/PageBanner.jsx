@@ -15,6 +15,8 @@ export default function PageBanner({
   label,
   text,
   actions,
+  footer,
+  footerClassName = "pb-10 sm:pb-14 lg:pb-16",
   children,
 }) {
   return (
@@ -67,7 +69,11 @@ export default function PageBanner({
 
       <Navbar />
 
-      <div className="fade-up container-x relative pb-16 pt-32 sm:pb-28 sm:pt-36 lg:pb-36 lg:pt-44">
+      <div
+        className={`fade-up container-x relative pt-32 sm:pt-36 lg:pt-44 ${
+          footer ? "pb-8 sm:pb-10 lg:pb-12" : "pb-16 sm:pb-28 lg:pb-36"
+        }`}
+      >
         <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80">
           <span className="h-px w-8 bg-copper-light" />
           {label}
@@ -82,6 +88,9 @@ export default function PageBanner({
         )}
         {actions && <div className="mt-8 flex flex-col gap-3 sm:flex-row">{actions}</div>}
       </div>
+
+      {/* Extra things at the bottom of the banner: trust points, number cards... */}
+      {footer && <div className={`container-x relative ${footerClassName}`}>{footer}</div>}
     </section>
   );
 }

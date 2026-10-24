@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Search, Wallet } from "lucide-react";
+import { Check, ChevronDown, MoreVertical, Power, RotateCcw, Search, UserRound, Wallet } from "lucide-react";
 import {
   deactivatePartner,
   setPartnerActive,
 } from "@/actions/admin/partners";
 import { formatRupees } from "@/lib/partnerFee";
+import ConfirmDialog from "../ConfirmDialog";
+import Select from "../Select";
 import MarkPaidModal from "./MarkPaidModal";
 import Switch from "./Switch";
-import { card, inputCls } from "./ui";
 
 const date = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", {
@@ -19,6 +20,15 @@ const date = (iso) =>
     year: "numeric",
   });
 
+const field =
+  "w-full rounded-2xl border border-black/10 bg-white text-sm text-ink shadow-[0_8px_20px_-14px_rgba(110,60,20,0.45)] outline-none transition placeholder:text-ink/45 focus:border-copper focus:ring-4 focus:ring-copper/15";
+
+const th = "px-3 py-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/55";
+
+// Phone, Referred by and Referrals only get their own column on wide screens;
+// below that the phone moves under the email, so the table never needs to scroll.
+const wide = "hidden min-[1500px]:table-cell";
+
 export default function PartnersTable({ partners, fee }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -26,6 +36,9 @@ export default function PartnersTable({ partners, fee }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const [activating, setActivating] = useState(null);
+  const [confirming, setConfirming] = useState(null);
+  // The open row menu: which partner, and where the button sits on screen.
+  const [menu, setMenu] = useState(null);
 
   // Who referred whom, worked out from the list itself.
   const byId = useMemo(() => new Map(partners.map((p) => [p.id, p])), [partners]);
@@ -46,6 +59,22 @@ export default function PartnersTable({ partners, fee }) {
     });
   }, [partners, search, status]);
 
+  // The menu is drawn with fixed positioning (the table scrolls sideways and
+  // would clip it), so close it whenever the page moves.
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const onKey = (e) => e.key === "Escape" && close();
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
+
   const toggle = (p, value) =>
     start(async () => {
       setError("");
@@ -54,40 +83,55 @@ export default function PartnersTable({ partners, fee }) {
       router.refresh();
     });
 
-  const markUnpaid = (p) =>
+  // Asks first (see the dialog at the bottom), then runs.
+  const markUnpaid = (p) => setConfirming(p);
+
+  const confirmUnpaid = () =>
     start(async () => {
-      if (!window.confirm(`Mark ${p.full_name || p.email} as unpaid? Their dashboard will lock until you mark it paid again.`)) {
-        return;
-      }
+      const p = confirming;
       setError("");
       const res = await deactivatePartner(p.id);
       if (!res.success) setError(res.error);
+      setConfirming(null);
       router.refresh();
     });
 
+  const openMenu = (e, p) => {
+    if (menu?.partner.id === p.id) return setMenu(null);
+    const r = e.currentTarget.getBoundingClientRect();
+    setMenu({ partner: p, top: r.bottom + 8, right: window.innerWidth - r.right });
+  };
+
+  const menuItem =
+    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink transition hover:bg-[#fbeedd] hover:text-copper-dark";
+
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative sm:max-w-xs sm:flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-copper/70" />
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative sm:w-[340px]">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-copper" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, email, phone or code"
-            className={`${inputCls} !py-2.5 pl-10`}
+            placeholder="Search name, email, phone or code..."
+            className={`${field} py-3.5 pl-11 pr-4`}
           />
         </div>
-        <select
+        <Select
+          wrapperClassName="sm:w-[190px]"
+          variant="toolbar"
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className={`${inputCls} !py-2.5 sm:w-44`}
-        >
-          <option value="all">All partners</option>
-          <option value="active">Active only</option>
-          <option value="off">Switched off</option>
-          <option value="pending">Payment pending</option>
-        </select>
-        <p className="text-sm text-ink/55 sm:ml-auto">
+          onChange={setStatus}
+          ariaLabel="Filter partners"
+          menuMinWidth={210}
+          options={[
+            { value: "all", label: "All partners" },
+            { value: "active", label: "Active only" },
+            { value: "off", label: "Switched off" },
+            { value: "pending", label: "Payment pending" },
+          ]}
+        />
+        <p className="text-sm text-ink/60 sm:ml-auto">
           Showing {shown.length} of {partners.length}
         </p>
       </div>
@@ -98,40 +142,42 @@ export default function PartnersTable({ partners, fee }) {
         </p>
       )}
 
-      <div className={`${card} overflow-x-auto !p-0`}>
+      {/* Scrolls sideways only on phones and small tablets. */}
+      <div className="rounded-3xl bg-white shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 max-lg:overflow-x-auto lg:overflow-hidden">
         {shown.length === 0 ? (
           <p className="py-14 text-center text-sm text-ink/60">No partners found.</p>
         ) : (
-          <table className="w-full min-w-[1020px] text-left">
+          <table className="w-full text-left max-lg:min-w-[860px]">
             <thead>
-              <tr className="border-b border-black/5 text-xs uppercase tracking-wider text-ink/50">
-                <th className="px-6 py-4 font-semibold">Partner</th>
-                <th className="px-4 py-4 font-semibold">Phone</th>
-                <th className="px-4 py-4 font-semibold">Code</th>
-                <th className="px-4 py-4 font-semibold">Referred by</th>
-                <th className="px-4 py-4 font-semibold">Referrals</th>
-                <th className="px-4 py-4 font-semibold">Joined</th>
-                <th className="px-4 py-4 font-semibold">Joining payment</th>
-                <th className="px-6 py-4 text-right font-semibold">Can log in</th>
+              <tr className="border-b border-black/5 bg-gradient-to-b from-white to-[#fcf6ee]">
+                <th className={`${th} pl-5`}>Partner</th>
+                <th className={`${th} ${wide}`}>Phone</th>
+                <th className={th}>Code</th>
+                <th className={`${th} ${wide}`}>Referred by</th>
+                <th className={`${th} ${wide}`}>Referrals</th>
+                <th className={th}>Joined</th>
+                <th className={th}>Joining payment</th>
+                <th className={th}>Can log in</th>
+                <th className={`${th} border-l border-black/5 pr-5 text-center`}>Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
               {shown.map((p) => (
-                <tr key={p.id} className="transition hover:bg-[#fbf7f0]">
-                  <td className="px-6 py-4">
+                <tr key={p.id} className="transition hover:bg-[#fffaf3]">
+                  <td className="py-5 pl-5 pr-3">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-base font-bold text-white shadow-md shadow-copper/30 ring-2 ring-white">
                         {p.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                (p.full_name || p.email)[0].toUpperCase()
-              )}
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (p.full_name || p.email)[0].toUpperCase()
+                        )}
                       </span>
-                      <span className="min-w-0 leading-tight">
+                      <span className="min-w-0 max-w-[210px] leading-tight">
                         <a
                           href={`/admin/partners/${p.id}`}
-                          className="flex items-center gap-2 text-left font-semibold text-ink hover:text-copper"
+                          className="flex items-center gap-2 text-left text-[15px] font-bold text-ink transition hover:text-copper"
                           title="Open full profile"
                         >
                           {p.full_name || "—"}
@@ -141,25 +187,38 @@ export default function PartnersTable({ partners, fee }) {
                             </span>
                           )}
                         </a>
-                        <span className="block truncate text-sm text-ink/55">{p.email}</span>
+                        <span className="mt-1 block truncate text-[13px] text-ink/55" title={p.email}>
+                          {p.email}
+                        </span>
+                        {p.phone && (
+                          <span className="mt-0.5 block truncate text-[13px] text-ink/55 min-[1500px]:hidden">{p.phone}</span>
+                        )}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-ink/75">{p.phone || "—"}</td>
-                  <td className="whitespace-nowrap px-4 py-4 font-mono text-sm text-ink/75">{p.referral_code || "—"}</td>
-                  <td className="px-4 py-4 text-sm text-ink/75">
+                  <td className={`${wide} whitespace-nowrap px-3 py-5 text-sm text-ink/80`}>{p.phone || "—"}</td>
+                  <td className="whitespace-nowrap px-3 py-5">
+                    {p.referral_code ? (
+                      <span className="rounded-full bg-[#f6ecdf] px-3 py-1.5 font-mono text-[13px] font-semibold text-ink/75 ring-1 ring-copper/10">
+                        {p.referral_code}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-ink/55">—</span>
+                    )}
+                  </td>
+                  <td className={`${wide} px-3 py-5 text-sm leading-snug text-ink/80`}>
                     {byId.get(p.referred_by)?.full_name || "—"}
                   </td>
-                  <td className="px-4 py-4 text-sm text-ink/75">{referralCounts[p.id] ?? 0}</td>
-                  <td className="whitespace-nowrap px-4 py-4 text-sm text-ink/75">{date(p.created_at)}</td>
-                  <td className="px-4 py-4">
+                  <td className={`${wide} px-3 py-5 text-sm font-medium text-ink/80`}>{referralCounts[p.id] ?? 0}</td>
+                  <td className="whitespace-nowrap px-3 py-5 text-sm text-ink/80">{date(p.created_at)}</td>
+                  <td className="px-3 py-5">
                     {p.activated_at ? (
                       <div className="leading-tight">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1.5 text-[13px] font-bold text-emerald-800 ring-1 ring-emerald-200">
                           <Check className="h-3.5 w-3.5" strokeWidth={3} />
                           Paid {formatRupees(p.activation_amount ?? fee)}
                         </span>
-                        <p className="mt-1.5 whitespace-nowrap text-xs text-ink/55">
+                        <p className="mt-2 max-w-[190px] break-words text-xs leading-snug text-ink/55">
                           {date(p.activated_at)}
                           {p.activation_note ? ` · ${p.activation_note}` : ""}
                         </p>
@@ -167,31 +226,35 @@ export default function PartnersTable({ partners, fee }) {
                           type="button"
                           disabled={pending}
                           onClick={() => markUnpaid(p)}
-                          className="mt-1 text-xs text-ink/50 underline-offset-2 hover:text-rose-700 hover:underline disabled:opacity-50"
+                          className="mt-1 text-xs font-medium text-copper underline underline-offset-2 transition hover:text-rose-700 disabled:opacity-50"
                         >
                           Mark as unpaid
                         </button>
                       </div>
                     ) : (
                       <div className="leading-tight">
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                        <span className="inline-flex items-center rounded-full bg-amber-100 px-3.5 py-1.5 text-[13px] font-bold text-amber-800 ring-1 ring-amber-200">
                           Unpaid
                         </span>
                         <button
                           type="button"
                           onClick={() => setActivating(p)}
-                          className="mt-2 flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-copper/30 transition hover:-translate-y-0.5"
+                          className="mt-2 flex items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-4 py-2 text-[13px] font-semibold text-white shadow-md shadow-copper/30 transition hover:-translate-y-0.5"
                         >
-                          <Wallet className="h-3.5 w-3.5" />
+                          <Wallet className="h-4 w-4" />
                           Mark as paid
                         </button>
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-3 py-5">
+                    <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs font-medium ${p.is_active ? "text-emerald-700" : "text-rose-700"}`}
+                        className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${
+                          p.is_active
+                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                            : "bg-rose-50 text-rose-700 ring-rose-200"
+                        }`}
                       >
                         {p.is_active ? "Active" : "Off"}
                       </span>
@@ -203,12 +266,107 @@ export default function PartnersTable({ partners, fee }) {
                       />
                     </div>
                   </td>
+                  <td className="border-l border-black/5 px-3 py-5 text-center">
+                    <button
+                      type="button"
+                      onClick={(e) => openMenu(e, p)}
+                      aria-label={`More actions for ${p.full_name || p.email}`}
+                      aria-haspopup="menu"
+                      aria-expanded={menu?.partner.id === p.id}
+                      className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border bg-white shadow-sm transition hover:border-copper hover:text-copper ${
+                        menu?.partner.id === p.id ? "border-copper text-copper" : "border-black/10 text-ink/70"
+                      }`}
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {menu && (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMenu(null)}
+            className="fixed inset-0 z-40 cursor-default"
+          />
+          <div
+            role="menu"
+            style={{ top: menu.top, right: menu.right }}
+            className="fade-up fixed z-50 w-64 rounded-2xl bg-white p-2 shadow-[0_30px_60px_-20px_rgba(60,30,10,0.55)] ring-1 ring-copper/20"
+          >
+            <a href={`/admin/partners/${menu.partner.id}`} role="menuitem" className={menuItem}>
+              <UserRound className="h-[18px] w-[18px] text-copper" />
+              Open full profile
+            </a>
+            {menu.partner.activated_at ? (
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItem}
+                onClick={() => {
+                  const p = menu.partner;
+                  setMenu(null);
+                  markUnpaid(p);
+                }}
+              >
+                <RotateCcw className="h-[18px] w-[18px] text-copper" />
+                Mark as unpaid
+              </button>
+            ) : (
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItem}
+                onClick={() => {
+                  setActivating(menu.partner);
+                  setMenu(null);
+                }}
+              >
+                <Wallet className="h-[18px] w-[18px] text-copper" />
+                Mark as paid
+              </button>
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              className={`${menuItem} ${menu.partner.is_active ? "hover:!bg-rose-50 hover:!text-rose-700" : ""}`}
+              onClick={() => {
+                const p = menu.partner;
+                setMenu(null);
+                toggle(p, !p.is_active);
+              }}
+            >
+              <Power className={`h-[18px] w-[18px] ${menu.partner.is_active ? "text-rose-500" : "text-emerald-600"}`} />
+              {menu.partner.is_active ? "Switch off account" : "Switch on account"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {confirming && (
+        <ConfirmDialog
+          tone="warn"
+          icon={RotateCcw}
+          title="Mark as unpaid?"
+          text={
+            <>
+              <b className="text-ink">{confirming.full_name || confirming.email}</b>&apos;s dashboard will lock until you
+              mark the payment as paid again.
+            </>
+          }
+          confirmText="Yes, mark unpaid"
+          busy={pending}
+          onConfirm={confirmUnpaid}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
       {activating && (
         <MarkPaidModal
           partner={activating}

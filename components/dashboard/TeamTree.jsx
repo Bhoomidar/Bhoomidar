@@ -38,6 +38,7 @@ import {
 import { rankTiers } from "@/lib/data";
 import { fmtArea, fmtPoints } from "@/lib/points";
 import { BarsArt, CoinsArt, OrgChartArt, PeopleArt } from "@/components/dashboard/StatArt";
+import Select from "@/components/Select";
 
 const STATUS = {
   active: { text: "Active", chip: "bg-emerald-100 text-emerald-800", ring: "ring-emerald-400/70", dot: "bg-emerald-500" },
@@ -360,22 +361,22 @@ export function ReferralsTable({ nodes, rootId, children }) {
           </div>
         </div>
 
-        <div className="relative shrink-0">
-          <select
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setShown(PAGE);
-            }}
-            aria-label="Filter by status"
-            className="appearance-none rounded-xl border border-black/10 bg-white py-2.5 pl-4 pr-10 text-sm font-semibold text-ink/80 shadow-sm outline-none transition focus:border-copper focus:ring-4 focus:ring-copper/15"
-          >
-            <option value="all">All ({counts.all})</option>
-            <option value="active">Active ({counts.active})</option>
-            <option value="unpaid">Unpaid ({counts.unpaid})</option>
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/50" />
-        </div>
+        <Select
+          wrapperClassName="shrink-0"
+          variant="pill"
+          value={filter}
+          onChange={(v) => {
+            setFilter(v);
+            setShown(PAGE);
+          }}
+          ariaLabel="Filter by status"
+          menuMinWidth={180}
+          options={[
+            { value: "all", label: `All (${counts.all})` },
+            { value: "active", label: `Active (${counts.active})` },
+            { value: "unpaid", label: `Unpaid (${counts.unpaid})` },
+          ]}
+        />
       </div>
 
       {direct.length === 0 ? (
@@ -1129,21 +1130,19 @@ export default function TeamTree({ nodes, rootId, me }) {
                 <>
                   <button type="button" aria-label="Close filters" className="fixed inset-0 z-30 cursor-default" onClick={() => setFiltersOpen(false)} />
                   <div className="absolute left-0 top-full z-40 mt-2 w-64 space-y-4 rounded-2xl bg-white p-4 shadow-[0_24px_50px_-16px_rgba(60,30,10,0.45)] ring-1 ring-black/10">
-                    <label className="block">
+                    <div className="block">
                       <span className="mb-1.5 block text-xs font-semibold text-ink/60">Level</span>
-                      <select
-                        value={levelFilter}
-                        onChange={(e) => setLevelFilter(e.target.value)}
-                        className="w-full rounded-lg border border-black/10 bg-[#fbf7f0] px-3 py-2 text-sm text-ink outline-none focus:border-copper"
-                      >
-                        <option value="all">All levels</option>
-                        {perLevel.map(({ level, count }) => (
-                          <option key={level} value={level}>
-                            Level {level} ({count})
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                      <Select
+                        variant="inset"
+                        value={String(levelFilter)}
+                        onChange={setLevelFilter}
+                        ariaLabel="Level"
+                        options={[
+                          { value: "all", label: "All levels" },
+                          ...perLevel.map(({ level, count }) => ({ value: String(level), label: `Level ${level} (${count})` })),
+                        ]}
+                      />
+                    </div>
                     <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink/75">
                       <input
                         type="checkbox"

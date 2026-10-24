@@ -4,10 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Power, RotateCcw, Wallet } from "lucide-react";
 import { deactivatePartner, setPartnerActive } from "@/actions/admin/partners";
+import ConfirmDialog from "../ConfirmDialog";
 import MarkPaidModal from "./MarkPaidModal";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60";
 
 // What the admin can do to one partner: mark the joining payment paid (which
 // activates the account) or unpaid, and switch the whole account on or off.
@@ -17,11 +18,15 @@ export default function PartnerControls({ partner, fee }) {
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
+  // Which question is on screen: "unpaid", "off", or none.
+  const [ask, setAsk] = useState(null);
+
   const run = (fn) =>
     start(async () => {
       setError("");
       const res = await fn();
       if (!res.success) setError(res.error);
+      setAsk(null);
       router.refresh();
     });
 
@@ -35,12 +40,8 @@ export default function PartnerControls({ partner, fee }) {
           <button
             type="button"
             disabled={pending}
-            onClick={() => {
-              if (window.confirm(`Mark ${label} as unpaid? Their dashboard will lock until you mark it paid again.`)) {
-                run(() => deactivatePartner(partner.id));
-              }
-            }}
-            className={`${base} border border-white/25 text-white hover:bg-white/10`}
+            onClick={() => setAsk("unpaid")}
+            className={`${base} bg-white text-ink/80 shadow-sm ring-1 ring-black/10 hover:text-copper hover:ring-copper`}
           >
             <RotateCcw className="h-4 w-4" />
             Mark as unpaid
@@ -49,7 +50,7 @@ export default function PartnerControls({ partner, fee }) {
           <button
             type="button"
             onClick={() => setPaying(true)}
-            className={`${base} bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-lg shadow-black/30 hover:-translate-y-0.5`}
+            className={`${base} bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-lg shadow-copper/35`}
           >
             <Wallet className="h-4 w-4" />
             Mark as paid
@@ -59,18 +60,11 @@ export default function PartnerControls({ partner, fee }) {
         <button
           type="button"
           disabled={pending}
-          onClick={() => {
-            if (
-              !partner.is_active ||
-              window.confirm(`Switch off ${label}? They will not be able to log in.`)
-            ) {
-              run(() => setPartnerActive(partner.id, !partner.is_active));
-            }
-          }}
+          onClick={() => (partner.is_active ? setAsk("off") : run(() => setPartnerActive(partner.id, true)))}
           className={`${base} ${
             partner.is_active
-              ? "border border-rose-300/40 text-rose-200 hover:bg-rose-500/15"
-              : "bg-emerald-500 text-white hover:bg-emerald-600"
+              ? "bg-white text-rose-700 shadow-sm ring-1 ring-rose-200 hover:bg-rose-50 hover:ring-rose-300"
+              : "bg-gradient-to-b from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-600/30"
           }`}
         >
           <Power className="h-4 w-4" />
@@ -78,7 +72,41 @@ export default function PartnerControls({ partner, fee }) {
         </button>
       </div>
 
-      {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
+      {error && <p className="mt-3 text-sm font-medium text-rose-700">{error}</p>}
+
+      {ask === "unpaid" && (
+        <ConfirmDialog
+          tone="warn"
+          icon={RotateCcw}
+          title="Mark as unpaid?"
+          text={
+            <>
+              <b className="text-ink">{label}</b>&apos;s dashboard will lock until you mark the payment as paid again.
+            </>
+          }
+          confirmText="Yes, mark unpaid"
+          busy={pending}
+          onConfirm={() => run(() => deactivatePartner(partner.id))}
+          onCancel={() => setAsk(null)}
+        />
+      )}
+
+      {ask === "off" && (
+        <ConfirmDialog
+          tone="danger"
+          icon={Power}
+          title="Switch off account?"
+          text={
+            <>
+              <b className="text-ink">{label}</b> will not be able to log in until you switch the account back on.
+            </>
+          }
+          confirmText="Yes, switch off"
+          busy={pending}
+          onConfirm={() => run(() => setPartnerActive(partner.id, false))}
+          onCancel={() => setAsk(null)}
+        />
+      )}
 
       {paying && (
         <MarkPaidModal

@@ -16,7 +16,7 @@ export default async function HomeCustomizePage() {
         accent="Page"
         text="Change the text and images of each section. Press Save and the website updates right away."
       />
-      <SettingsEditor tabs={HOME_TABS} initial={content} />
+      <SettingsEditor tabs={HOME_TABS} initial={content} siteHref="/" siteLabel="Open the home page" />
     </>
   );
 }

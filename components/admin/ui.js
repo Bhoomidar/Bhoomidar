@@ -1,9 +1,9 @@
 // Shared class names for the admin panel.
 export const card =
-  "rounded-2xl bg-white p-6 shadow-[0_18px_40px_-22px_rgba(110,60,20,0.35)] ring-1 ring-black/5";
+  "rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7";
 
 export const inputCls =
-  "w-full rounded-xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink/40 focus:border-copper focus:bg-white focus:ring-4 focus:ring-copper/15";
+  "w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-ink shadow-[0_8px_20px_-14px_rgba(110,60,20,0.35)] outline-none transition placeholder:text-ink/40 focus:border-copper focus:ring-4 focus:ring-copper/15";
 
 export const labelCls = "mb-1.5 block text-xs font-semibold text-ink/70";
 

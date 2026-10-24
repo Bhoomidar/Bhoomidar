@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
-export default function Modal({ title, onClose, children }) {
+export default function Modal({ title, subtitle, icon: Icon, size = "md", onClose, children }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -16,19 +16,29 @@ export default function Modal({ title, onClose, children }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#140d08]/65 p-4 backdrop-blur-sm sm:items-center">
       <div
         className="absolute inset-0"
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative my-6 w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="font-display text-2xl font-bold text-ink">{title}</h2>
+      <div className={`fade-up relative my-6 w-full ${size === "xl" ? "max-w-5xl" : "max-w-2xl"} rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_40px_90px_-24px_rgba(60,30,10,0.7)] ring-1 ring-copper/20 sm:p-8`}>
+        <div className="mb-6 flex items-center justify-between gap-3 border-b border-black/5 pb-4">
+          <div className="flex min-w-0 items-center gap-3.5">
+            {Icon && (
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
+                <Icon className="h-6 w-6" />
+              </span>
+            )}
+            <div className="min-w-0 leading-tight">
+              <h2 className="font-display text-2xl font-bold text-ink">{title}</h2>
+              {subtitle && <p className="mt-1 text-sm text-ink/55">{subtitle}</p>}
+            </div>
+          </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg p-2 text-ink/60 transition hover:bg-black/5"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink/60 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
           >
             <X className="h-5 w-5" />
           </button>

@@ -15,6 +15,7 @@ import {
   MessageSquareQuote,
   Network,
   PhoneCall,
+  ShieldCheck,
   Building2,
   Coins,
   ShoppingBag,
@@ -84,11 +85,13 @@ export default function AdminSidebar({ email, newInquiries }) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-sm flex-col border-r border-white/5 bg-night transition-transform duration-300 lg:w-[272px] lg:max-w-none lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-sm flex-col overflow-hidden border-r border-white/5 bg-gradient-to-b from-[#1a130e] via-[#120d0a] to-[#0d0907] transition-transform duration-300 lg:w-[272px] lg:max-w-none lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="px-6 pb-2 pt-6">
+        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-copper/15 blur-3xl" />
+
+        <div className="relative px-5 pb-2 pt-6">
           <div className="flex items-center justify-between">
             <Logo />
             <button
@@ -99,18 +102,19 @@ export default function AdminSidebar({ email, newInquiries }) {
               <X className="h-5 w-5" />
             </button>
           </div>
-          <span className="mt-4 inline-block rounded-full bg-copper/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-light">
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-copper/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-light ring-1 ring-copper/30">
+            <ShieldCheck className="h-3 w-3" />
             Admin Panel
           </span>
         </div>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-6 pt-4">
-          {groups.map((group) => (
-            <div key={group.label}>
-              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35">
+        <nav className="relative flex-1 overflow-y-auto px-4 pb-4 pt-3">
+          {groups.map((group, gi) => (
+            <div key={group.label} className={gi > 0 ? "mt-5 border-t border-white/10 pt-5" : ""}>
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
                 {group.label}
               </p>
-              <ul className="mt-2.5 space-y-1">
+              <ul className="mt-3 space-y-1.5">
                 {group.items.map(({ icon: Icon, label, href, badgeKey }) => {
                   const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
                   const count = badgeKey ? badges[badgeKey] : 0;
@@ -119,16 +123,17 @@ export default function AdminSidebar({ email, newInquiries }) {
                       <a
                         href={href}
                         onClick={() => setOpen(false)}
-                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                        className={`group flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-[15px] font-medium transition ${
                           active
-                            ? "bg-gradient-to-r from-copper/30 to-copper/5 text-copper-light ring-1 ring-copper/30"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                            ? "bg-gradient-to-r from-copper/35 via-copper/15 to-copper/5 text-copper-light shadow-[0_0_28px_-8px_rgba(217,139,82,0.7)] ring-1 ring-copper/60"
+                            : "text-white/75 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
                         <Icon
-                          className={`h-[18px] w-[18px] ${
-                            active ? "text-copper-light" : "text-white/50 group-hover:text-copper-light"
+                          className={`h-5 w-5 shrink-0 transition ${
+                            active ? "text-copper-light" : "text-white/55 group-hover:text-copper-light"
                           }`}
+                          strokeWidth={1.7}
                         />
                         {label}
                         {count > 0 && (
@@ -145,23 +150,29 @@ export default function AdminSidebar({ email, newInquiries }) {
           ))}
         </nav>
 
-        <div className="border-t border-white/10 p-4">
+        <div className="relative space-y-3 border-t border-white/10 p-4">
           <a
             href="/"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
+            className="group flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-copper/40"
           >
-            <ExternalLink className="h-4 w-4" />
-            View website
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md ring-2 ring-white/20">
+              {(email?.[0] ?? "A").toUpperCase()}
+            </span>
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="block truncate text-sm font-semibold text-white">View website</span>
+              <span className="mt-1 block truncate text-xs text-white/50">{email}</span>
+            </span>
+            <ExternalLink className="h-4 w-4 shrink-0 text-white/40 transition group-hover:text-copper-light" />
           </a>
-          <p className="mt-3 truncate px-1 text-center text-xs text-white/45">{email}</p>
-          <form action={adminLogout} className="mt-2">
+
+          <form action={adminLogout}>
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/85 transition hover:bg-white/10"
+              className="flex w-full items-center gap-3 rounded-2xl border border-rose-500/45 bg-rose-500/[0.06] px-4 py-3 text-sm font-semibold text-rose-400 transition hover:bg-rose-500/15 hover:text-rose-300"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-5 w-5" strokeWidth={1.8} />
               Log out
             </button>
           </form>

@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import Select from "@/components/Select";
 import { iconClass } from "./fields";
 
 const MONTHS = [
@@ -103,7 +104,12 @@ export default function DobPicker({
   useEffect(() => {
     if (!open) return;
     const onDown = (e) => {
-      if (!inputRef.current?.contains(e.target) && !popRef.current?.contains(e.target)) {
+      // the month and year lists are drawn outside the calendar, so ignore them
+      if (
+        !inputRef.current?.contains(e.target) &&
+        !popRef.current?.contains(e.target) &&
+        !e.target.closest?.("[data-select-menu]")
+      ) {
         setOpen(false);
       }
     };
@@ -152,8 +158,6 @@ export default function DobPicker({
 
   const nav =
     "flex h-9 w-9 items-center justify-center rounded-full text-ink/70 transition enabled:hover:bg-copper/10 enabled:hover:text-copper disabled:opacity-30";
-  const select =
-    "cursor-pointer rounded-lg bg-[#fbf7f0] px-2.5 py-1.5 text-sm font-semibold text-ink outline-none ring-1 ring-black/5 transition hover:ring-copper/40 focus:ring-copper";
 
   return (
     <>
@@ -198,30 +202,22 @@ export default function DobPicker({
               <ChevronLeft className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-2">
-              <select
-                aria-label="Month"
-                className={select}
+              <Select
+                variant="mini"
+                ariaLabel="Month"
                 value={view.m}
-                onChange={(e) => setView((v) => ({ ...v, m: Number(e.target.value) }))}
-              >
-                {MONTHS.map((name, i) => (
-                  <option key={name} value={i}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Year"
-                className={select}
+                onChange={(m) => setView((v) => ({ ...v, m: Number(m) }))}
+                options={MONTHS.map((name, i) => ({ value: i, label: name }))}
+                menuMinWidth={150}
+              />
+              <Select
+                variant="mini"
+                ariaLabel="Year"
                 value={view.y}
-                onChange={(e) => setView((v) => ({ ...v, y: Number(e.target.value) }))}
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
+                onChange={(y) => setView((v) => ({ ...v, y: Number(y) }))}
+                options={years.map((y) => ({ value: y, label: String(y) }))}
+                menuMinWidth={100}
+              />
             </div>
             <button type="button" className={nav} disabled={!canNext} onClick={() => go(1)} aria-label="Next month">
               <ChevronRight className="h-5 w-5" />

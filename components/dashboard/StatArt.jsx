@@ -68,6 +68,70 @@ export function BarsArt({ className = "" }) {
   );
 }
 
+// An envelope with a couple of lines, for messages.
+export function MailArt({ className = "" }) {
+  return (
+    <svg {...svg} className={className}>
+      <g fill="currentColor">
+        <rect x="14" y="26" width="92" height="62" rx="9" opacity="0.2" />
+        <rect x="30" y="12" width="60" height="40" rx="6" opacity="0.14" />
+      </g>
+      <rect x="14" y="26" width="92" height="62" rx="9" stroke="currentColor" strokeOpacity="0.4" strokeWidth="2.5" />
+      <path d="m18 34 42 30 42-30" stroke="currentColor" strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// A few tall buildings, for "locations". Takes its colour from the text colour.
+export function BuildingsArt({ className = "" }) {
+  return (
+    <svg {...svg} className={className}>
+      <g fill="currentColor">
+        <rect x="14" y="44" width="26" height="50" rx="3" opacity="0.3" />
+        <rect x="44" y="14" width="34" height="80" rx="3" opacity="0.45" />
+        <rect x="82" y="34" width="24" height="60" rx="3" opacity="0.3" />
+      </g>
+      <g fill="currentColor" opacity="0.5">
+        {[24, 38, 52, 66].map((y) => (
+          <g key={y}>
+            <rect x="52" y={y} width="6" height="6" rx="1" />
+            <rect x="64" y={y} width="6" height="6" rx="1" />
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+// A page with lines and a tick, for "papers".
+export function DocumentArt({ className = "" }) {
+  return (
+    <svg {...svg} className={className}>
+      <rect x="26" y="8" width="62" height="84" rx="8" fill="currentColor" opacity="0.28" />
+      <g fill="currentColor" opacity="0.5">
+        <rect x="38" y="24" width="38" height="6" rx="3" />
+        <rect x="38" y="38" width="30" height="6" rx="3" />
+        <rect x="38" y="52" width="34" height="6" rx="3" />
+      </g>
+      <circle cx="84" cy="76" r="17" fill="currentColor" opacity="0.5" />
+      <path d="m76 76 6 6 11-12" stroke="#000" strokeOpacity="0.45" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// A small house with a pitched roof, for "support till registration".
+export function HomeArt({ className = "" }) {
+  return (
+    <svg {...svg} className={className}>
+      <path d="M12 52 60 12l48 40Z" fill="currentColor" opacity="0.4" />
+      <rect x="24" y="50" width="72" height="44" rx="3" fill="currentColor" opacity="0.28" />
+      <rect x="52" y="64" width="16" height="30" rx="2" fill="currentColor" opacity="0.5" />
+      <rect x="30" y="60" width="12" height="12" rx="2" fill="currentColor" opacity="0.5" />
+      <rect x="78" y="60" width="12" height="12" rx="2" fill="currentColor" opacity="0.5" />
+    </svg>
+  );
+}
+
 // A little team for the "latest referrals" card: five partners under an arch,
 // with a few sparkles. Colours are fixed (copper tones), it does not use currentColor.
 export function TeamArt({ className = "" }) {

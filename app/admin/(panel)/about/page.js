@@ -16,7 +16,7 @@ export default async function AboutCustomizePage() {
         accent="Page"
         text="Change the text and images of the About page."
       />
-      <SettingsEditor tabs={ABOUT_TABS} initial={content} />
+      <SettingsEditor tabs={ABOUT_TABS} initial={content} siteHref="/about" siteLabel="Open the About page" />
     </>
   );
 }

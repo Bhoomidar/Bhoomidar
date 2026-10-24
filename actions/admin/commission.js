@@ -17,7 +17,7 @@ export async function getSellerOptions() {
   await requireAdmin();
   const { data } = await createAdminClient()
     .from("profiles")
-    .select("id, full_name, email, referral_code")
+    .select("id, full_name, email, referral_code, avatar_url")
     .not("activated_at", "is", null)
     .eq("is_active", true)
     .order("full_name", { ascending: true });
@@ -25,6 +25,7 @@ export async function getSellerOptions() {
     id: p.id,
     name: p.full_name || p.email,
     code: p.referral_code || "",
+    avatarUrl: p.avatar_url || "",
   }));
 }
 
@@ -129,12 +130,14 @@ export async function getSales() {
 
   const { data: people } = await db
     .from("profiles")
-    .select("id, full_name, email, referral_code")
+    .select("id, full_name, email, referral_code, avatar_url")
     .in("id", [...new Set(sales.map((s) => s.seller_id))]);
   const who = Object.fromEntries((people ?? []).map((p) => [p.id, p]));
 
   return sales.map((s) => ({
     id: s.id,
+    sellerId: s.seller_id,
+    sellerAvatar: who[s.seller_id]?.avatar_url || "",
     sellerName: who[s.seller_id]?.full_name || who[s.seller_id]?.email || "Partner",
     sellerCode: who[s.seller_id]?.referral_code || "",
     title: s.property_title,
@@ -158,7 +161,7 @@ export async function getPayoutsOverview() {
   const db = createAdminClient();
 
   const [{ data: partners }, { data: entries }, { data: payouts }, { data: history }, { data: plan }] = await Promise.all([
-    db.from("profiles").select("id, full_name, email, referral_code, is_active, activated_at").not("activated_at", "is", null),
+    db.from("profiles").select("id, full_name, email, referral_code, is_active, activated_at, avatar_url").not("activated_at", "is", null),
     db.from("commission_entries").select("partner_id, points"),
     db.from("payouts").select("id, partner_id, points, note, paid_at").order("paid_at", { ascending: false }),
     db.from("rank_history").select("partner_id, rank_no, achieved_at, reward_given_at"),
@@ -179,6 +182,7 @@ export async function getPayoutsOverview() {
       id: p.id,
       name: p.full_name || p.email,
       code: p.referral_code || "",
+      avatarUrl: p.avatar_url || "",
       active: p.is_active !== false,
       rank: rankTitle[topRank[p.id] ?? 1]?.title ?? "",
       earned: earned[p.id] ?? 0,
@@ -193,6 +197,7 @@ export async function getPayoutsOverview() {
       partnerId: h.partner_id,
       rankNo: h.rank_no,
       name: person[h.partner_id].full_name || person[h.partner_id].email,
+      avatarUrl: person[h.partner_id].avatar_url || "",
       code: person[h.partner_id].referral_code || "",
       rank: rankTitle[h.rank_no]?.title ?? "",
       reward: rankTitle[h.rank_no]?.reward ?? "",
@@ -202,6 +207,8 @@ export async function getPayoutsOverview() {
 
   const recent = (payouts ?? []).slice(0, 30).map((p) => ({
     id: p.id,
+    partnerId: p.partner_id,
+    avatarUrl: person[p.partner_id]?.avatar_url || "",
     name: person[p.partner_id]?.full_name || person[p.partner_id]?.email || "Partner",
     points: Number(p.points),
     note: p.note || "",

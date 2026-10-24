@@ -85,7 +85,7 @@ export default function CTA({ c, partner = false }) {
               </span>
               <span className="leading-tight">
                 <span className="block text-sm text-ink/60">{copy.label}</span>
-                <span className="mt-1 block font-display text-3xl font-bold text-ink">{copy.value}</span>
+                <span className="mt-1 block font-sans text-3xl font-extrabold tabular-nums text-ink">{copy.value}</span>
               </span>
             </div>
             <a
