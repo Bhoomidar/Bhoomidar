@@ -11,7 +11,7 @@ const dancing = Dancing_Script({ subsets: ["latin"], variable: "--font-dancing" 
 export const metadata = {
   title: "Bhoomidar | Invest Today, Build a Brighter Tomorrow",
   description:
-    "Great properties. Clear deals. Rewarding partnership. Bhoomidar is a trusted real estate partner network.",
+    "Great properties. Clear deals. Trusted service. Bhoomidar helps you find good land and property in fast growing places.",
 };
 
 export default function RootLayout({ children }) {

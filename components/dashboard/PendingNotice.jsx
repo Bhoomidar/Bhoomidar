@@ -8,13 +8,13 @@ import {
   Landmark,
   Lock,
   Mail,
-  MessageCircle,
   Network,
   PhoneCall,
   Smartphone,
   UserPlus,
   Wallet,
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import CopyField from "@/components/dashboard/CopyField";
 import { getPayment } from "@/lib/payment";
 import { phoneHref } from "@/lib/siteContent";
@@ -118,30 +118,49 @@ export default async function PendingNotice({ name = "", email = "" }) {
           </section>
 
           {/* Who to talk to */}
-          <section className="rounded-3xl bg-white p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-8">
-            <div className="flex items-center gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
-                <Headset className="h-6 w-6" />
-              </span>
-              <div className="min-w-0 leading-tight">
-                <h3 className="font-display text-xl font-bold text-ink">Talk to our team</h3>
-                <p className="mt-1 text-sm text-ink/60">
-                  {contact.name ? <b className="text-ink">{contact.name}</b> : "We will help you with the payment."}
-                  {contact.name && " will help you with the payment."}
-                </p>
-              </div>
-            </div>
+          <section className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-copper-light/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-[#25D366]/10 blur-3xl" />
 
-            {hasContact ? (
-              <>
-                <div className="mt-5 flex flex-wrap gap-3">
+            <div className="relative">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
+                    <Headset className="h-6 w-6" />
+                  </span>
+                  <div className="min-w-0 leading-tight">
+                    <h3 className="font-display text-2xl font-bold text-ink">
+                      Talk to <span className="text-copper">our team</span>
+                    </h3>
+                    <p className="mt-1 text-sm text-ink/60">
+                      {contact.name ? <b className="text-ink">{contact.name}</b> : "We will help you with the payment."}
+                      {contact.name && " will help you with the payment."}
+                    </p>
+                  </div>
+                </div>
+
+                {contact.hours && (
+                  <span className="inline-flex w-fit shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-[#fbf7f0] px-3.5 py-1.5 text-xs font-semibold text-ink/70 ring-1 ring-black/5">
+                    <Clock className="h-3.5 w-3.5 text-copper" />
+                    {contact.hours}
+                  </span>
+                )}
+              </div>
+
+              {hasContact ? (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   {contact.phone && (
                     <a
                       href={phoneHref(contact.phone)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+                      className="group flex items-center gap-3.5 rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-lg hover:ring-copper/30"
                     >
-                      <PhoneCall className="h-4 w-4" />
-                      Call {contact.phone}
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30 transition group-hover:scale-110">
+                        <PhoneCall className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 leading-tight">
+                        <span className="block text-[11px] font-semibold uppercase tracking-wider text-ink/50">Call us</span>
+                        <span className="mt-1 block text-base font-bold text-ink">{contact.phone}</span>
+                      </span>
                     </a>
                   )}
                   {contact.whatsapp && (
@@ -149,38 +168,45 @@ export default async function PendingNotice({ name = "", email = "" }) {
                       href={`https://wa.me/${contact.whatsapp}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#25D366]/30 transition hover:-translate-y-0.5 hover:bg-[#1fbd5b]"
+                      className="group flex items-center gap-3.5 rounded-2xl bg-gradient-to-br from-[#2bd96b] to-[#128c4a] p-4 shadow-lg shadow-[#25D366]/25 ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#25D366]/40"
                     >
-                      <MessageCircle className="h-4 w-4" />
-                      WhatsApp
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#25D366] shadow-md transition group-hover:scale-110">
+                        <FaWhatsapp className="h-6 w-6" />
+                      </span>
+                      <span className="min-w-0 leading-tight text-white">
+                        <span className="block text-[11px] font-semibold uppercase tracking-wider text-white/85">WhatsApp</span>
+                        <span className="mt-1 flex items-center gap-1.5 text-base font-bold">
+                          Chat now
+                          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                        </span>
+                      </span>
                     </a>
                   )}
                   {contact.email && (
                     <a
                       href={`mailto:${contact.email}`}
-                      className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-ink/80 transition hover:border-copper hover:text-copper"
+                      className="group flex items-center gap-3.5 rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-lg hover:ring-copper/30 sm:col-span-2"
                     >
-                      <Mail className="h-4 w-4" />
-                      {contact.email}
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3a2a1f] to-[#17110c] text-copper-light shadow-lg transition group-hover:scale-110">
+                        <Mail className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 leading-tight">
+                        <span className="block text-[11px] font-semibold uppercase tracking-wider text-ink/50">Email us</span>
+                        <span className="mt-1 block break-all text-base font-bold text-ink">{contact.email}</span>
+                      </span>
                     </a>
                   )}
                 </div>
-                {contact.hours && (
-                  <p className="mt-4 flex items-center gap-2 text-sm text-ink/60">
-                    <Clock className="h-4 w-4 text-copper" />
-                    {contact.hours}
-                  </p>
-                )}
-              </>
-            ) : (
-              <a
-                href="/contact"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
-              >
-                <PhoneCall className="h-4 w-4" />
-                Contact us
-              </a>
-            )}
+              ) : (
+                <a
+                  href="/contact"
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  Contact us
+                </a>
+              )}
+            </div>
           </section>
         </div>
 
@@ -256,7 +282,11 @@ export default async function PendingNotice({ name = "", email = "" }) {
                 rel={contact.whatsapp ? "noopener noreferrer" : undefined}
                 className="group btn-shimmer inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 text-base font-bold text-copper-dark shadow-lg transition hover:-translate-y-0.5"
               >
-                <Check className="h-5 w-5" strokeWidth={3} />
+                {contact.whatsapp ? (
+                  <FaWhatsapp className="h-6 w-6 text-[#25D366]" />
+                ) : (
+                  <Check className="h-5 w-5" strokeWidth={3} />
+                )}
                 I have paid
                 <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
               </a>
@@ -272,37 +302,41 @@ export default async function PendingNotice({ name = "", email = "" }) {
 
       {/* What opens up */}
       <section>
-        <h3 className="font-display text-2xl font-bold text-ink">
-          Unlocked after <span className="text-copper">activation</span>
-        </h3>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          {locked.map(({ icon: Icon, title, text }) => (
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <h3 className="font-display text-2xl font-bold text-ink">
+            Unlocked after <span className="text-copper">activation</span>
+          </h3>
+          <p className="text-sm text-ink/55">Pay the joining fee and all of this opens up.</p>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          {locked.map(({ icon: Icon, title, text }, i) => (
             <div
               key={title}
-              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-white to-[#f6ecdc] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_60px_-26px_rgba(110,60,20,0.6)] hover:ring-copper/30"
+              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-[#f8efe2] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_60px_-26px_rgba(110,60,20,0.6)] hover:ring-copper/30"
             >
-              <Icon
-                className="pointer-events-none absolute -bottom-6 -right-4 h-32 w-32 text-copper/[0.07] transition duration-500 group-hover:scale-110 group-hover:text-copper/[0.12]"
-                strokeWidth={1.2}
-              />
-              <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-copper-light to-copper-dark opacity-70" />
+              <span className="pointer-events-none absolute right-5 top-4 select-none text-6xl font-extrabold leading-none text-copper/[0.08]">
+                0{i + 1}
+              </span>
 
-              <div className="relative flex items-start justify-between gap-3">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
-                  <Icon className="h-6 w-6" strokeWidth={1.8} />
+              <div className="relative">
+                <span className="relative inline-flex">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
+                    <Icon className="h-6 w-6" strokeWidth={1.8} />
+                  </span>
+                  <span className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-night text-copper-light shadow-md ring-2 ring-white">
+                    <Lock className="h-3 w-3" strokeWidth={2.4} />
+                  </span>
                 </span>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-copper shadow-md ring-1 ring-copper/25">
-                  <Lock className="h-4 w-4" />
-                </span>
+
+                <p className="mt-5 text-lg font-bold text-ink">{title}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink/60">{text}</p>
+
+                <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
+                  <Clock className="h-3.5 w-3.5" />
+                  Opens after activation
+                </p>
               </div>
-
-              <p className="relative mt-5 text-lg font-bold text-ink">{title}</p>
-              <p className="relative mt-1.5 text-sm leading-relaxed text-ink/60">{text}</p>
-
-              <p className="relative mt-5 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
-                <Lock className="h-3.5 w-3.5" />
-                Opens after activation
-              </p>
             </div>
           ))}
         </div>

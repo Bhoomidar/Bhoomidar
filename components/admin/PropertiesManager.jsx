@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ExternalLink, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   deleteProperty,
   moveProperty,
@@ -11,6 +11,7 @@ import {
 } from "@/actions/admin/properties";
 import { CATEGORIES, DETAIL_ICONS } from "@/lib/icons";
 import ConfirmButton from "./ConfirmButton";
+import GalleryEditor from "./GalleryEditor";
 import ImageUploader from "./ImageUploader";
 import Modal from "./Modal";
 import Switch from "./Switch";
@@ -30,10 +31,43 @@ const EMPTY = {
     { icon: "ShieldCheck", text: "" },
     { icon: "Trees", text: "" },
   ],
+  slug: "",
+  tagline: "",
+  location: "",
+  description: "",
+  gallery: [],
+  highlights: [],
+  specs: [
+    { label: "Plot size", value: "" },
+    { label: "Location", value: "" },
+    { label: "Papers", value: "Checked and clear" },
+  ],
+  amenities: [],
+  map_url: "",
 };
 
+// One item per line in a text box <-> a list.
+const toLines = (list) => (Array.isArray(list) ? list.join("\n") : "");
+const fromLines = (text) => text.split("\n").map((t) => t.trim()).filter(Boolean);
+
 function PropertyForm({ initial, onDone }) {
-  const [form, setForm] = useState({ ...initial, badge: initial.badge ?? "" });
+  const [form, setForm] = useState({
+    ...EMPTY,
+    ...initial,
+    badge: initial.badge ?? "",
+    slug: initial.slug ?? "",
+    tagline: initial.tagline ?? "",
+    location: initial.location ?? "",
+    description: initial.description ?? "",
+    map_url: initial.map_url ?? "",
+    gallery: Array.isArray(initial.gallery) ? initial.gallery : [],
+    highlights: Array.isArray(initial.highlights) ? initial.highlights : [],
+    amenities: Array.isArray(initial.amenities) ? initial.amenities : [],
+    specs: Array.isArray(initial.specs) ? initial.specs : [],
+  });
+  // The text boxes keep what is typed (blank lines and all); the list is made when saving.
+  const [highlightsText, setHighlightsText] = useState(toLines(initial.highlights));
+  const [amenitiesText, setAmenitiesText] = useState(toLines(initial.amenities));
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
 
@@ -45,7 +79,11 @@ function PropertyForm({ initial, onDone }) {
     e.preventDefault();
     setError("");
     start(async () => {
-      const res = await saveProperty(form);
+      const res = await saveProperty({
+        ...form,
+        highlights: fromLines(highlightsText),
+        amenities: fromLines(amenitiesText),
+      });
       if (res.success) onDone(true);
       else setError(res.error || "Could not save.");
     });
@@ -166,6 +204,144 @@ function PropertyForm({ initial, onDone }) {
         )}
       </div>
 
+      {/* everything for the property's own page */}
+      <div className="space-y-5 rounded-2xl border border-copper/20 bg-[#fff8ef] p-5">
+        <div>
+          <p className="font-display text-xl font-bold text-ink">Property page</p>
+          <p className="mt-1 text-xs text-ink/60">
+            What customers see when they open this property. All of it is optional.
+          </p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className={labelCls}>Location (shown under the title)</label>
+            <input
+              value={form.location}
+              onChange={(e) => set("location", e.target.value)}
+              placeholder="e.g. Sector 150, Noida, Uttar Pradesh"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Google Maps link (optional)</label>
+            <input
+              value={form.map_url}
+              onChange={(e) => set("map_url", e.target.value)}
+              placeholder="https://maps.google.com/..."
+              className={inputCls}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelCls}>One line about it</label>
+            <input
+              maxLength={160}
+              value={form.tagline}
+              onChange={(e) => set("tagline", e.target.value)}
+              placeholder="e.g. Gated plots with wide roads and parks"
+              className={inputCls}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelCls}>About this property</label>
+            <textarea
+              rows={6}
+              maxLength={5000}
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Write a few lines. Leave a blank line to start a new paragraph."
+              className={`${inputCls} resize-y`}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelCls}>Page address</label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-sm text-ink/50">/properties/</span>
+              <input
+                value={form.slug}
+                onChange={(e) => set("slug", e.target.value)}
+                placeholder="made from the title if you leave this empty"
+                className={inputCls}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-ink/50">Small letters, numbers and dashes. Changing it changes the link.</p>
+          </div>
+        </div>
+
+        <div>
+          <label className={labelCls}>More photos</label>
+          <GalleryEditor value={form.gallery} onChange={(list) => set("gallery", list)} />
+        </div>
+
+        <div>
+          <label className={labelCls}>Key details (boxes like &ldquo;Plot size - 1200 Sq. Yards&rdquo;)</label>
+          <div className="space-y-3">
+            {form.specs.map((s, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={s.label}
+                  onChange={(e) =>
+                    set("specs", form.specs.map((x, idx) => (idx === i ? { ...x, label: e.target.value } : x)))
+                  }
+                  placeholder="Name, e.g. Plot size"
+                  className={`${inputCls} w-2/5`}
+                  aria-label="Name"
+                />
+                <input
+                  value={s.value}
+                  onChange={(e) =>
+                    set("specs", form.specs.map((x, idx) => (idx === i ? { ...x, value: e.target.value } : x)))
+                  }
+                  placeholder="Value, e.g. 1200 - 2400 Sq. Yards"
+                  className={inputCls}
+                  aria-label="Value"
+                />
+                <button
+                  type="button"
+                  onClick={() => set("specs", form.specs.filter((_, idx) => idx !== i))}
+                  aria-label="Remove"
+                  className={iconBtn}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          {form.specs.length < 12 && (
+            <button
+              type="button"
+              onClick={() => set("specs", [...form.specs, { label: "", value: "" }])}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-copper"
+            >
+              <Plus className="h-4 w-4" /> Add a detail
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className={labelCls}>Why you will like it (one point per line)</label>
+            <textarea
+              rows={5}
+              value={highlightsText}
+              onChange={(e) => setHighlightsText(e.target.value)}
+              placeholder={"All papers checked and clear\nGated community"}
+              className={`${inputCls} resize-y`}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Facilities (one per line)</label>
+            <textarea
+              rows={5}
+              value={amenitiesText}
+              onChange={(e) => setAmenitiesText(e.target.value)}
+              placeholder={"Gated entry\nPark\nStreet lights"}
+              className={`${inputCls} resize-y`}
+            />
+          </div>
+        </div>
+      </div>
+
       {error && (
         <p className="rounded-xl border border-rose-500/25 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}
@@ -247,7 +423,19 @@ export default function PropertiesManager({ properties }) {
                 </div>
                 <p className="mt-1 text-sm text-ink/60">
                   {p.price} · {p.unit}
+                  {p.location ? ` · ${p.location}` : ""}
                 </p>
+                {p.slug && (
+                  <a
+                    href={`/properties/${p.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-copper hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    /properties/{p.slug} · {1 + (Array.isArray(p.gallery) ? p.gallery.length : 0)} photos
+                  </a>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

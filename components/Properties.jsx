@@ -18,7 +18,7 @@ export default function Properties({ c, properties }) {
 
   return (
     <section id="properties" className="bg-cream py-16 lg:py-20">
-      <div className="container-x">
+      <div className="container-x lg:!max-w-none lg:!px-[4.2vw]">
         <Reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-ink/70">

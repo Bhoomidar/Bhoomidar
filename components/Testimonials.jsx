@@ -42,7 +42,7 @@ export default function Testimonials({ c, testimonials }) {
         strokeWidth={0}
       />
 
-      <div className="container-x relative">
+      <div className="container-x relative lg:!max-w-none lg:!px-[4.2vw]">
         <Reveal className="flex flex-col items-start gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <div>
             <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-ink/70">

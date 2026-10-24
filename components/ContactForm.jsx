@@ -10,12 +10,11 @@ const interests = [
   "Premium Villas",
   "Farm Land",
   "Commercial Plots",
-  "Partner Program",
   "Something else",
 ];
 
 const field =
-  "w-full rounded-xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink/40 focus:border-copper focus:bg-white focus:ring-4 focus:ring-copper/15";
+  "w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-[15px] shadow-sm text-ink outline-none transition placeholder:text-ink/40 focus:border-copper focus:bg-white focus:ring-4 focus:ring-copper/15";
 
 // Remounting the form (new key) gives a fresh, empty form for "Send another".
 export default function ContactForm() {
@@ -138,7 +137,7 @@ function ContactFormInner({ onAgain }) {
       <button
         type="submit"
         disabled={pending}
-        className="group inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-copper/40 disabled:pointer-events-none disabled:opacity-60 sm:w-auto"
+        className="btn-shimmer group inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-10 py-4 text-[15px] font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-copper/40 disabled:pointer-events-none disabled:opacity-60 sm:w-auto"
       >
         {pending ? "Sending..." : "Send Message"}
         {pending ? (

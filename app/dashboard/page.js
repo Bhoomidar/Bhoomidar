@@ -1,20 +1,29 @@
 import {
   ArrowRight,
+  ArrowUp,
+  ArrowUpRight,
   Building2,
   Check,
   Clock,
   Handshake,
   PhoneCall,
+  Ticket,
+  Trophy,
   UserRound,
   Users,
   Wallet,
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import AutoRefresh from "@/components/dashboard/AutoRefresh";
+import GrowthPath from "@/components/dashboard/GrowthPath";
+import HeroSlides from "@/components/dashboard/HeroSlides";
 import PendingNotice from "@/components/dashboard/PendingNotice";
+import { BarsArt, HourglassArt, PeopleArt, TeamArt } from "@/components/dashboard/StatArt";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import { getCurrentPartner, getNetwork, initials } from "@/lib/profile";
 import { referralLink } from "@/lib/referral";
+import { getPartnerCommission } from "@/lib/commission";
+import { fmtPoints } from "@/lib/points";
 
 const quickActions = [
   {
@@ -47,48 +56,54 @@ function greeting() {
   return "Good evening";
 }
 
-const tones = {
-  copper: { bar: "from-copper-light to-copper-dark", chip: "bg-copper/10 text-copper" },
-  amber: { bar: "from-amber-300 to-amber-500", chip: "bg-amber-100 text-amber-700" },
-  ink: { bar: "from-[#3a2a1f] to-[#17110c]", chip: "bg-ink/10 text-ink" },
-};
-
 export default async function DashboardOverview() {
   const partner = await getCurrentPartner();
   const { referrer, referrals } = await getNetwork(partner.user.id, partner.referredBy);
   const link = partner.referralCode ? await referralLink(partner.referralCode) : "";
+  const comm = partner.pending ? null : await getPartnerCommission(partner.user.id);
+  const currentRank = (comm?.rank?.no ?? 1) - 1;
 
   const status = !partner.active
-    ? { text: "Inactive", dot: "bg-rose-400", pill: "bg-rose-400/15 text-rose-300" }
+    ? { text: "Inactive", dot: "bg-rose-500", pill: "bg-rose-50 text-rose-700 ring-rose-200" }
     : partner.pending
-      ? { text: "Waiting for activation", dot: "bg-amber-400", pill: "bg-amber-400/15 text-amber-300" }
-      : { text: "Active partner", dot: "bg-emerald-400", pill: "bg-emerald-400/15 text-emerald-300" };
+      ? { text: "Waiting for activation", dot: "bg-amber-500", pill: "bg-amber-50 text-amber-800 ring-amber-200" }
+      : { text: "Active partner", dot: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-800 ring-emerald-200" };
 
   const unpaidReferrals = referrals.filter((p) => p.pending).length;
+  const monthOf = (d) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).slice(0, 7);
+  const thisMonth = monthOf(new Date());
+  const joinedThisMonth = referrals.filter((p) => p.joinedAt && monthOf(p.joinedAt) === thisMonth).length;
+
   const stats = [
     {
       icon: Users,
+      art: PeopleArt,
       label: "People you referred",
       value: referrals.length,
+      badge: joinedThisMonth > 0 ? `+${joinedThisMonth} this month` : "",
       note: referrals.length === 1 ? "partner joined with your code" : "partners joined with your code",
       href: "/dashboard/network",
-      tone: tones.copper,
+      theme: { bg: "from-[#fdebdc] to-[#fff6ec]", ring: "ring-copper/10", chip: "bg-[#f9d6b8] text-copper", art: "text-copper" },
     },
     {
       icon: Clock,
+      art: HourglassArt,
       label: "Waiting for payment",
       value: unpaidReferrals,
+      badge: "",
       note: "of your referrals have not paid yet",
       href: "/dashboard/network",
-      tone: tones.amber,
+      theme: { bg: "from-[#fff1cf] to-[#fffaf0]", ring: "ring-amber-300/30", chip: "bg-amber-200/80 text-amber-700", art: "text-amber-500" },
     },
     {
       icon: Wallet,
+      art: BarsArt,
       label: "Your commission",
-      value: "Soon",
-      note: "your sales and earnings will show here",
+      value: fmtPoints(comm?.balance ?? 0),
+      badge: "",
+      note: comm ? `points to be paid · ${comm.rank?.title ?? ""}` : "your sales and earnings will show here",
       href: "/dashboard/commission",
-      tone: tones.ink,
+      theme: { bg: "from-[#dff5e8] to-[#f5fcf8]", ring: "ring-emerald-300/30", chip: "bg-emerald-200/80 text-emerald-700", art: "text-emerald-500" },
     },
   ];
 
@@ -97,58 +112,71 @@ export default async function DashboardOverview() {
       <AutoRefresh />
 
       {/* Hero */}
-      <div className="fade-up relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2a2019] via-[#1d1712] to-night p-6 text-white shadow-xl sm:p-9">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.1]"
-          style={{
-            backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-          }}
-        />
-        <div className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-copper/35 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 left-1/3 h-60 w-60 rounded-full bg-copper-light/15 blur-3xl" />
-
-        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 items-center gap-5 sm:gap-6">
-            <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-3xl font-bold text-white shadow-xl ring-4 ring-white/10 sm:h-24 sm:w-24 sm:text-4xl">
-              {partner.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={partner.avatarUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials(partner.name)
-              )}
+      <div className="fade-up relative overflow-hidden rounded-3xl bg-gradient-to-r from-white via-[#fff7ec] to-[#fbeedd] shadow-[0_28px_60px_-30px_rgba(110,60,20,0.5)] ring-1 ring-black/5">
+        <div className="relative grid lg:min-h-[230px] lg:grid-cols-[1.05fr_1fr]">
+          <div className="relative z-10 flex items-center gap-5 p-6 sm:gap-7 sm:p-7 lg:py-6">
+            <span className="relative shrink-0">
+              <span className="absolute -inset-2.5 rounded-full bg-gradient-to-br from-copper-light/55 to-transparent blur-md" />
+              <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-3xl font-bold text-white shadow-xl ring-[5px] ring-white sm:h-28 sm:w-28 sm:text-4xl">
+                {partner.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={partner.avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials(partner.name)
+                )}
+              </span>
             </span>
+
             <div className="min-w-0">
               <span
-                className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] ${status.pill}`}
+                className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] ring-1 ${status.pill}`}
               >
                 <span className={`h-2 w-2 rounded-full ${status.dot}`} />
                 {status.text}
               </span>
-              <h1 className="mt-3 break-words font-display text-3xl font-bold leading-tight sm:text-4xl">
-                {greeting()}, <span className="text-copper-light">{partner.firstName}</span>
+              <h1 className="mt-3 truncate font-display text-2xl font-bold leading-tight text-ink sm:text-3xl xl:text-[2.1rem]">
+                {greeting()}, <span className="text-copper">{partner.firstName}</span> <span aria-hidden>👋</span>
               </h1>
-              <p className="mt-1.5 text-base text-white/65">
-                Welcome to your Bhoomidar partner account.
-              </p>
+              <p className="mt-1.5 text-base text-ink/60">Welcome to your Bhoomidar partner account.</p>
+
+              <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                {partner.referralCode && (
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs text-ink/60 shadow-sm ring-1 ring-black/10">
+                    <Ticket className="h-3.5 w-3.5 text-copper" />
+                    Your code
+                    <b className="font-mono text-sm tracking-wider text-copper-dark">{partner.referralCode}</b>
+                  </span>
+                )}
+                {comm?.rank && (
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-copper/10 px-3 py-1.5 text-xs font-semibold text-copper-dark ring-1 ring-copper/20">
+                    <Trophy className="h-3.5 w-3.5" />
+                    {comm.rank.title}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap gap-3">
-            <a
-              href="/properties"
-              className="group inline-flex items-center gap-3 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:-translate-y-0.5"
-            >
-              Browse Properties
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-            </a>
-            <a
-              href="/dashboard/profile"
-              className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              <UserRound className="h-4 w-4" />
-              My Profile
-            </a>
+          {/* Soft photos, the handwritten line and the two buttons */}
+          <div className="relative min-h-[230px] lg:min-h-full">
+            <HeroSlides />
+
+            <div className="absolute bottom-5 right-5 z-10 flex flex-wrap justify-end gap-3">
+              <a
+                href="/properties"
+                className="group inline-flex items-center gap-2.5 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/40 transition hover:-translate-y-0.5"
+              >
+                Browse Properties
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </a>
+              <a
+                href="/dashboard/profile"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:text-copper"
+              >
+                <UserRound className="h-4 w-4" />
+                My Profile
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -159,22 +187,37 @@ export default async function DashboardOverview() {
         <>
           {/* Numbers */}
           <Reveal>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {stats.map(({ icon: Icon, label, value, note, href, tone }) => (
+            <div className="grid gap-4 md:grid-cols-3">
+              {stats.map(({ icon: Icon, art: Art, label, value, badge, note, href, theme }) => (
                 <a
                   key={label}
                   href={href}
-                  className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-[0_18px_40px_-24px_rgba(110,60,20,0.4)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_50px_-24px_rgba(110,60,20,0.5)]"
+                  className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${theme.bg} p-5 shadow-[0_18px_40px_-24px_rgba(110,60,20,0.4)] ring-1 ${theme.ring} transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_50px_-24px_rgba(110,60,20,0.5)]`}
                 >
-                  <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${tone.bar}`} />
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-medium text-ink/60">{label}</p>
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.chip}`}>
-                      <Icon className="h-5 w-5" />
+                  <Art
+                    className={`pointer-events-none absolute bottom-3 right-4 h-24 w-28 origin-bottom-right transition duration-500 group-hover:scale-110 ${theme.art}`}
+                  />
+                  <div className="relative flex items-center gap-4">
+                    <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-sm ${theme.chip}`}>
+                      <Icon className="h-6 w-6" />
                     </span>
+                    <div className="min-w-0 leading-tight">
+                      <p className="text-sm font-medium text-ink/70">{label}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="text-4xl font-extrabold tabular-nums text-ink">{value}</span>
+                        {badge && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
+                            <ArrowUp className="h-3 w-3" strokeWidth={3} />
+                            {badge}
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-3 font-sans text-4xl font-extrabold tabular-nums text-ink">{value}</p>
-                  <p className="mt-1 text-xs text-ink/50">{note}</p>
+                  <p className="relative mt-3 text-sm text-ink/55">{note}</p>
+                  <span className="relative mt-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-copper shadow-sm ring-1 ring-copper/25 transition group-hover:bg-copper group-hover:text-white">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
                 </a>
               ))}
             </div>
@@ -187,50 +230,43 @@ export default async function DashboardOverview() {
 
           {/* Latest referrals and quick actions */}
           <Reveal>
-            <div className="grid gap-6 lg:grid-cols-5">
-              <section className="flex flex-col rounded-3xl bg-white p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7 lg:col-span-3">
+            <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+              <section className="relative flex flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="font-display text-2xl font-bold text-ink">Latest referrals</h2>
+                  <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
+                    Latest <span className="text-copper">referrals</span>
+                  </h2>
                   <a
                     href="/dashboard/network"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-copper transition hover:text-copper-dark"
+                    className="group inline-flex items-center gap-1.5 text-sm font-semibold text-copper transition hover:text-copper-dark"
                   >
                     View all
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                   </a>
                 </div>
 
-                {referrals.length === 0 ? (
-                  <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-copper/10 text-copper ring-8 ring-copper/5">
-                      <Users className="h-7 w-7" strokeWidth={1.6} />
-                    </span>
-                    <p className="mt-4 text-base font-bold text-ink">No referrals yet</p>
-                    <p className="mt-1 max-w-xs text-sm leading-relaxed text-ink/55">
-                      Share your link above. Everyone who joins with your code shows up here.
-                    </p>
-                  </div>
-                ) : (
-                  <ul className="mt-3 divide-y divide-black/5">
-                    {referrals.slice(0, 4).map((p) => (
-                      <li key={p.id} className="flex items-center gap-4 py-3.5">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white">
+                {referrals.length > 0 && (
+                  <ul className="mt-5 space-y-2.5">
+                    {referrals.slice(0, 3).map((p) => (
+                      <li
+                        key={p.id}
+                        className="flex items-center gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30"
+                      >
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md">
                           {initials(p.name || "?")}
                         </span>
                         <span className="min-w-0 flex-1 leading-tight">
-                          <span className="block truncate text-base font-semibold text-ink">
-                            {p.name || "Partner"}
-                          </span>
-                          <span className="mt-0.5 block text-xs text-ink/50">
+                          <span className="block truncate text-base font-bold text-ink">{p.name || "Partner"}</span>
+                          <span className="mt-1 block truncate text-xs text-ink/55">
                             {p.code} · Joined {p.joined}
                           </span>
                         </span>
                         {p.pending ? (
-                          <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+                          <span className="shrink-0 rounded-full bg-amber-100 px-4 py-1.5 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
                             Unpaid
                           </span>
                         ) : (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
                             <Check className="h-3 w-3" strokeWidth={3} />
                             Active
                           </span>
@@ -240,10 +276,28 @@ export default async function DashboardOverview() {
                   </ul>
                 )}
 
-                <p className="mt-auto border-t border-black/5 pt-4 text-xs text-ink/55">
+                <div className="mt-5 flex items-center gap-4 border-t border-black/10 pt-5">
+                  <TeamArt className="h-24 w-36 shrink-0" />
+                  <div className="min-w-0 leading-snug">
+                    {referrals.length > 0 ? (
+                      <p className="text-sm font-bold text-copper-dark">
+                        You&apos;ve invited {referrals.length} {referrals.length === 1 ? "partner" : "partners"} so far!
+                      </p>
+                    ) : (
+                      <p className="text-sm font-bold text-copper-dark">Invite your first partner!</p>
+                    )}
+                    <p className="mt-1.5 text-sm text-ink/60">
+                      {referrals.length > 0
+                        ? "Keep sharing your code to grow your network and earn higher commissions."
+                        : "Share your code above. Everyone who joins with it shows up here."}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-auto pt-4 text-xs text-ink/50">
                   {referrer ? (
                     <>
-                      You joined through <b className="text-ink">{referrer.name}</b> ({referrer.code})
+                      You joined through <b className="text-ink/70">{referrer.name}</b> ({referrer.code})
                     </>
                   ) : (
                     "You joined directly, without a referral code."
@@ -251,19 +305,19 @@ export default async function DashboardOverview() {
                 </p>
               </section>
 
-              <section className="rounded-3xl bg-white p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7 lg:col-span-2">
-                <h2 className="font-display text-2xl font-bold text-ink">
+              <section className="rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
+                <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
                   Quick <span className="text-copper">actions</span>
                 </h2>
-                <ul className="mt-4 space-y-3">
+                <ul className="mt-5 space-y-3">
                   {quickActions.map(({ icon: Icon, title, text, href }) => (
                     <li key={title}>
                       <a
                         href={href}
-                        className="group flex items-center gap-4 rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-lg hover:ring-copper/30"
+                        className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#fdf0e1] to-[#fffaf4] p-3.5 ring-1 ring-copper/10 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:ring-copper/30"
                       >
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#3a2a1f] to-[#17110c] text-copper-light shadow-md transition group-hover:scale-105">
-                          <Icon className="h-5 w-5" strokeWidth={1.8} />
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3a2a1f] to-[#17110c] text-copper-light shadow-md ring-1 ring-black/10 transition group-hover:scale-105">
+                          <Icon className="h-6 w-6" strokeWidth={1.7} />
                         </span>
                         <span className="min-w-0 flex-1 leading-tight">
                           <span className="block text-base font-bold text-ink">{title}</span>
@@ -276,6 +330,25 @@ export default async function DashboardOverview() {
                 </ul>
               </section>
             </div>
+          </Reveal>
+
+          {/* Growth path: the rank ladder from the partner plan */}
+          <Reveal>
+            <GrowthPath
+              currentRank={currentRank}
+              mins={comm?.plan.map((r) => r.minArea) ?? []}
+              teamArea={comm?.teamArea ?? 0}
+              next={
+                comm?.next
+                  ? {
+                      title: comm.next.title,
+                      minArea: comm.next.minArea,
+                      areaToNext: comm.areaToNext,
+                      progress: comm.progress,
+                    }
+                  : null
+              }
+            />
           </Reveal>
         </>
       )}

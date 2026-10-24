@@ -23,7 +23,7 @@ import { bannerProps, isOn, lines } from "@/lib/siteContent";
 export const metadata = {
   title: "About Us | Bhoomidar",
   description:
-    "Bhoomidar is a real estate partner network. We help people invest in good land and property in simple and clear ways.",
+    "Bhoomidar is a trusted real estate company. We help people invest in good land and property in simple and clear ways.",
 };
 
 const VALUE_ICONS = [ShieldCheck, Eye, Users, Sprout];

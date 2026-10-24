@@ -1,10 +1,9 @@
 import Image from "next/image";
-import { ArrowRight, Building, ChevronRight, Home, MapPin } from "lucide-react";
-import { Building2, Coins, Sprout, Users } from "lucide-react";
+import { ArrowRight, FileText, Home, MapPin, PhoneCall, TrendingUp, Users } from "lucide-react";
 import Navbar from "./Navbar";
 import { isOn, num } from "@/lib/siteContent";
 
-const STAT_ICONS = [Building2, Users, Coins, Sprout];
+const STAT_ICONS = [MapPin, Users, FileText, TrendingUp];
 
 export default function Hero({ c }) {
   // Phones can have their own (taller) photo. Without one, the laptop photo is
@@ -16,7 +15,6 @@ export default function Hero({ c }) {
   const phoneDark = num(c.hero_overlay_mobile, 0) / 100;
 
   const showBadge = isOn(c.hero_show_badge) && c.hero_badge;
-  const showTagline = isOn(c.hero_show_tagline);
   const showCard = isOn(c.hero_show_card);
   const showStats = isOn(c.hero_show_stats);
 
@@ -52,20 +50,17 @@ export default function Hero({ c }) {
         </>
       ) : (
         <>
-          {/* Phones: the wide photo as a band across the page (whole house and
-              pool visible), fading into a dark background. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0b1424] via-[#08101c] to-[#04070c] lg:hidden" />
-          <div className="fade-edges-y absolute inset-x-0 top-[16%] h-[50%] lg:hidden">
-            <Image
-              src={c.hero_image}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              style={{ objectPosition: phonePos }}
-              className="zoom-in-slow object-cover"
-            />
-          </div>
+          {/* Phones: the photo fills the screen, focused on the house. */}
+          <div className="absolute inset-0 bg-night lg:hidden" />
+          <Image
+            src={c.hero_image}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectPosition: phonePos }}
+            className="zoom-in-slow object-cover lg:hidden"
+          />
           <Image
             src={c.hero_image}
             alt=""
@@ -88,19 +83,20 @@ export default function Hero({ c }) {
           style={{ backgroundColor: `rgba(0,0,0,${laptopDark})` }}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/80 lg:bg-gradient-to-r lg:from-[#060d18]/90 lg:via-[#060d18]/55 lg:to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/75 lg:bg-gradient-to-r lg:from-[#060d18]/90 lg:via-[#060d18]/55 lg:to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/10 to-transparent lg:hidden" />
       <div className="absolute inset-0 hidden bg-gradient-to-b from-black/50 via-transparent to-transparent lg:block" />
 
       <Navbar />
 
-      <div className="container-x relative flex flex-1 flex-col justify-between gap-6 pb-5 pt-[88px] lg:block lg:flex-none lg:pb-16 lg:pt-24">
-        <div className="max-w-2xl">
+      <div className="container-x relative flex flex-1 flex-col justify-between gap-6 pb-5 pt-[88px] lg:block lg:flex-none lg:pb-14 lg:pt-[max(7.75rem,min(10rem,17vh))] lg:!max-w-none lg:!px-[4.2vw]">
+        <div className="max-w-2xl lg:max-w-[44rem]">
           {showBadge && (
             <span
               style={{ animationDelay: "100ms" }}
-              className="fade-up inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur"
+              className="fade-up inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-black/25 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur lg:px-5 lg:py-2.5 lg:text-xs lg:tracking-[0.24em]"
             >
-              <Building className="h-3 w-3 text-copper-light" />
+              <Home className="h-3 w-3 text-copper-light lg:h-4 lg:w-4" />
               {c.hero_badge}
             </span>
           )}
@@ -111,61 +107,75 @@ export default function Hero({ c }) {
           >
             {c.hero_title_1}
             <span className="block text-copper-light">{c.hero_title_2}</span>
-            <span className="block text-copper-light">{c.hero_title_3}</span>
+            <span className="block">
+              <span className="relative inline-block">
+                {c.hero_title_3}
+                <svg
+                  className="absolute -bottom-2.5 left-0 h-2.5 w-full text-copper-light lg:hidden"
+                  viewBox="0 0 120 10"
+                  preserveAspectRatio="none"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path d="M2 8C30 2 80 1 118 6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+                </svg>
+              </span>
+            </span>
           </h1>
 
           <p
             style={{ animationDelay: "400ms" }}
-            className="fade-up mt-5 max-w-xl whitespace-pre-line text-[17px] font-medium leading-snug text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.85),0_2px_16px_rgba(0,0,0,0.7)] sm:text-xl lg:text-[min(26px,2.8vh)] lg:[text-shadow:none]"
+            className="fade-up mt-6 max-w-xl whitespace-pre-line text-[15px] font-normal leading-snug text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.85),0_2px_16px_rgba(0,0,0,0.7)] sm:mt-5 sm:text-xl lg:text-[min(22px,2.4vh)] lg:font-normal lg:text-white/90 lg:[text-shadow:none]"
           >
             {c.hero_lead}
           </p>
           <p
             style={{ animationDelay: "500ms" }}
-            className="fade-up mt-3 hidden max-w-xl text-base leading-relaxed text-white/80 sm:block lg:text-[min(18px,2.1vh)]"
+            className="fade-up mt-3 hidden max-w-xl text-base leading-relaxed text-white/80 sm:block lg:mt-1 lg:text-[min(20px,2.2vh)] lg:leading-snug lg:text-white/80"
           >
             {c.hero_text}
           </p>
-        </div>
 
-        <div>
           <div
             style={{ animationDelay: "650ms" }}
-            className="fade-up flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-4 lg:mt-7"
+            className="fade-up mt-6 flex flex-row flex-wrap items-center gap-3 sm:gap-4 lg:mt-7"
           >
             {c.hero_btn1 && (
               <a
                 href={c.hero_btn1_link || "#properties"}
-                className="inline-flex w-full items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:brightness-110 sm:w-auto sm:rounded-md sm:py-3.5"
+                className="inline-flex w-auto items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:brightness-110 sm:w-auto sm:rounded-md sm:py-3.5 lg:rounded-lg lg:px-9 lg:py-[min(1rem,1.9vh)] lg:text-[17px]"
               >
-                {c.hero_btn1} <ArrowRight className="h-4 w-4" />
+                {c.hero_btn1} <ArrowRight className="hidden h-4 w-4 lg:block" />
               </a>
             )}
             {c.hero_btn2 && (
               <a
-                href={c.hero_btn2_link || "/register"}
-                className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/80 bg-black/30 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10 sm:w-auto sm:rounded-md sm:py-3.5"
+                href={c.hero_btn2_link || "/contact"}
+                className="inline-flex w-auto items-center justify-center gap-3 rounded-lg border border-white/35 bg-black/30 px-5 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10 sm:w-auto sm:rounded-md sm:py-3.5 lg:rounded-lg lg:border-white/30 lg:px-9 lg:py-[min(1rem,1.9vh)] lg:text-[17px]"
               >
-                {c.hero_btn2} <ArrowRight className="h-4 w-4" />
+                <PhoneCall className="h-[18px] w-[18px]" />
+                {c.hero_btn2}
               </a>
             )}
           </div>
+        </div>
 
+        <div>
           {showStats && (
           <div
             style={{ animationDelay: "800ms" }}
-            className="fade-up mt-5 grid max-w-[1020px] grid-cols-2 gap-x-3 gap-y-3.5 sm:mt-7 sm:grid-cols-4 sm:gap-6 lg:mt-9"
+            className="fade-up mt-5 grid grid-cols-4 rounded-2xl border border-white/10 bg-black/35 px-0 py-3.5 backdrop-blur-md sm:mt-7 sm:w-fit sm:px-3 sm:py-4 lg:mt-[min(2.25rem,4vh)] lg:py-[min(1.25rem,2.4vh)]"
           >
             {STAT_ICONS.map((Icon, i) => (
-              <div key={i} className="flex items-center gap-2.5 sm:gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f6e9d6] text-copper shadow-md sm:h-14 sm:w-14">
-                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <div key={i} className="flex min-w-0 flex-col items-start gap-2 border-l border-white/10 px-2 first:border-l-0 min-[400px]:px-2.5 sm:flex-row sm:items-center sm:gap-3 sm:px-5 lg:px-6">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-copper-light ring-1 ring-copper/40 sm:h-14 sm:w-14">
+                  <Icon className="h-[18px] w-[18px] sm:h-6 sm:w-6" />
                 </span>
                 <span className="min-w-0 leading-tight">
-                  <span className="block text-[15px] font-bold text-white sm:text-base">
+                  <span className="block whitespace-nowrap text-[12px] font-bold text-white min-[375px]:text-[13px] min-[400px]:text-sm sm:text-base lg:text-lg">
                     {c[`hero_stat${i + 1}_value`]}
                   </span>
-                  <span className="block text-[13px] text-white/75 sm:text-sm">
+                  <span className="mt-0.5 block text-[11px] leading-tight text-white/70 sm:text-sm lg:text-[13px] lg:text-white/65">
                     {c[`hero_stat${i + 1}_label`]}
                   </span>
                 </span>
@@ -174,69 +184,36 @@ export default function Hero({ c }) {
           </div>
           )}
 
-          {/* Phones: the "featured" card sits in the page at the bottom. */}
-          {showCard && (
-          <div
-            style={{ animationDelay: "950ms" }}
-            className="fade-up mt-4 overflow-hidden rounded-2xl bg-white shadow-2xl lg:hidden"
-          >
-            {cardRows.map(({ icon: Icon, label, value }, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-4 px-4 py-2.5 ${i > 0 ? "border-t border-black/5" : ""}`}
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1 leading-tight">
-                  <span className="block text-xs text-ink/55">{label}</span>
-                  <span className="block truncate text-[15px] font-bold text-ink">{value}</span>
-                </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-ink/40" />
-              </div>
-            ))}
-          </div>
-          )}
         </div>
       </div>
 
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
-        <div className="container-x relative h-full">
-          {showTagline && (
-            <div className="absolute right-10 top-24 -rotate-6 whitespace-pre-line text-right font-hand text-4xl font-semibold leading-tight text-[#f0cfa4] drop-shadow-lg">
-              {c.hero_tagline}
-            </div>
-          )}
-
+        <div className="container-x relative h-full lg:!max-w-none lg:!px-[4.2vw]">
           {showCard && (
-          <div className="float-slow absolute bottom-24 right-10 w-72 rounded-xl bg-white p-4 shadow-2xl">
+          <div className="float-slow absolute bottom-[6rem] right-[4.2vw] w-[22.5rem] rounded-2xl bg-white p-5 shadow-2xl">
             {cardRows.map(({ icon: Icon, label, value }, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-3 ${i === 0 ? "border-b border-black/5 pb-3" : "pt-3"}`}
+                className={`flex items-center gap-3.5 ${i === 0 ? "border-b border-black/5 pb-3.5" : "pt-3.5"}`}
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-copper/10 text-copper">
-                  <Icon className="h-4 w-4" />
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f6e9d6] text-copper">
+                  <Icon className="h-5 w-5" />
                 </span>
-                <span className="leading-tight">
-                  <span className="block text-[11px] text-ink/55">{label}</span>
-                  <span className="block text-sm font-semibold">{value}</span>
+                <span className="min-w-0 flex-1 leading-tight">
+                  <span className="block text-xs text-ink/55">{label}</span>
+                  <span className="mt-0.5 block truncate text-base font-semibold text-ink">{value}</span>
                 </span>
+                {i === 1 && (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-md ring-1 ring-black/5">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                )}
               </div>
             ))}
           </div>
           )}
         </div>
       </div>
-
-      <svg
-        className="absolute inset-x-0 bottom-0 hidden h-16 w-full text-cream lg:block"
-        viewBox="0 0 1440 64"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <path d="M0 64V14C140 52 300 64 520 64Z" fill="currentColor" />
-      </svg>
     </section>
   );
 }

@@ -53,6 +53,7 @@ export async function activatePartner(id, note) {
     })
     .eq("id", id);
   if (error) return { success: false, error: "Could not activate the partner." };
+  await createAdminClient().rpc("sync_ranks", { p: id });
   revalidatePath("/admin", "layout");
   return { success: true };
 }

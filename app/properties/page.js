@@ -1,10 +1,11 @@
 import { ArrowRight } from "lucide-react";
-import PageBanner from "@/components/PageBanner";
+import PropertiesHero from "@/components/PropertiesHero";
 import PropertiesGrid from "@/components/PropertiesGrid";
 import Reveal from "@/components/Reveal";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { getContent, getProperties } from "@/lib/content";
+import { CATEGORIES } from "@/lib/icons";
 
 export const metadata = {
   title: "Properties | Bhoomidar",
@@ -12,20 +13,30 @@ export const metadata = {
     "Choose from land and property in the best locations. Plots, villas, farm land and commercial plots.",
 };
 
-export default async function PropertiesPage() {
-  const [c, properties] = await Promise.all([getContent(), getProperties()]);
+const LABELS = { Villa: "Villas" };
+
+export default async function PropertiesPage({ searchParams }) {
+  const [c, properties, params] = await Promise.all([getContent(), getProperties(), searchParams]);
+
+  // From the search box: /properties?q=noida&type=Villa
+  const q = typeof params?.q === "string" ? params.q.slice(0, 80) : "";
+  const type = typeof params?.type === "string" && CATEGORIES.includes(params.type) ? params.type : "";
+  const types = CATEGORIES.filter((cat) => properties.some((p) => p.category === cat)).map((cat) => ({
+    id: cat,
+    label: LABELS[cat] ?? cat,
+  }));
 
   return (
     <main>
-      <PageBanner image={c.hero_image} label="Our Properties" text={c.props_text}>
-        Find Your
-        <br />
-        <span className="text-copper-light">Perfect Land</span>
-      </PageBanner>
+      <PropertiesHero
+        image={c.hero_image}
+        imageMobile={c.props_hero_image_mobile || c.hero_image_mobile}
+        text={c.props_text}
+      />
 
-      <section className="bg-cream py-12 sm:py-16 lg:py-20">
-        <div className="container-x">
-          <PropertiesGrid properties={properties} />
+      <section id="listings" className="scroll-mt-4 bg-cream py-10 sm:py-14 lg:py-16">
+        <div className="container-x lg:!max-w-none lg:!px-[4.2vw]">
+          <PropertiesGrid properties={properties} initialType={type || "All"} initialQuery={q} />
         </div>
       </section>
 

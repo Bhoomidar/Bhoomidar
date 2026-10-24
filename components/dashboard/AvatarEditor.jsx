@@ -36,7 +36,7 @@ async function squarePhoto(file, size = 512) {
 // The partner's profile photo with a camera button to add or change it, and a
 // small cross to remove it. The photo is stored on ImageKit and its address is
 // saved on the profile (see app/api/profile/avatar).
-export default function AvatarEditor({ url, initials }) {
+export default function AvatarEditor({ url, initials, overlap = true }) {
   const router = useRouter();
   const input = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -75,7 +75,7 @@ export default function AvatarEditor({ url, initials }) {
 
   return (
     <div className="shrink-0">
-      <div className="relative -mt-14 h-28 w-28 sm:-mt-16 sm:h-32 sm:w-32">
+      <div className={`relative h-28 w-28 sm:h-32 sm:w-32 ${overlap ? "-mt-14 sm:-mt-16" : ""}`}>
         <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-4xl font-bold text-white shadow-xl ring-[6px] ring-white sm:text-5xl">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element

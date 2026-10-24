@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  ArrowRight,
   Building2,
   ChevronRight,
-  Gift,
   Handshake,
   Home,
   Info,
@@ -18,24 +16,26 @@ import {
 } from "lucide-react";
 import Logo from "./Logo";
 import { createClient } from "@/lib/supabase/client";
-import { navLinks } from "@/lib/data";
+import { siteNavLinks } from "@/lib/data";
 
 const LINK_ICONS = {
   Home,
   Properties: Building2,
-  Opportunities: Handshake,
-  Rewards: Gift,
+  Partners: Handshake,
   About: Info,
   Contact: PhoneCall,
 };
 
+// One navbar for the whole site, partner page included. A "Partners" menu link
+// leads to the partner page; the right side is Login + Contact Us.
 export default function Navbar() {
+  const links = siteNavLinks;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Show "My Dashboard" instead of "Join as Partner" for logged-in partners.
+  // Logged-in partners see "My Dashboard" instead of Login and the main button.
   useEffect(() => {
     createClient()
       .auth.getSession()
@@ -64,31 +64,62 @@ export default function Navbar() {
     };
   }, [open]);
 
-  const primaryHref = user ? "/dashboard" : "/register";
-  const primaryLabel = user ? "My Dashboard" : "Join as Partner";
+  const home = pathname === "/" || pathname === "/contact"; // pages with the floating pill bar
+  const wide = home || pathname.startsWith("/properties"); // pages whose content runs wide, so the bar lines up
+  const showLogin = !user;
+  const primaryHref = user ? "/dashboard" : "/contact";
+  const primaryLabel = user ? "My Dashboard" : "Contact Us";
 
   return (
     <>
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled ? "bg-night/90 shadow-lg shadow-black/20 backdrop-blur-md" : "bg-transparent"
+          home
+            ? scrolled
+              ? "bg-transparent pt-2 lg:pt-3"
+              : "bg-transparent pt-3 lg:pt-5"
+            : scrolled
+              ? "bg-night/90 shadow-lg shadow-black/20 backdrop-blur-md"
+              : "bg-transparent"
         }`}
       >
+        <div className={`container-x ${home ? "max-lg:!px-4 lg:!max-w-none lg:!px-[4.2vw]" : wide ? "lg:!max-w-none lg:!px-[4.2vw]" : ""}`}>
         <div
-          className={`container-x flex items-center justify-between transition-all duration-300 ${
-            scrolled ? "py-2" : "py-3"
+          className={`flex items-center justify-between transition-all duration-300 ${
+            home
+              ? `relative rounded-2xl border px-3 backdrop-blur-xl lg:rounded-full lg:px-5 ${
+                  scrolled
+                    ? "border-white/15 bg-night/85 py-2 shadow-[0_18px_44px_-14px_rgba(0,0,0,0.75)] lg:py-2.5"
+                    : "border-white/20 bg-white/[0.07] py-2.5 shadow-[0_18px_44px_-18px_rgba(0,0,0,0.6)] lg:py-3.5"
+                }`
+              : scrolled
+                ? "py-2"
+                : "py-3"
           }`}
         >
-          <Logo size="h-10 sm:h-12" />
+          {home && (
+            <span className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-copper-light/70 to-transparent" />
+          )}
+          <Logo size={home ? "h-8 sm:h-12" : "h-10 sm:h-12"} />
 
-          <nav className="hidden items-center gap-9 lg:flex">
-            {navLinks.map((link) => (
+          <nav className={`hidden items-center lg:flex ${home ? "gap-1.5 rounded-full bg-black/20 p-1.5 ring-1 ring-white/10" : "gap-9"}`}>
+            {links.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className={`text-sm font-medium transition hover:text-copper-light ${
-                  link.href === pathname ? "text-copper-light" : "text-white/90"
-                }`}
+                className={
+                  home
+                    ? `rounded-full px-4 py-2 text-sm font-medium transition ${
+                        link.href === pathname
+                          ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
+                          : "text-white/85 hover:bg-white/10 hover:text-white"
+                      }`
+                    : `relative text-sm font-medium transition hover:text-copper-light ${
+                        link.href === pathname
+                          ? "text-copper-light after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-copper-light"
+                          : "text-white/90"
+                      }`
+                }
               >
                 {link.label}
               </a>
@@ -96,29 +127,34 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-5 lg:flex">
-            {!user && (
+            {showLogin && (
               <a
                 href="/login"
-                className="text-sm font-medium text-white/90 transition hover:text-copper-light"
+                className={
+                  home
+                    ? "rounded-full border border-white/25 px-5 py-2.5 text-sm font-medium text-white transition hover:border-copper-light hover:text-copper-light"
+                    : "text-sm font-medium text-white/90 transition hover:text-copper-light"
+                }
               >
                 Login
               </a>
             )}
             <a
               href={primaryHref}
-              className="inline-flex items-center gap-2 rounded-md bg-copper px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:bg-copper-dark"
+              className={`btn-shimmer inline-flex items-center gap-2 bg-gradient-to-b from-copper-light to-copper-dark px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110 ${home ? "rounded-full shadow-copper/40" : "rounded-lg shadow-black/20"}`}
             >
-              {primaryLabel} <ArrowRight className="h-4 w-4" />
+              {primaryLabel}
             </a>
           </div>
 
           <button
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white backdrop-blur transition hover:bg-white/20 lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white backdrop-blur transition hover:bg-white/20 lg:hidden"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >
             <Menu className="h-6 w-6" />
           </button>
+        </div>
         </div>
       </header>
 
@@ -160,7 +196,7 @@ export default function Navbar() {
               Menu
             </p>
             <ul className="space-y-1.5">
-              {navLinks.map((link, i) => {
+              {links.map((link, i) => {
                 const Icon = LINK_ICONS[link.label] ?? Home;
                 const active = link.href === pathname;
                 return (
@@ -202,7 +238,7 @@ export default function Navbar() {
           </nav>
 
           <div className="relative space-y-3 border-t border-white/10 p-5">
-            {!user && (
+            {showLogin && (
               <a
                 href="/login"
                 tabIndex={open ? 0 : -1}
@@ -221,7 +257,6 @@ export default function Navbar() {
             >
               {user && <LayoutDashboard className="h-4 w-4" />}
               {primaryLabel}
-              {!user && <ArrowRight className="h-4 w-4" />}
             </a>
           </div>
         </aside>

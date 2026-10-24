@@ -170,3 +170,87 @@ input::-ms-clear {
     width: 0;
   }
 }
+
+/* team tree: a top-down org chart. Plain CSS because the connector lines need
+   pseudo-elements on every <li>. Markup: .org-tree > ul > li > (card, ul > li ...) */
+.org-tree {
+  --org-line: rgba(181, 98, 47, 0.38);
+  --org-gap: 40px;
+}
+.org-tree ul {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: var(--org-gap) 0 0;
+  list-style: none;
+}
+.org-tree > ul {
+  padding-top: 0;
+}
+.org-tree li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--org-gap) 10px 0;
+}
+.org-tree > ul > li {
+  padding-top: 0;
+}
+/* the horizontal bar above each child, and its drop onto the child */
+.org-tree li::before,
+.org-tree li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: var(--org-gap);
+  border-top: 2px solid var(--org-line);
+}
+.org-tree li::after {
+  right: auto;
+  left: 50%;
+  border-left: 2px solid var(--org-line);
+}
+.org-tree li:only-child::before,
+.org-tree li:only-child::after {
+  display: none;
+}
+.org-tree li:first-child::before,
+.org-tree li:last-child::after {
+  border: 0 none;
+}
+.org-tree li:last-child::before {
+  border-right: 2px solid var(--org-line);
+  border-radius: 0 14px 0 0;
+}
+.org-tree li:first-child::after {
+  border-radius: 14px 0 0 0;
+}
+/* an only child hangs straight under its parent: no bar, so no extra space either */
+.org-tree li:only-child {
+  padding-top: 0;
+}
+/* from a parent card down to the bar of its children */
+.org-tree ul ul::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: var(--org-gap);
+  border-left: 2px solid var(--org-line);
+}
+/* a small dot half way down each connector */
+.org-tree ul ul::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--org-gap) / 2);
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #b5622f;
+}

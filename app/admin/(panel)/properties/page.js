@@ -13,7 +13,7 @@ export default async function PropertiesPage() {
         label="Content"
         title="Our"
         accent="Properties"
-        text="The property cards on the home page. Add, change, hide or re-order them."
+        text="The property cards and each property's own page (photos, details, facilities). Add, change, hide or re-order them."
       />
       <PropertiesManager properties={properties} />
     </>

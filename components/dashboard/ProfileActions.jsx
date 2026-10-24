@@ -400,11 +400,31 @@ function PasswordModal({ onClose, onSaved }) {
   );
 }
 
+// A button that opens the edit-profile (or change-password) window of <ProfileActions>.
+export function ProfileOpenButton({ what = "edit", className = "", children }) {
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new CustomEvent("profile:open", { detail: what }))}
+      className={className}
+    >
+      {children}
+    </button>
+  );
+}
+
 // "Edit profile" and "Change password" buttons for the profile page.
 export default function ProfileActions({ initial }) {
   const router = useRouter();
   const [open, setOpen] = useState(null); // "edit" | "password" | null
   const [toast, setToast] = useState("");
+
+  // Buttons elsewhere on the page ("Edit" on a card) ask for a window like this.
+  useEffect(() => {
+    const onOpen = (e) => setOpen(e.detail === "password" ? "password" : "edit");
+    window.addEventListener("profile:open", onOpen);
+    return () => window.removeEventListener("profile:open", onOpen);
+  }, []);
 
   const saved = (message) => {
     setOpen(null);
@@ -416,12 +436,20 @@ export default function ProfileActions({ initial }) {
   return (
     <>
       <div className="flex flex-wrap gap-3">
-        <button type="button" onClick={() => setOpen("edit")} className={primary}>
+        <button
+          type="button"
+          onClick={() => setOpen("edit")}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+        >
           <Pencil className="h-4 w-4" />
           Edit profile
         </button>
-        <button type="button" onClick={() => setOpen("password")} className={ghost}>
-          <KeyRound className="h-4 w-4" />
+        <button
+          type="button"
+          onClick={() => setOpen("password")}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:text-copper hover:ring-copper"
+        >
+          <Lock className="h-4 w-4 text-copper" />
           Change password
         </button>
       </div>

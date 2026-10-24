@@ -13,6 +13,25 @@ function refreshSite() {
 
 const clean = (v, max = 200) => String(v ?? "").trim().slice(0, max);
 
+const slugify = (v) =>
+  String(v ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+// Only our own pictures (/images/...) or https addresses.
+const safeUrl = (v) => {
+  const u = clean(v, 500);
+  return u.startsWith("/") && !u.startsWith("//") ? u : /^https:\/\//.test(u) ? u : "";
+};
+
+const lines = (v, count, max) =>
+  (Array.isArray(v) ? v : [])
+    .map((t) => clean(t, max))
+    .filter(Boolean)
+    .slice(0, count);
+
 function parse(input) {
   const title = clean(input.title, 120);
   const price = clean(input.price, 60);
@@ -37,7 +56,19 @@ function parse(input) {
       details,
       price,
       unit: clean(input.unit, 40),
+      tagline: clean(input.tagline, 160),
+      location: clean(input.location, 120),
+      description: clean(input.description, 5000),
+      gallery: (Array.isArray(input.gallery) ? input.gallery : []).map(safeUrl).filter(Boolean).slice(0, 12),
+      highlights: lines(input.highlights, 8, 160),
+      amenities: lines(input.amenities, 20, 40),
+      specs: (Array.isArray(input.specs) ? input.specs : [])
+        .map((s) => ({ label: clean(s?.label, 40), value: clean(s?.value, 80) }))
+        .filter((s) => s.label && s.value)
+        .slice(0, 12),
+      map_url: /^https:\/\//.test(clean(input.map_url, 500)) ? clean(input.map_url, 500) : null,
     },
+    slugWanted: slugify(input.slug) || slugify(title),
   };
 }
 
@@ -53,11 +84,22 @@ export async function getAllProperties() {
 // Creates a property when input.id is empty, otherwise updates it.
 export async function saveProperty(input) {
   await requireAdmin();
-  const { row, error: invalid } = parse(input ?? {});
+  const { row, slugWanted, error: invalid } = parse(input ?? {});
   if (invalid) return { success: false, error: invalid };
 
   const db = createAdminClient();
   let error;
+
+  // The page address must be unique: add -2, -3 ... if another property already has it.
+  let slug = slugWanted || "property";
+  for (let n = 2; n < 50; n++) {
+    let q = db.from("properties").select("id").eq("slug", slug).limit(1);
+    if (input.id) q = q.neq("id", input.id);
+    const { data: taken } = await q;
+    if (!taken?.length) break;
+    slug = `${slugWanted || "property"}-${n}`;
+  }
+  row.slug = slug;
 
   if (input.id) {
     ({ error } = await db.from("properties").update(row).eq("id", input.id));
