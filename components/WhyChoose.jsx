@@ -12,7 +12,7 @@ export default function WhyChoose({ c }) {
     >
       {/* the picture: a house and hills in warm light, along the bottom */}
       <Image
-        src="/images/whychooseusbg.png"
+        src={c.why_image}
         alt=""
         fill
         sizes="100vw"
@@ -28,7 +28,7 @@ export default function WhyChoose({ c }) {
         aria-hidden
       >
         <Image
-          src="/images/whychooseusbgmobile.png"
+          src={c.why_image_mobile || c.why_image}
           alt=""
           fill
           sizes="100vw"

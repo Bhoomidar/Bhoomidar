@@ -4,10 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Check, Eye, ExternalLink, Loader2, MapPin, Plus, X } from "lucide-react";
 import { saveProperty } from "@/actions/admin/properties";
-import { CATEGORIES, DETAIL_ICONS } from "@/lib/icons";
+import { DETAIL_ICONS } from "@/lib/icons";
 import Select from "../Select";
 import GalleryEditor from "./GalleryEditor";
 import ImageUploader from "./ImageUploader";
+import Switch from "./Switch";
 import { btnGhost, btnPrimary, iconBtn, inputCls, labelCls } from "./ui";
 
 export const EMPTY_PROPERTY = {};
@@ -15,7 +16,7 @@ export const EMPTY_PROPERTY = {};
 const EMPTY = {
   id: "",
   title: "",
-  category: CATEGORIES[0],
+  category: "",
   image_url: "",
   badge: "",
   price: "",
@@ -39,6 +40,8 @@ const EMPTY = {
   ],
   amenities: [],
   map_url: "",
+  show_on_home: true,
+  banner_url: "",
 };
 
 // One item per line in a text box <-> a list.
@@ -133,10 +136,11 @@ function CardPreview({ form }) {
   );
 }
 
-export default function PropertyForm({ initial, onDone }) {
+export default function PropertyForm({ initial, onDone, categories = [] }) {
   const [form, setForm] = useState({
     ...EMPTY,
     ...initial,
+    category: initial.category || categories[0]?.name || "",
     badge: initial.badge ?? "",
     slug: initial.slug ?? "",
     tagline: initial.tagline ?? "",
@@ -147,6 +151,8 @@ export default function PropertyForm({ initial, onDone }) {
     highlights: arr(initial.highlights),
     amenities: arr(initial.amenities),
     specs: arr(initial.specs),
+    show_on_home: initial.show_on_home !== false,
+    banner_url: initial.banner_url ?? "",
   });
   // The text boxes keep what is typed (blank lines and all); the list is made when saving.
   const [highlightsText, setHighlightsText] = useState(toLines(initial.highlights));
@@ -194,7 +200,15 @@ export default function PropertyForm({ initial, onDone }) {
             </div>
             <div>
               <label className={labelCls}>Type</label>
-              <Select value={form.category} onChange={(v) => set("category", v)} options={CATEGORIES} ariaLabel="Type" />
+              <Select
+                value={form.category}
+                onChange={(v) => set("category", v)}
+                options={categories.map((c) => c.name)}
+                ariaLabel="Type"
+              />
+              <p className="mt-1.5 text-xs text-ink/50">
+                Need another type? <a href="/admin/properties/categories" className="font-semibold text-copper underline-offset-2 hover:underline">Add or change types</a>
+              </p>
             </div>
             <div>
               <label className={labelCls}>Blue tag on the image (optional)</label>
@@ -224,6 +238,20 @@ export default function PropertyForm({ initial, onDone }) {
                 className={inputCls}
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-black/10 bg-[#fbf7f0] px-4 py-3">
+            <span>
+              <span className="block text-sm font-semibold text-ink">Show on the home page</span>
+              <span className="block text-xs text-ink/55">
+                {form.show_on_home ? "Listed on the home page" : "Not on the home page"}. It stays on the Properties page.
+              </span>
+            </span>
+            <Switch
+              label="Show on the home page"
+              checked={form.show_on_home}
+              onChange={(v) => set("show_on_home", v)}
+            />
           </div>
 
           <div>
@@ -340,6 +368,19 @@ export default function PropertyForm({ initial, onDone }) {
               </div>
               <p className="mt-1.5 text-xs text-ink/50">Small letters, numbers and dashes. Changing it changes the link.</p>
             </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>Banner photo of this page (optional)</label>
+            <p className="-mt-0.5 mb-2 text-xs text-ink/50">
+              The big wide photo behind the name at the top. Leave it empty to use the card image.
+            </p>
+            <ImageUploader
+              value={form.banner_url}
+              onChange={(url) => set("banner_url", url)}
+              optional
+              natural
+            />
           </div>
 
           <div>
@@ -465,11 +506,12 @@ export default function PropertyForm({ initial, onDone }) {
 
 
 // The form on its own page: after saving or cancelling, go back to the list.
-export function PropertyPageForm({ initial }) {
+export function PropertyPageForm({ initial, categories = [] }) {
   const router = useRouter();
   return (
     <PropertyForm
       initial={initial}
+      categories={categories}
       onDone={(changed) => {
         router.push("/admin/properties");
         if (changed) router.refresh();

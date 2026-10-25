@@ -22,7 +22,10 @@ import Reveal from "@/components/Reveal";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { getContent } from "@/lib/content";
-import { rankTiers, ranks } from "@/lib/data";
+import { rankTiers } from "@/lib/data";
+import { rewardIcon } from "@/lib/rankIcons";
+import { getRankChart } from "@/lib/plan";
+import { monthlyMonths } from "@/lib/planChart";
 import { bannerProps, isOn, lines } from "@/lib/siteContent";
 
 // The browser tab title and the Google description come from the admin (Partner Page > Browser Title).
@@ -47,6 +50,8 @@ const TRUST = [
 const STEP_ICONS = [UserPlus, Share2, Wallet];
 
 export default async function OpportunitiesPage() {
+  const ranks = await getRankChart();
+  const topRate = Math.max(...ranks.map((r) => r.rate), 1);
   const c = await getContent();
   const showStrip = isOn(c.partner_show_strip);
   const showTrust = isOn(c.partner_show_trust);
@@ -275,7 +280,7 @@ export default async function OpportunitiesPage() {
                       <th className="px-4 py-5">Eligibility</th>
                       <th className="px-4 py-5">Personal Sales Commission</th>
                       <th className="px-4 py-5">Team Sales Defence (TSD)</th>
-                      <th className="px-4 py-5">Monthly Bonus (12 months)</th>
+                      <th className="px-4 py-5">Monthly Bonus ({monthlyMonths(c)} months)</th>
                       <th className="px-6 py-5">Reward</th>
                     </tr>
                   </thead>
@@ -291,7 +296,7 @@ export default async function OpportunitiesPage() {
                           <td className={`${cell} px-6 py-4`}>
                             <span className="flex items-center gap-4">
                               <span
-                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${rankTiers[i]} text-sm font-bold text-white shadow-md ring-2 ring-white`}
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${rankTiers[i % rankTiers.length]} text-sm font-bold text-white shadow-md ring-2 ring-white`}
                               >
                                 {i + 1}
                               </span>
@@ -316,7 +321,7 @@ export default async function OpportunitiesPage() {
                             <span className="mt-2 block h-1.5 w-28 overflow-hidden rounded-full bg-black/10">
                               <span
                                 className="block h-full rounded-full bg-gradient-to-r from-copper to-copper-light"
-                                style={{ width: `${(parseFloat(r.commission) / 4) * 100}%` }}
+                                style={{ width: `${(r.rate / topRate) * 100}%` }}
                               />
                             </span>
                             <span className="mt-2 block text-[11px] text-ink/50">{r.example}</span>
@@ -343,9 +348,12 @@ export default async function OpportunitiesPage() {
                           <td className={`${cell} px-6 py-4`}>
                             <span className="flex items-center gap-3.5">
                               <span
-                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${rankTiers[i]} text-white shadow-md ring-2 ring-white transition duration-300 group-hover:scale-110 group-hover:-rotate-3`}
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${rankTiers[i % rankTiers.length]} text-white shadow-md ring-2 ring-white transition duration-300 group-hover:scale-110 group-hover:-rotate-3`}
                               >
-                                <r.icon className="h-5 w-5" strokeWidth={1.7} />
+                                {(() => {
+                                  const RewardIcon = rewardIcon(r.icon);
+                                  return <RewardIcon className="h-5 w-5" strokeWidth={1.7} />;
+                                })()}
                               </span>
                               <span className="text-sm font-semibold text-ink">{r.reward}</span>
                             </span>

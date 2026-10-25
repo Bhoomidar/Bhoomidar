@@ -4,12 +4,13 @@ import PageHeader from "@/components/admin/PageHeader";
 import { PropertyPageForm } from "@/components/admin/PropertyForm";
 import { card } from "@/components/admin/ui";
 import { getPropertyById } from "@/actions/admin/properties";
+import { getCategoryRows } from "@/actions/admin/categories";
 
 export const metadata = { title: "Edit property" };
 
 export default async function EditPropertyPage({ params }) {
   const { id } = await params;
-  const property = await getPropertyById(id);
+  const [property, categories] = await Promise.all([getPropertyById(id), getCategoryRows()]);
   if (!property) notFound();
 
   return (
@@ -44,7 +45,7 @@ export default async function EditPropertyPage({ params }) {
 
       <div className={card}>
         {/* key: opening another property starts with a fresh form */}
-        <PropertyPageForm key={property.id} initial={property} />
+        <PropertyPageForm key={property.id} initial={property} categories={categories} />
       </div>
     </div>
   );

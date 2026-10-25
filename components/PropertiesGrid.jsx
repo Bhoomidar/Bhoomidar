@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import { LayoutGrid, X } from "lucide-react";
 import Reveal from "./Reveal";
 import PropertyCard from "./PropertyCard";
-import { CATEGORIES, CATEGORY_ICONS } from "@/lib/icons";
-
-const LABELS = { Villa: "Villas" };
+import { categoryTabs } from "@/lib/icons";
 
 // What the search box looks at: the name, the type and every detail line (the place is in there).
 const haystack = (p) =>
@@ -14,23 +12,16 @@ const haystack = (p) =>
 
 // All properties with a working filter by type and a search. `initialType` and
 // `initialQuery` come from the search box at the top of the page (?type= and ?q=).
-export default function PropertiesGrid({ properties, initialType = "All", initialQuery = "" }) {
+export default function PropertiesGrid({ properties, categories, initialType = "All", initialQuery = "" }) {
   const [filter, setFilter] = useState(initialType);
   const [query, setQuery] = useState(initialQuery);
 
   const tabs = useMemo(
     () => [
       { id: "All", label: "All Properties", icon: LayoutGrid, count: properties.length },
-      ...CATEGORIES.filter((cat) => properties.some((p) => p.category === cat)).map(
-        (cat) => ({
-          id: cat,
-          label: LABELS[cat] ?? cat,
-          icon: CATEGORY_ICONS[cat],
-          count: properties.filter((p) => p.category === cat).length,
-        }),
-      ),
+      ...categoryTabs(properties, categories),
     ],
-    [properties],
+    [properties, categories],
   );
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);

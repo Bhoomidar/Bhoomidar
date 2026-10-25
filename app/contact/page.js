@@ -156,7 +156,7 @@ export default async function ContactPage() {
         </svg>
       </section>
 
-      <section className="relative z-10 -mt-[var(--pull)] bg-[linear-gradient(to_bottom,transparent_var(--pull),#fdf3e4_var(--pull))] pb-14 [--pull:3.5rem] sm:pb-20 sm:[--pull:5rem] lg:pb-24">
+      <section className="relative z-10 -mt-[var(--pull)] overflow-x-clip bg-[linear-gradient(to_bottom,transparent_var(--pull),#fdf3e4_var(--pull))] pb-14 [--pull:3.5rem] sm:pb-20 sm:[--pull:5rem] lg:pb-24">
         <div className="pointer-events-none absolute -left-24 top-1/2 h-96 w-96 rounded-full bg-copper-light/15 blur-3xl" />
         <div className="pointer-events-none absolute -right-24 top-24 h-80 w-80 rounded-full bg-amber-300/15 blur-3xl" />
 

@@ -19,21 +19,14 @@ import Navbar from "@/components/Navbar";
 import PropertyGallery from "@/components/PropertyGallery";
 import PropertyEnquiry from "@/components/PropertyEnquiry";
 import PropertyShare from "@/components/PropertyShare";
-import PropertyCard from "@/components/PropertyCard";
+import PropertyTabs from "@/components/PropertyTabs";
+import RelatedProperties from "@/components/RelatedProperties";
 import Reveal from "@/components/Reveal";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { getContent, getProperties } from "@/lib/content";
-import { CATEGORY_ICONS, DETAIL_ICONS } from "@/lib/icons";
-import { phoneHref } from "@/lib/siteContent";
-
-// The contact form's own names for each kind of property.
-const INTEREST = {
-  Residential: "Residential Plots",
-  Villa: "Premium Villas",
-  "Farm Land": "Farm Land",
-  Commercial: "Commercial Plots",
-};
+import { DETAIL_ICONS, amenityIcon, categoryIcon } from "@/lib/icons";
+import { fill, isOn, phoneHref } from "@/lib/siteContent";
 
 // A picture for a fact box, chosen from its label.
 function specIcon(label = "") {
@@ -58,11 +51,11 @@ async function find(slug) {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const { property: p } = await find(slug);
-  if (!p) return { title: "Property not found | Bhoomidar" };
-  const text = p.tagline || p.description?.split("\n")[0] || `${p.title} - ${p.location}`;
+  const [c, { property: p }] = await Promise.all([getContent(), find(slug)]);
+  if (!p) return { title: c.pd_meta_missing };
+  const text = p.tagline || p.description?.split("\n")[0] || [p.title, p.location].filter(Boolean).join(" - ");
   return {
-    title: `${p.title} | Bhoomidar`,
+    title: fill(c.pd_meta_title, { title: p.title }),
     description: text,
     openGraph: { title: p.title, description: text, images: p.image_url ? [p.image_url] : undefined },
   };
@@ -74,18 +67,57 @@ export default async function PropertyPage({ params }) {
   if (!p) notFound();
 
   const images = photos(p);
-  const hero = images[0];
-  const CategoryIcon = CATEGORY_ICONS[p.category] ?? Home;
+  const hero = p.banner_url || images[0];
+  const CategoryIcon = categoryIcon(p);
   const paragraphs = String(p.description ?? "").split(/\n{2,}/).map((t) => t.trim()).filter(Boolean);
   const highlights = list(p.highlights);
   const specs = list(p.specs);
   const amenities = list(p.amenities);
   const details = list(p.details);
-  const related = properties.filter((x) => x.id !== p.id).slice(0, 3);
+  // Other properties of the same type first, then the rest.
+  const related = properties
+    .filter((x) => x.id !== p.id)
+    .sort((a, b) => (b.category === p.category) - (a.category === p.category))
+    .slice(0, 8);
+
+  // The last word of the name is picked out in copper ("Green Valley" + "Plots").
+  const nameWords = String(p.title).trim().split(/\s+/);
+  const titleEnd = nameWords.length > 1 ? nameWords.pop() : "";
+  const titleStart = nameWords.join(" ");
+
+  // The detail lines of the strip go in two columns, split by a thin line.
+  const half = Math.ceil(details.length / 2);
+  const detailColumns = [details.slice(0, half), details.slice(half)].filter((col) => col.length);
+
+  const tabs = [
+    ["#photos", c.pd_tab_photos],
+    ...(paragraphs.length ? [["#about", c.pd_tab_about]] : []),
+    ...(highlights.length ? [["#why", c.pd_tab_why]] : []),
+    ...(specs.length ? [["#details", c.pd_tab_details]] : []),
+    ...(amenities.length ? [["#facilities", c.pd_tab_facilities]] : []),
+    ["#visit", c.pd_tab_visit],
+  ].filter(([, label]) => label);
+
+  // Every text of the booking card comes from the admin.
+  const form = {
+    title1: c.pd_form_title_1,
+    titleAccent: c.pd_form_title_accent,
+    text: c.pd_form_text,
+    name: c.pd_form_name,
+    phone: c.pd_form_phone,
+    button: c.pd_form_btn,
+    sending: c.pd_form_sending,
+    call: c.pd_form_call,
+    whatsapp: c.pd_form_wa,
+    thanksTitle: c.pd_form_thanks_title,
+    thanksText: c.pd_form_thanks_text,
+    priceLabel: c.pd_price_label,
+  };
+  const vars = { title: p.title, location: p.location };
 
   const digits = String(c.contact_phone ?? "").replace(/\D/g, "");
   const wa = digits.length === 10 ? `91${digits}` : digits;
-  const waText = encodeURIComponent(`Hello, I want to know more about ${p.title}${p.location ? ` (${p.location})` : ""}.`);
+  const waText = encodeURIComponent(fill(c.pd_wa_message, vars));
 
   return (
     <main className="max-lg:bg-night max-lg:pb-20">
@@ -99,9 +131,9 @@ export default async function PropertyPage({ params }) {
 
         <div className="fade-up container-x relative pb-28 pt-32 sm:pb-32 sm:pt-36 lg:!max-w-none lg:!px-[4.2vw] lg:pb-36 lg:pt-40">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-white/70">
-            <a href="/" className="transition hover:text-white">Home</a>
+            <a href="/" className="transition hover:text-white">{c.pd_crumb_home}</a>
             <ChevronRight className="h-3.5 w-3.5" />
-            <a href="/properties" className="transition hover:text-white">Properties</a>
+            <a href="/properties" className="transition hover:text-white">{c.pd_crumb_props}</a>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="text-copper-light">{p.title}</span>
           </nav>
@@ -120,16 +152,32 @@ export default async function PropertyPage({ params }) {
                 {p.badge}
               </span>
             )}
-            <PropertyShare title={p.title} />
+            {c.pd_share && (
+              <PropertyShare
+                title={p.title}
+                label={c.pd_share}
+                doneLabel={c.pd_share_done}
+                shareText={fill(c.pd_share_text, vars)}
+              />
+            )}
           </div>
 
-          <h1 className="mt-5 max-w-4xl font-display text-[40px] font-bold leading-[1.08] text-white sm:text-6xl lg:text-[4.6rem]">
-            {p.title}
+          <h1 className="mt-5 max-w-4xl font-display text-[40px] font-bold leading-[1.08] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.45)] sm:text-6xl lg:text-[4.6rem]">
+            {titleStart}
+            {titleEnd && (
+              <>
+                {" "}
+                <span className="bg-gradient-to-b from-[#ffd9aa] to-copper-light bg-clip-text text-transparent [text-shadow:none]">
+                  {titleEnd}
+                </span>
+              </>
+            )}
           </h1>
           {p.location && (
-            <p className="mt-5 flex items-center gap-2.5 text-lg text-white/90">
-              <MapPin className="h-5 w-5 text-copper-light" />
+            <p className="mt-6 flex items-center gap-2.5 text-lg text-white/90">
+              <MapPin className="h-6 w-6 text-copper-light" />
               {p.location}
+              <span className="ml-1 hidden h-px w-16 bg-copper-light/70 sm:block" />
               {p.map_url && (
                 <a
                   href={p.map_url}
@@ -137,7 +185,7 @@ export default async function PropertyPage({ params }) {
                   rel="noreferrer"
                   className="ml-2 text-sm font-semibold text-copper-light underline-offset-4 hover:underline"
                 >
-                  View on map
+                  {c.pd_map_link}
                 </a>
               )}
             </p>
@@ -147,37 +195,47 @@ export default async function PropertyPage({ params }) {
       </section>
 
       {/* a strip that sits over the photo: price, quick facts, buttons */}
-      <section className="relative z-10 -mt-16 bg-cream sm:-mt-20">
+      <section className="relative z-10 -mt-16 bg-cream pt-5 sm:-mt-20 sm:pt-6">
         <div className="container-x lg:!max-w-none lg:!px-[4.2vw]">
           <Reveal>
-            <div className="grid gap-5 rounded-3xl bg-white p-5 shadow-[0_30px_70px_-30px_rgba(60,35,15,0.55)] ring-1 ring-black/5 sm:gap-6 sm:p-8 lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-10">
+            <div className="grid gap-5 rounded-3xl bg-gradient-to-b from-[#fffdf9] to-[#fcf3e6] p-5 shadow-[0_30px_70px_-30px_rgba(60,35,15,0.55)] ring-1 ring-copper/30 sm:gap-6 sm:p-8 lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-10">
               <div className="leading-tight">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/50">{p.unit || "Price"}</p>
-                <p className="mt-1 text-4xl font-extrabold tabular-nums text-copper-dark sm:mt-1.5 sm:text-5xl">{p.price}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ink/55">{p.unit || c.pd_price_label}</p>
+                <p className="mt-1 text-4xl font-extrabold tabular-nums text-copper-dark sm:mt-1.5 sm:text-5xl lg:text-[3.4rem]">{p.price}</p>
+                <span className="mt-3 block h-0.5 w-10 rounded-full bg-copper/60" />
               </div>
 
-              <ul className="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-black/5 pt-5 min-[420px]:grid-cols-2 sm:pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-                {details.map(({ icon, text }, i) => {
-                  const Icon = DETAIL_ICONS[icon] ?? DETAIL_ICONS.MapPin;
-                  return (
-                    <li key={i} className="flex items-center gap-3 text-sm text-ink/80 sm:text-[15px]">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      {text}
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="grid gap-y-3 border-t border-black/5 pt-5 sm:pt-6 lg:grid-cols-2 lg:border-t-0 lg:pt-0">
+                {detailColumns.map((col, c2) => (
+                  <ul
+                    key={c2}
+                    className="grid content-center gap-x-8 gap-y-3 min-[420px]:max-lg:grid-cols-2 lg:gap-y-5 lg:border-l lg:border-copper/20 lg:pl-10"
+                  >
+                    {col.map(({ icon, text }, i) => {
+                      const Icon = DETAIL_ICONS[icon] ?? DETAIL_ICONS.MapPin;
+                      return (
+                        <li key={i} className="flex items-center gap-3.5 text-sm text-ink/80 sm:text-base">
+                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f9e3cf] text-copper shadow-inner">
+                            <Icon className="h-5 w-5" strokeWidth={1.7} />
+                          </span>
+                          {text}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ))}
+              </div>
 
               <div className="hidden flex-col gap-3 sm:flex sm:flex-row lg:flex-col">
-                <a
-                  href="#visit"
-                  className="btn-shimmer group inline-flex items-center justify-center gap-3 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
-                >
-                  Book a site visit
-                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-                </a>
+                {c.pd_btn_visit && (
+                  <a
+                    href="#visit"
+                    className="btn-shimmer group inline-flex items-center justify-center gap-3 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+                  >
+                    {c.pd_btn_visit}
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                  </a>
+                )}
                 <a
                   href={phoneHref(c.contact_phone)}
                   className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-copper/40 px-7 py-3.5 text-sm font-semibold text-copper-dark transition hover:bg-copper hover:text-white"
@@ -192,36 +250,13 @@ export default async function PropertyPage({ params }) {
       </section>
 
       {/* jump to a part of the page, stays under the menu while you scroll (laptops) */}
-      <nav
-        aria-label="On this page"
-        className="sticky top-[76px] z-30 mt-10 hidden border-y border-black/5 bg-white/90 backdrop-blur-md lg:block"
-      >
-        <ul className="container-x flex gap-2 py-3 lg:!max-w-none lg:!px-[4.2vw]">
-          {[
-            ["#photos", "Photos"],
-            ...(paragraphs.length ? [["#about", "About"]] : []),
-            ...(highlights.length ? [["#why", "Highlights"]] : []),
-            ...(specs.length ? [["#details", "Key details"]] : []),
-            ...(amenities.length ? [["#facilities", "Facilities"]] : []),
-            ["#visit", "Book a visit"],
-          ].map(([href, label]) => (
-            <li key={href}>
-              <a
-                href={href}
-                className="inline-flex rounded-full px-4 py-2 text-sm font-medium text-ink/70 transition hover:bg-copper/10 hover:text-copper-dark"
-              >
-                {label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <PropertyTabs items={tabs} />
 
       {/* the photos */}
-      <section id="photos" className="scroll-mt-36 bg-cream pt-8 sm:pt-10">
+      <section id="photos" className="scroll-mt-36 lg:scroll-mt-52 bg-cream pt-8 sm:pt-10">
         <div className="container-x lg:!max-w-none lg:!px-[4.2vw]">
           <Reveal>
-            <PropertyGallery images={images} title={p.title} />
+            <PropertyGallery images={images} title={p.title} allLabel={c.pd_photos_all} moreLabel={c.pd_photos_more} />
           </Reveal>
         </div>
       </section>
@@ -232,9 +267,10 @@ export default async function PropertyPage({ params }) {
           <div className="space-y-12">
             {paragraphs.length > 0 && (
               <Reveal>
-                <h2 id="about" className="scroll-mt-36 font-display text-3xl font-bold text-ink sm:text-4xl">
-                  About this <span className="text-copper">property</span>
+                <h2 id="about" className="scroll-mt-36 lg:scroll-mt-52 font-display text-3xl font-bold text-ink sm:text-4xl">
+                  {c.pd_about_1} <span className="text-copper">{c.pd_about_accent}</span>
                 </h2>
+                <span className="mt-3 block h-0.5 w-12 rounded-full bg-copper/70" />
                 <div className="mt-5 space-y-4 text-base leading-relaxed text-ink/75 sm:text-[17px]">
                   {paragraphs.map((t, i) => (
                     <p key={i}>{t}</p>
@@ -245,17 +281,18 @@ export default async function PropertyPage({ params }) {
 
             {highlights.length > 0 && (
               <Reveal>
-                <h2 id="why" className="scroll-mt-36 font-display text-3xl font-bold text-ink sm:text-4xl">
-                  Why you will <span className="text-copper">like it</span>
+                <h2 id="why" className="scroll-mt-36 lg:scroll-mt-52 font-display text-3xl font-bold text-ink sm:text-4xl">
+                  {c.pd_why_1} <span className="text-copper">{c.pd_why_accent}</span>
                 </h2>
+                <span className="mt-3 block h-0.5 w-12 rounded-full bg-copper/70" />
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                   {highlights.map((t, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3.5 rounded-2xl bg-white p-4 text-[15px] leading-snug text-ink/80 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.4)] ring-1 ring-black/5"
+                      className="flex items-center gap-4 rounded-2xl bg-white p-4 text-[15px] leading-snug text-ink/80 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.4)] ring-1 ring-black/5"
                     >
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-copper-light to-copper-dark text-white">
-                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30 ring-4 ring-copper/15">
+                        <Check className="h-4 w-4" strokeWidth={3} />
                       </span>
                       {t}
                     </li>
@@ -266,9 +303,10 @@ export default async function PropertyPage({ params }) {
 
             {specs.length > 0 && (
               <Reveal>
-                <h2 id="details" className="scroll-mt-36 font-display text-3xl font-bold text-ink sm:text-4xl">
-                  Key <span className="text-copper">details</span>
+                <h2 id="details" className="scroll-mt-36 lg:scroll-mt-52 font-display text-3xl font-bold text-ink sm:text-4xl">
+                  {c.pd_details_1} <span className="text-copper">{c.pd_details_accent}</span>
                 </h2>
+                <span className="mt-3 block h-0.5 w-12 rounded-full bg-copper/70" />
                 <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {specs.map(({ label, value }, i) => {
                     const Icon = specIcon(label);
@@ -293,30 +331,45 @@ export default async function PropertyPage({ params }) {
 
             {amenities.length > 0 && (
               <Reveal>
-                <h2 id="facilities" className="scroll-mt-36 font-display text-3xl font-bold text-ink sm:text-4xl">
-                  Facilities & <span className="text-copper">amenities</span>
-                </h2>
-                <ul className="mt-6 flex flex-wrap gap-3">
-                  {amenities.map((t, i) => (
-                    <li
-                      key={i}
-                      className="inline-flex items-center gap-2.5 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-ink/80 shadow-sm ring-1 ring-black/5"
-                    >
-                      <Check className="h-4 w-4 text-copper" strokeWidth={2.5} />
-                      {t}
-                    </li>
-                  ))}
+                {c.pd_amen_label && (
+                  <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-ink/60">
+                    <span className="h-3.5 w-px bg-copper" />
+                    {c.pd_amen_label}
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <h2 id="facilities" className="scroll-mt-36 lg:scroll-mt-52 font-display text-3xl font-bold text-ink sm:text-4xl">
+                    {c.pd_amen_title_1} <span className="text-copper">{c.pd_amen_title_accent}</span>
+                  </h2>
+                  {c.pd_amen_text && <p className="max-w-sm text-sm leading-relaxed text-ink/65">{c.pd_amen_text}</p>}
+                </div>
+                <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                  {amenities.map((t, i) => {
+                    const Icon = amenityIcon(t);
+                    return (
+                      <li
+                        key={i}
+                        className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-[15px] font-medium text-ink/85 shadow-[0_10px_26px_-18px_rgba(60,35,15,0.4)] ring-1 ring-black/5"
+                      >
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e5efe1] text-[#2f6b3a]">
+                          <Icon className="h-5 w-5" strokeWidth={1.7} />
+                        </span>
+                        {t}
+                      </li>
+                    );
+                  })}
                 </ul>
               </Reveal>
             )}
           </div>
 
-          <aside id="visit" className="scroll-mt-36">
+          <aside id="visit" className="scroll-mt-36 lg:scroll-mt-52">
             <div className="lg:sticky lg:top-28">
               <Reveal delay={100}>
                 <PropertyEnquiry
-                  title={p.title}
-                  interest={INTEREST[p.category] ?? "Something else"}
+                  t={form}
+                  interest={p.title}
+                  message={fill(c.pd_form_message, vars)}
                   price={p.price}
                   unit={p.unit}
                   phone={c.contact_phone}
@@ -330,25 +383,12 @@ export default async function PropertyPage({ params }) {
       </section>
 
       {/* more to see */}
-      {related.length > 0 && (
-        <section className="bg-gradient-to-b from-cream to-[#f6ecdc] pb-16 sm:pb-20">
+      {isOn(c.pd_show_more) && related.length > 0 && (
+        <section className="bg-gradient-to-b from-cream to-[#f6ecdc] pb-12 pt-4 sm:pb-16">
           <div className="container-x lg:!max-w-none lg:!px-[4.2vw]">
-            <Reveal className="flex items-end justify-between gap-4">
-              <h2 className="font-display text-3xl font-bold text-ink sm:text-4xl">
-                More <span className="text-copper">properties</span>
-              </h2>
-              <a href="/properties" className="group hidden items-center gap-2 text-sm font-semibold text-copper-dark sm:inline-flex">
-                See all
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-              </a>
+            <Reveal>
+              <RelatedProperties c={c} items={related} />
             </Reveal>
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
-              {related.map((x, i) => (
-                <Reveal key={x.id} delay={i * 100} className="h-full">
-                  <PropertyCard p={x} />
-                </Reveal>
-              ))}
-            </div>
           </div>
         </section>
       )}
@@ -360,12 +400,12 @@ export default async function PropertyPage({ params }) {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.25)] backdrop-blur-md lg:hidden">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[11px] text-ink/55">{p.unit || "Price"}</p>
+            <p className="truncate text-[11px] text-ink/55">{p.unit || c.pd_price_label}</p>
             <p className="truncate text-xl font-extrabold tabular-nums text-copper-dark">{p.price}</p>
           </div>
           <a
             href={phoneHref(c.contact_phone)}
-            aria-label="Call us"
+            aria-label={c.pd_form_call}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-copper/40 text-copper-dark transition active:bg-copper active:text-white"
           >
             <Phone className="h-5 w-5" />
@@ -374,7 +414,7 @@ export default async function PropertyPage({ params }) {
             href={`https://wa.me/${wa}?text=${waText}`}
             target="_blank"
             rel="noreferrer"
-            aria-label="WhatsApp"
+            aria-label={c.pd_form_wa}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#25d366]/15 text-[#128c4a] transition active:bg-[#25d366] active:text-white"
           >
             <MessageCircle className="h-5 w-5" />
@@ -383,7 +423,7 @@ export default async function PropertyPage({ params }) {
             href="#visit"
             className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 text-sm font-semibold text-white shadow-md shadow-copper/30"
           >
-            Book visit
+            {c.pd_bar_book}
           </a>
         </div>
       </div>

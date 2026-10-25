@@ -22,6 +22,7 @@ import {
   Plus,
   Search,
   Table,
+  Tags,
   Trash2,
   X,
 } from "lucide-react";
@@ -29,8 +30,9 @@ import {
   deleteProperty,
   moveProperty,
   setPropertyActive,
+  setPropertyHome,
 } from "@/actions/admin/properties";
-import { CATEGORIES, DETAIL_ICONS } from "@/lib/icons";
+import { DETAIL_ICONS } from "@/lib/icons";
 import { BarsArt, ClipboardArt, HouseArt, HourglassArt, PeopleArt } from "@/components/dashboard/StatArt";
 import ConfirmDialog from "../ConfirmDialog";
 import Select from "../Select";
@@ -65,7 +67,7 @@ function Stat({ icon: Icon, art: Art, label, value, note, theme }) {
   );
 }
 
-export default function PropertiesManager({ properties }) {
+export default function PropertiesManager({ properties, categories = [] }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(null);
   const [search, setSearch] = useState("");
@@ -106,6 +108,7 @@ export default function PropertiesManager({ properties }) {
     });
 
   const live = properties.filter((p) => p.is_active).length;
+  const onHome = properties.filter((p) => p.is_active && p.show_on_home !== false).length;
   const needAttention = properties.filter((p) => completeness(p).done < 4).length;
   const photos = properties.reduce((t, p) => t + (p.image_url ? 1 : 0) + arr(p.gallery).length, 0);
 
@@ -135,7 +138,7 @@ export default function PropertiesManager({ properties }) {
       art: BarsArt,
       label: "Live on website",
       value: live,
-      note: "customers can see these",
+      note: `${onHome} on the home page`,
       theme: { bg: "from-[#dff5e8] to-[#f5fcf8]", ring: "ring-emerald-300/30", chip: "bg-emerald-200/80 text-emerald-700", art: "text-emerald-500" },
     },
     {
@@ -258,6 +261,15 @@ export default function PropertiesManager({ properties }) {
                       />
                       <span className="text-xs font-semibold text-ink/55">{p.is_active ? "Live" : "Hidden"}</span>
                     </label>
+                    <label className="flex items-center gap-2">
+                      <Switch
+                        checked={p.show_on_home !== false}
+                        disabled={pending}
+                        label="Show on the home page"
+                        onChange={(v) => run(() => setPropertyHome(p.id, v))}
+                      />
+                      <span className="text-xs font-semibold text-ink/55">Home</span>
+                    </label>
 
                     <div className="ml-auto flex items-center gap-1.5">
                       <button
@@ -337,7 +349,7 @@ export default function PropertiesManager({ properties }) {
           onChange={setCategory}
           ariaLabel="Filter by type"
           menuMinWidth={210}
-          options={[{ value: "all", label: "All types" }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]}
+          options={[{ value: "all", label: "All types" }, ...categories.map((c) => ({ value: c.name, label: c.name }))]}
         />
         <Select
           wrapperClassName="xl:w-[170px]"
@@ -377,6 +389,9 @@ export default function PropertiesManager({ properties }) {
               </button>
             ))}
           </div>
+          <a href="/admin/properties/categories" className={`${btnGhost} !rounded-2xl !px-5 !py-3`}>
+            <Tags className="h-4 w-4" /> Types
+          </a>
           <a href="/admin/properties/new" className={`${btnPrimary} !rounded-2xl !px-5 !py-3`}>
             <Plus className="h-4 w-4" /> Add property
           </a>
@@ -407,6 +422,7 @@ export default function PropertiesManager({ properties }) {
                       <th className={`${th} hidden xl:table-cell`}>Photos</th>
                       <th className={`${th} hidden xl:table-cell`}>Page filled</th>
                       <th className={th}>Live</th>
+                      <th className={th}>Home page</th>
                       <th className={`${th} pr-6 text-right`}>Actions</th>
                     </tr>
                   </thead>
@@ -494,6 +510,14 @@ export default function PropertiesManager({ properties }) {
                                 {p.is_active ? "Live" : "Hidden"}
                               </span>
                             </div>
+                          </td>
+                          <td className="px-3 py-4">
+                            <Switch
+                              checked={p.show_on_home !== false}
+                              disabled={pending}
+                              label={`Show ${p.title} on the home page`}
+                              onChange={(v) => run(() => setPropertyHome(p.id, v))}
+                            />
                           </td>
                           <td className="py-4 pl-3 pr-6">
                             <div className="flex items-center justify-end gap-2">

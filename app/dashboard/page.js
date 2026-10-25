@@ -23,6 +23,7 @@ import ReferralCard from "@/components/dashboard/ReferralCard";
 import { getCurrentPartner, getNetwork, initials } from "@/lib/profile";
 import { referralLink } from "@/lib/referral";
 import { getPartnerCommission } from "@/lib/commission";
+import { getRankChart } from "@/lib/plan";
 import { fmtPoints } from "@/lib/points";
 
 const quickActions = [
@@ -335,6 +336,7 @@ export default async function DashboardOverview() {
           {/* Growth path: the rank ladder from the partner plan */}
           <Reveal>
             <GrowthPath
+              chart={await getRankChart()}
               currentRank={currentRank}
               mins={comm?.plan.map((r) => r.minArea) ?? []}
               teamArea={comm?.teamArea ?? 0}

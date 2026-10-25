@@ -41,7 +41,8 @@ import {
 import { getCurrentPartner } from "@/lib/profile";
 import { getPartnerCommission } from "@/lib/commission";
 import { fmtArea, fmtDate, fmtPoints } from "@/lib/points";
-import { rankTiers, ranks as rankArt } from "@/lib/data";
+import { rankTiers } from "@/lib/data";
+import { rewardIcon } from "@/lib/rankIcons";
 
 export const metadata = { title: "Commission | Bhoomidar" };
 
@@ -75,9 +76,9 @@ export default async function CommissionPage() {
 
   const c = await getPartnerCommission(partner.user.id);
   const rankIndex = Math.max(0, (c.rank?.no ?? 1) - 1);
-  const RankIcon = rankArt[rankIndex]?.icon ?? Trophy;
-  const tier = rankTiers[rankIndex] ?? rankTiers[0];
-  const nextTier = c.next ? rankTiers[c.next.no - 1] : tier;
+  const RankIcon = c.rank?.icon ? rewardIcon(c.rank.icon) : Trophy;
+  const tier = rankTiers[rankIndex % rankTiers.length];
+  const nextTier = c.next ? rankTiers[(c.next.no - 1) % rankTiers.length] : tier;
 
   // Where the points came from.
   const sum = (kinds) => c.ledger.filter((e) => kinds.includes(e.kind)).reduce((t, e) => t + e.points, 0);
@@ -396,7 +397,7 @@ export default async function CommissionPage() {
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           {[
             { icon: Coins, art: BarsArt, value: fmtPoints(c.earned), label: "Total earned", hint: "All the points you have earned so far.", bg: "from-[#e1f7ec] to-white", chip: "bg-emerald-100 text-emerald-600", artTone: "text-emerald-500" },
-            { icon: Wallet, art: Wallet, value: fmtPoints(c.paid), label: "Already paid to you", hint: "Points our team has already paid you.", bg: "from-[#ffeadf] to-white", chip: "bg-[#fdd9c6] text-copper", artTone: "text-copper" },
+            { icon: Wallet, art: Wallet, value: fmtPoints(c.paid), label: "Points redeemed", hint: "Points our team has already paid you.", bg: "from-[#ffeadf] to-white", chip: "bg-[#fdd9c6] text-copper", artTone: "text-copper" },
             { icon: Users, art: BarsArt, value: `${fmtArea(c.teamArea)} sq. yd`, label: "Land sold by team", hint: "Land sold by you and your whole team.", bg: "from-[#e4f0ff] to-white", chip: "bg-sky-100 text-sky-600", artTone: "text-sky-500" },
             { icon: Star, art: Crown, value: fmtPoints(monthPoints), label: "Current month points", hint: "Points you earned this month.", bg: "from-[#efe8ff] to-white", chip: "bg-violet-100 text-violet-600", artTone: "text-violet-500" },
           ].map(({ icon: Icon, art: Art, value, label, hint, bg, chip, artTone }) => (
@@ -518,7 +519,7 @@ export default async function CommissionPage() {
             <h2 className="font-display text-3xl font-bold text-ink sm:text-4xl">
               Points <span className="text-copper">history</span>
             </h2>
-            <p className="mt-1.5 text-sm text-ink/55 sm:text-base">Every point that came in or was paid to you, newest first.</p>
+            <p className="mt-1.5 text-sm text-ink/55 sm:text-base">Every point that came in or was redeemed, newest first.</p>
           </div>
           <div className="relative mt-6">
             <PointsHistory rows={timeline} />

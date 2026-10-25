@@ -14,6 +14,7 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
   const ACTIVATION_FEE_TEXT = formatRupees(fee);
   const [mode, setMode] = useState("UPI");
   const [reference, setReference] = useState("");
+  const [amount, setAmount] = useState(String(fee ?? ""));
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
@@ -21,7 +22,7 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
     e.preventDefault();
     start(async () => {
       const note = reference.trim() ? `${mode} · ${reference.trim()}` : mode;
-      const res = await activatePartner(partner.id, note);
+      const res = await activatePartner(partner.id, note, amount);
       if (!res.success) return setError(res.error);
       onDone();
     });
@@ -37,8 +38,25 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
           </div>
           <div className="shrink-0 text-right leading-tight">
             <p className="text-xs text-ink/55">Joining payment</p>
-            <p className="mt-1 font-display text-2xl font-bold text-copper">{ACTIVATION_FEE_TEXT}</p>
+            <p className="mt-1 text-2xl font-extrabold tabular-nums text-copper">{ACTIVATION_FEE_TEXT}</p>
           </div>
+        </div>
+
+        <div>
+          <label className={labelCls} htmlFor="payment-amount">
+            Amount received (₹)
+          </label>
+          <input
+            id="payment-amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+            inputMode="numeric"
+            placeholder={String(fee ?? "")}
+            className={inputCls}
+          />
+          <p className="mt-1.5 text-xs text-ink/50">
+            Change it if the partner paid a different amount. It is saved with the partner.
+          </p>
         </div>
 
         <div>
@@ -86,7 +104,7 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
             Cancel
           </button>
           <button type="submit" disabled={pending} className={btnPrimary}>
-            {pending ? "Saving..." : `Mark ${ACTIVATION_FEE_TEXT} as paid`}
+            {pending ? "Saving..." : `Mark ${Number(amount) > 0 ? formatRupees(Number(amount)) : ACTIVATION_FEE_TEXT} as paid`}
           </button>
         </div>
       </form>

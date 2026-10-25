@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Building2, Castle, Home, LandPlot, Wheat } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, LayoutGrid } from "lucide-react";
 import Reveal from "./Reveal";
 import PropertyCard from "./PropertyCard";
+import { categoryTabs } from "@/lib/icons";
 
-const TABS = [
-  { label: "Residential", icon: Home },
-  { label: "Commercial", icon: Building2 },
-  { label: "Farm Land", icon: Wheat },
-  { label: "Plots", icon: LandPlot },
-  { label: "Villas", icon: Castle },
-];
+export default function Properties({ c, properties, categories }) {
+  const [active, setActive] = useState("All");
 
-export default function Properties({ c, properties }) {
-  const [active, setActive] = useState("Residential");
+  // Tabs come from the properties in the database, not from a fixed list.
+  const tabs = useMemo(
+    () => [
+      { id: "All", label: "All", icon: LayoutGrid, count: properties.length },
+      ...categoryTabs(properties, categories),
+    ],
+    [properties, categories],
+  );
+
+  const shown = active === "All" ? properties : properties.filter((p) => p.category === active);
 
   return (
     <section id="properties" className="bg-cream py-16 lg:py-20">
@@ -45,29 +49,36 @@ export default function Properties({ c, properties }) {
           </div>
         </Reveal>
 
-        <Reveal
-          delay={100}
-          className="no-scrollbar -mx-6 mt-8 flex gap-3 overflow-x-auto px-6 pb-1 sm:mx-0 sm:mt-10 sm:flex-wrap sm:overflow-visible sm:px-0"
-        >
-          {TABS.map(({ label, icon: Icon }) => (
-            <button
-              key={label}
-              onClick={() => setActive(label)}
-              className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-5 py-2.5 text-sm font-medium transition ${
-                active === label
-                  ? "border-copper-dark bg-copper-dark text-white shadow-md"
-                  : "border-black/10 bg-white/60 text-ink/80 hover:border-copper hover:text-copper"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </Reveal>
+        {tabs.length > 2 && (
+          <Reveal
+            delay={100}
+            className="no-scrollbar -mx-6 mt-8 flex gap-3 overflow-x-auto px-6 pb-1 sm:mx-0 sm:mt-10 sm:flex-wrap sm:overflow-visible sm:px-0"
+          >
+            {tabs.map(({ id, label, icon: Icon, count }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActive(id)}
+                aria-pressed={active === id}
+                className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-5 py-2.5 text-sm font-medium transition ${
+                  active === id
+                    ? "border-copper-dark bg-copper-dark text-white shadow-md"
+                    : "border-black/10 bg-white/60 text-ink/80 hover:border-copper hover:text-copper"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+                <span className={`tabular-nums ${active === id ? "text-white/75" : "text-ink/40"}`}>
+                  {count}
+                </span>
+              </button>
+            ))}
+          </Reveal>
+        )}
 
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-          {properties.map((p, i) => (
-            <Reveal key={p.id} delay={i * 100} className="h-full">
+          {shown.map((p, i) => (
+            <Reveal key={p.id} delay={(i % 4) * 100} className="h-full">
               <PropertyCard p={p} />
             </Reveal>
           ))}

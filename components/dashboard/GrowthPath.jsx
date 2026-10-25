@@ -19,7 +19,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { ranks } from "@/lib/data";
+import { rewardIcon } from "@/lib/rankIcons";
 import { fmtArea } from "@/lib/points";
 
 // Icon, colours and number colour of each rank card, in the order of the ranks.
@@ -70,7 +70,7 @@ function RankArt({ className = "" }) {
 // The rank ladder of the partner plan. Ranks already reached are filled in, the
 // current one is outlined, and the next target shows how far away it is.
 // `mins` is the area each rank starts at; `next` is null at the top rank.
-export default function GrowthPath({ currentRank, teamArea, next, mins }) {
+export default function GrowthPath({ chart: ranks, currentRank, teamArea, next, mins }) {
   const track = useRef(null);
 
   // Open with the partner's own rank in view.
@@ -192,7 +192,7 @@ export default function GrowthPath({ currentRank, teamArea, next, mins }) {
         {ranks.map((r, i) => {
           const look = LOOKS[i] ?? LOOKS[0];
           const Icon = look.icon;
-          const RewardIcon = i === 0 ? Gift : r.icon;
+          const RewardIcon = i === 0 ? Gift : rewardIcon(r.icon);
           const here = i === currentRank;
           const passed = i < currentRank;
           return (

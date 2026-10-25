@@ -42,13 +42,19 @@ export async function setPartnerActive(id, isActive) {
 }
 
 // The partner has paid the joining fee: switch the account on. Works at any time.
-export async function activatePartner(id, note) {
+export async function activatePartner(id, note, amount) {
   await requireAdmin();
+  // The amount the partner really paid. Left empty, it is the joining payment set on the Payment Details page.
+  const typed = Math.round(Number(String(amount ?? "").replace(/[^0-9.]/g, "")));
+  if (amount !== undefined && amount !== "" && (!Number.isFinite(typed) || typed < 0 || typed > 100000000)) {
+    return { success: false, error: "Enter the amount in rupees, numbers only." };
+  }
+  const paid = typed > 0 ? typed : (await getPayment()).amount;
   const { error } = await createAdminClient()
     .from("profiles")
     .update({
       activated_at: new Date().toISOString(),
-      activation_amount: (await getPayment()).amount,
+      activation_amount: paid,
       activation_note: String(note ?? "").trim().slice(0, 200) || null,
     })
     .eq("id", id);

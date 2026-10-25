@@ -4,7 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTENT_TAG } from "@/lib/content";
-import { CATEGORIES, DETAIL_ICONS } from "@/lib/icons";
+import { DEFAULT_CATEGORIES, DETAIL_ICONS } from "@/lib/icons";
 
 function refreshSite() {
   updateTag(CONTENT_TAG);
@@ -32,13 +32,15 @@ const lines = (v, count, max) =>
     .filter(Boolean)
     .slice(0, count);
 
-function parse(input) {
+// `categoryNames`: the types the admin has made (Admin > Properties > Types).
+function parse(input, categoryNames) {
   const title = clean(input.title, 120);
   const price = clean(input.price, 60);
   if (!title) return { error: "Title is required." };
   if (!price) return { error: "Price is required." };
 
-  const category = CATEGORIES.includes(input.category) ? input.category : CATEGORIES[0];
+  const category = categoryNames.includes(input.category) ? input.category : categoryNames[0];
+  if (!category) return { error: "Add a property type first (Properties > Types)." };
   const details = (Array.isArray(input.details) ? input.details : [])
     .map((d) => ({
       icon: d?.icon in DETAIL_ICONS ? d.icon : "MapPin",
@@ -67,6 +69,8 @@ function parse(input) {
         .filter((s) => s.label && s.value)
         .slice(0, 12),
       map_url: /^https:\/\//.test(clean(input.map_url, 500)) ? clean(input.map_url, 500) : null,
+      show_on_home: input.show_on_home !== false,
+      banner_url: safeUrl(input.banner_url) || null,
     },
     slugWanted: slugify(input.slug) || slugify(title),
   };
@@ -91,10 +95,14 @@ export async function getPropertyById(id) {
 // Creates a property when input.id is empty, otherwise updates it.
 export async function saveProperty(input) {
   await requireAdmin();
-  const { row, slugWanted, error: invalid } = parse(input ?? {});
+  const db = createAdminClient();
+  const { data: cats } = await db.from("property_categories").select("name").order("display_order", { ascending: true });
+  // an unreadable table (not set up yet) falls back to the starting types; an empty one means none
+  const categoryNames = (cats ?? DEFAULT_CATEGORIES).map((c) => c.name);
+
+  const { row, slugWanted, error: invalid } = parse(input ?? {}, categoryNames);
   if (invalid) return { success: false, error: invalid };
 
-  const db = createAdminClient();
   let error;
 
   // The page address must be unique: add -2, -3 ... if another property already has it.
@@ -133,6 +141,18 @@ export async function setPropertyActive(id, isActive) {
   const { error } = await createAdminClient()
     .from("properties")
     .update({ is_active: !!isActive })
+    .eq("id", id);
+  if (error) return { success: false, error: "Could not update." };
+  refreshSite();
+  return { success: true };
+}
+
+// Shows or hides a property on the home page (the Properties page is not affected).
+export async function setPropertyHome(id, show) {
+  await requireAdmin();
+  const { error } = await createAdminClient()
+    .from("properties")
+    .update({ show_on_home: !!show })
     .eq("id", id);
   if (error) return { success: false, error: "Could not update." };
   refreshSite();

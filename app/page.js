@@ -5,21 +5,27 @@ import Testimonials from "@/components/Testimonials";
 import Faq from "@/components/Faq";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
-import { getContent, getFaqs, getProperties, getTestimonials } from "@/lib/content";
+import { getCategories, getContent, getFaqs, getProperties, getTestimonials } from "@/lib/content";
 import { isOn } from "@/lib/siteContent";
 
 export default async function Home() {
-  const [c, properties, testimonials, faqs] = await Promise.all([
+  const [c, properties, categories, testimonials, faqs] = await Promise.all([
     getContent(),
     getProperties(),
+    getCategories(),
     getTestimonials(),
     getFaqs(),
   ]);
 
+  // The admin picks which properties are listed here (Properties page shows all).
+  const homeProperties = properties.filter((p) => p.show_on_home !== false);
+
   return (
     <main>
       <Hero c={c} />
-      {isOn(c.show_properties) && <Properties c={c} properties={properties} />}
+      {isOn(c.show_properties) && homeProperties.length > 0 && (
+        <Properties c={c} properties={homeProperties} categories={categories} />
+      )}
       {isOn(c.show_why) && <WhyChoose c={c} />}
       {isOn(c.show_testimonials) && <Testimonials c={c} testimonials={testimonials} />}
       {isOn(c.show_home_faq) && faqs.length > 0 && <Faq c={c} faqs={faqs} />}

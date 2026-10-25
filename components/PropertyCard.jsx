@@ -1,13 +1,13 @@
 import Image from "next/image";
 import { ArrowRight, Home } from "lucide-react";
-import { CATEGORY_ICONS, DETAIL_ICONS } from "@/lib/icons";
+import { DETAIL_ICONS, categoryIcon } from "@/lib/icons";
 
 // "Hot Deal" is red, every other badge ("New Launch", ...) is orange.
 const badgeTone = (text) => (/hot/i.test(text) ? "bg-[#e5473d]" : "bg-[#f07b3f]");
 
 // One property card. Used on the home page and on the Properties page.
 export default function PropertyCard({ p }) {
-  const CategoryIcon = CATEGORY_ICONS[p.category] ?? Home;
+  const CategoryIcon = categoryIcon(p);
   // Properties with a page go there; the built-in samples (no page) go to the contact page.
   const href = p.slug ? `/properties/${p.slug}` : "/contact";
 

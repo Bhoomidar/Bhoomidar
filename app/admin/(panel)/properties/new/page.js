@@ -2,10 +2,12 @@ import { ArrowLeft } from "lucide-react";
 import PageHeader from "@/components/admin/PageHeader";
 import { PropertyPageForm } from "@/components/admin/PropertyForm";
 import { card } from "@/components/admin/ui";
+import { getCategoryRows } from "@/actions/admin/categories";
 
 export const metadata = { title: "Add property" };
 
-export default function NewPropertyPage() {
+export default async function NewPropertyPage() {
+  const categories = await getCategoryRows();
   return (
     <div className="space-y-6">
       <a
@@ -24,7 +26,7 @@ export default function NewPropertyPage() {
       />
 
       <div className={card}>
-        <PropertyPageForm initial={{}} />
+        <PropertyPageForm initial={{}} categories={categories} />
       </div>
     </div>
   );

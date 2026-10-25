@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 
-// Photos of a property: a big one with small ones beside it, and a full screen viewer
+// Photos of a property: all in one square size, and a full screen viewer
 // (arrows, keyboard, swipe-friendly thumbnails) that opens on a click.
-export default function PropertyGallery({ images, title }) {
+export default function PropertyGallery({ images, title, allLabel = "", moreLabel = "" }) {
   const [open, setOpen] = useState(-1);
   const n = images.length;
 
@@ -30,12 +30,9 @@ export default function PropertyGallery({ images, title }) {
 
   if (n === 0) return null;
 
-  // How the big photo and the small ones share the grid on a laptop.
-  const shownSmall = Math.min(n - 1, 4);
-  const mainSpan = n === 1 ? "lg:col-span-4" : n === 2 ? "lg:col-span-3" : "lg:col-span-2";
-  // The small photos fill the right half without leaving a hole: with four photos the last one runs across.
-  const smallSpanOf = (k) =>
-    n === 2 ? "lg:col-span-1 lg:row-span-2" : n === 3 ? "lg:col-span-2" : n === 4 && k === 2 ? "lg:col-span-2" : "";
+  // Every photo is a square, so they all line up: rows of four on a laptop, two rows at most.
+  const MAX_SHOWN = 8;
+  const shown = Math.min(n, MAX_SHOWN);
 
   const tile = (i, cls, sizes) => (
     <button
@@ -54,10 +51,10 @@ export default function PropertyGallery({ images, title }) {
         className="object-cover transition duration-700 group-hover:scale-105"
       />
       <span className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10" />
-      {i === 0 && (
+      {i === 0 && allLabel && (
         <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-black/55 px-4 py-2 text-xs font-semibold text-white backdrop-blur">
           <Expand className="h-3.5 w-3.5" />
-          View all {n} photos
+          {allLabel.replace("{n}", n)}
         </span>
       )}
     </button>
@@ -65,26 +62,24 @@ export default function PropertyGallery({ images, title }) {
 
   return (
     <>
-      {/* phones: one big photo and a strip under it */}
+      {/* phones: one big square photo and a strip of small squares under it */}
       <div className="lg:hidden">
-        {tile(0, "block aspect-[4/3] w-full", "100vw")}
+        {tile(0, "block aspect-square w-full", "100vw")}
         {n > 1 && (
           <div className="no-scrollbar -mx-6 mt-3 flex gap-3 overflow-x-auto px-6">
             {images.slice(1).map((_, k) =>
-              tile(k + 1, "h-20 w-28 shrink-0 sm:h-24 sm:w-36", "150px"),
+              tile(k + 1, "aspect-square h-20 w-20 shrink-0 sm:h-24 sm:w-24", "150px"),
             )}
           </div>
         )}
       </div>
 
-      {/* laptops: a grid */}
-      <div className="hidden h-[min(34rem,62vh)] grid-cols-4 grid-rows-2 gap-3 lg:grid">
-        {tile(0, `row-span-2 ${mainSpan}`, "50vw")}
-        {Array.from({ length: shownSmall }, (_, k) => {
-          const i = k + 1;
-          const last = k === 3 && n > 5;
+      {/* laptops: a grid of squares */}
+      <div className="hidden grid-cols-4 gap-3 lg:grid">
+        {Array.from({ length: shown }, (_, i) => {
+          const last = i === MAX_SHOWN - 1 && n > MAX_SHOWN;
           return (
-            <div key={i} className={`relative ${smallSpanOf(k)}`}>
+            <div key={i} className="relative aspect-square">
               {tile(i, "absolute inset-0 h-full w-full", "25vw")}
               {last && (
                 <button
@@ -92,7 +87,7 @@ export default function PropertyGallery({ images, title }) {
                   onClick={() => setOpen(i)}
                   className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60 text-lg font-semibold text-white backdrop-blur-[2px]"
                 >
-                  +{n - 5} more
+                  {moreLabel.replace("{n}", n - MAX_SHOWN + 1)}
                 </button>
               )}
             </div>
@@ -166,11 +161,11 @@ export default function PropertyGallery({ images, title }) {
                   type="button"
                   onClick={() => setOpen(i)}
                   aria-label={`Photo ${i + 1}`}
-                  className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 transition ${
+                  className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg ring-2 transition ${
                     i === open ? "ring-copper-light" : "opacity-60 ring-transparent hover:opacity-100"
                   }`}
                 >
-                  <Image src={src} alt="" fill sizes="96px" className="object-cover" />
+                  <Image src={src} alt="" fill sizes="64px" className="object-cover" />
                 </button>
               ))}
             </div>

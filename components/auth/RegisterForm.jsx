@@ -142,7 +142,7 @@ export default function RegisterForm({
   useEffect(() => {
     const code = ref.trim().toUpperCase();
     if (!code) return setRefCheck({ status: "idle" });
-    if (!/^[A-Z]{2}-\d{4,}$/.test(code)) return setRefCheck({ status: "typing" });
+    if (!/^[A-Z]{2,5}-\d{4,}$/.test(code)) return setRefCheck({ status: "typing" });
     if (refCheck.status === "valid" && refCheck.code === code) return;
     if (code === refCode && referrerName) {
       return setRefCheck({ status: "valid", name: referrerName, code });
@@ -465,7 +465,7 @@ export default function RegisterForm({
               id="referral_code"
               name="referral_code"
               autoComplete="off"
-              maxLength={12}
+              maxLength={16}
               value={ref}
               onChange={(e) => setRef(e.target.value.toUpperCase())}
               placeholder="e.g. UP-8101"

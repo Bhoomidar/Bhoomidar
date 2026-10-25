@@ -4,8 +4,7 @@ import PropertiesGrid from "@/components/PropertiesGrid";
 import Reveal from "@/components/Reveal";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
-import { getContent, getProperties } from "@/lib/content";
-import { CATEGORIES } from "@/lib/icons";
+import { getCategories, getContent, getProperties } from "@/lib/content";
 import { isOn } from "@/lib/siteContent";
 
 export const metadata = {
@@ -14,21 +13,21 @@ export const metadata = {
     "Choose from land and property in the best locations. Plots, villas, farm land and commercial plots.",
 };
 
-const LABELS = { Villa: "Villas" };
-
 // Icons for the three small points in the "Cannot find what you need?" box.
 const HELP_ICONS = [Headset, FileText, Clock];
 
 export default async function PropertiesPage({ searchParams }) {
-  const [c, properties, params] = await Promise.all([getContent(), getProperties(), searchParams]);
+  const [c, properties, categories, params] = await Promise.all([
+    getContent(),
+    getProperties(),
+    getCategories(),
+    searchParams,
+  ]);
 
   // From the search box: /properties?q=noida&type=Villa
   const q = typeof params?.q === "string" ? params.q.slice(0, 80) : "";
-  const type = typeof params?.type === "string" && CATEGORIES.includes(params.type) ? params.type : "";
-  const types = CATEGORIES.filter((cat) => properties.some((p) => p.category === cat)).map((cat) => ({
-    id: cat,
-    label: LABELS[cat] ?? cat,
-  }));
+  const type =
+    typeof params?.type === "string" && properties.some((p) => p.category === params.type) ? params.type : "";
 
   return (
     <main>
@@ -40,7 +39,7 @@ export default async function PropertiesPage({ searchParams }) {
 
       <section id="listings" className="scroll-mt-4 bg-cream py-10 sm:py-14 lg:py-16">
         <div className="container-x lg:!max-w-none lg:!px-[4.2vw]">
-          <PropertiesGrid properties={properties} initialType={type || "All"} initialQuery={q} />
+          <PropertiesGrid properties={properties} categories={categories} initialType={type || "All"} initialQuery={q} />
         </div>
       </section>
 

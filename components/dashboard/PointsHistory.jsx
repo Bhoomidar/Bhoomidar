@@ -10,7 +10,7 @@ const TABS = [
   ["sales", "My sales", ["sale"]],
   ["team", "Team", ["team"]],
   ["bonus", "Bonus", ["monthly", "cto"]],
-  ["paid", "Paid to me", ["payout"]],
+  ["paid", "Redeemed", ["payout"]],
 ];
 
 const PAGE = 10;
@@ -18,7 +18,7 @@ const PAGE = 10;
 // What happened to the points: they came in, were paid out, or were taken back.
 const statusOf = (kind) =>
   kind === "payout"
-    ? { text: "Paid", tone: "bg-teal-100 text-teal-800" }
+    ? { text: "Redeemed", tone: "bg-teal-100 text-teal-800" }
     : kind === "reversal"
       ? { text: "Cancelled", tone: "bg-rose-100 text-rose-800" }
       : { text: "Credited", tone: "bg-emerald-100 text-emerald-800" };
