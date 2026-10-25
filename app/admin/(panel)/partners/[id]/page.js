@@ -125,7 +125,7 @@ function SectionHeader({ icon: Icon, title, note, right }) {
 
 function Section({ icon, title, note, children }) {
   return (
-    <section className={card}>
+    <section className={`${card} min-w-0`}>
       <SectionHeader icon={icon} title={title} note={note} />
       <ul className="mt-3 divide-y divide-black/5">{children}</ul>
     </section>
@@ -442,7 +442,7 @@ export default async function PartnerPage({ params }) {
 
       {/* Numbers */}
       <Reveal>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map(({ icon: Icon, art: Art, label, value, note, theme }) => (
             <div
               key={label}
@@ -468,7 +468,7 @@ export default async function PartnerPage({ params }) {
 
       {/* Details */}
       <Reveal>
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Section icon={UserRound} title="Personal details" note="Basic information and identity details.">
             <Row icon={UserRound} label="Full name">
               {p.full_name}
@@ -620,10 +620,10 @@ export default async function PartnerPage({ params }) {
                           className="h-12 w-12 text-base shadow-md shadow-copper/30 ring-2 ring-white"
                         />
                         <span className="min-w-0 flex-1 leading-tight">
-                          <span className="block truncate text-[15px] font-bold text-ink">{m.full_name || "—"}</span>
-                          <span className="mt-1 block truncate text-[13px] text-ink/55">{m.email}</span>
+                          <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">{m.full_name || "—"}</span>
+                          <span className="mt-1 block [overflow-wrap:anywhere] text-[13px] text-ink/55">{m.email}</span>
                           {(m.phone || place) && (
-                            <span className="mt-0.5 block truncate text-[13px] text-ink/55">
+                            <span className="mt-0.5 block [overflow-wrap:anywhere] text-[13px] text-ink/55">
                               {[m.phone, place].filter(Boolean).join(" · ")}
                             </span>
                           )}
@@ -670,12 +670,12 @@ export default async function PartnerPage({ params }) {
                             className="h-12 w-12 text-base shadow-md shadow-copper/30 ring-2 ring-white"
                           />
                           <span className="min-w-0 max-w-[230px] leading-tight">
-                            <span className="block truncate text-[15px] font-bold text-ink">{m.full_name || "—"}</span>
-                            <span className="mt-1 block truncate text-[13px] text-ink/55">
+                            <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">{m.full_name || "—"}</span>
+                            <span className="mt-1 block [overflow-wrap:anywhere] text-[13px] text-ink/55">
                               {[m.email, m.phone].filter(Boolean).join(" · ")}
                             </span>
                             {place && (
-                              <span className="mt-0.5 block truncate text-[13px] text-ink/55 xl:hidden">{place}</span>
+                              <span className="mt-0.5 block [overflow-wrap:anywhere] text-[13px] text-ink/55 xl:hidden">{place}</span>
                             )}
                           </span>
                         </a>

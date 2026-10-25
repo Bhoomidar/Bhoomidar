@@ -43,6 +43,7 @@ import { getPartnerCommission } from "@/lib/commission";
 import { fmtArea, fmtDate, fmtPoints } from "@/lib/points";
 import { rankTiers } from "@/lib/data";
 import { rewardIcon } from "@/lib/rankIcons";
+import RewardPic from "@/components/RewardPic";
 
 export const metadata = { title: "Commission | Bhoomidar" };
 
@@ -134,7 +135,7 @@ export default async function CommissionPage() {
       <Heading />
 
       {/* Balance, and where the points came from */}
-      <div className="fade-up relative z-10 grid gap-6 lg:grid-cols-2">
+      <div className="fade-up relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7 lg:min-h-[250px]">
           <CoinPileArt className="pointer-events-none absolute right-2 top-5 hidden h-48 w-64 sm:block" />
 
@@ -156,13 +157,13 @@ export default async function CommissionPage() {
         </section>
 
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
-          <ClipboardArt className="pointer-events-none absolute -bottom-3 -right-2 h-56 w-60 opacity-90" />
+          <ClipboardArt className="pointer-events-none absolute -bottom-3 -right-2 hidden h-56 w-60 opacity-90 sm:block" />
 
           <div className="relative flex items-center gap-3.5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-copper shadow-md ring-1 ring-black/5">
               <Clock className="h-5 w-5" />
             </span>
-            <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">Where your points came from</h2>
+            <h2 className="min-w-0 font-display text-xl font-bold text-ink sm:text-2xl">Where your points came from</h2>
           </div>
 
           {shareTotal > 0 ? (
@@ -180,14 +181,14 @@ export default async function CommissionPage() {
                     <span className={`h-3 w-3 shrink-0 rounded-full ${p.dot}`} />
                     <span className="min-w-0 leading-tight">
                       <span className="block text-sm font-extrabold tabular-nums text-ink">{fmtPoints(p.value)}</span>
-                      <span className="block truncate text-[11px] text-ink/55">{p.label}</span>
+                      <span className="block [overflow-wrap:anywhere] text-[11px] text-ink/55">{p.label}</span>
                     </span>
                   </li>
                 ))}
               </ul>
             </div>
           ) : (
-            <p className="relative mt-8 max-w-[24rem] text-sm leading-relaxed text-ink/60 sm:max-w-[58%]">
+            <p className="relative mt-5 max-w-[24rem] text-sm sm:mt-8 leading-relaxed text-ink/60 sm:max-w-[58%]">
               No points yet. When a sale made by you or your team is confirmed, you will see here exactly where your
               points came from.
             </p>
@@ -199,19 +200,19 @@ export default async function CommissionPage() {
       <Reveal>
         <section className={card}>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">
+            <h2 className="min-w-0 whitespace-nowrap font-display text-2xl font-bold text-ink sm:text-3xl">
               How you <span className="text-copper">earn</span>
             </h2>
             <a
               href="/opportunities#rewards"
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-copper-dark shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white hover:ring-copper"
+              className="group inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-copper-dark shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white hover:ring-copper sm:px-4"
             >
               Learn more
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </a>
           </div>
 
-          <ol className="mt-7 grid gap-x-3 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
+          <ol className="mt-6 grid grid-cols-1 gap-x-3 gap-y-7 sm:mt-7 sm:grid-cols-2 sm:gap-y-8 xl:grid-cols-4">
             {steps.map(({ icon: Icon, art: Art, title, text }, i) => (
               <li key={title} className="relative">
                 {/* the number, and a dotted arrow to the next one */}
@@ -225,13 +226,15 @@ export default async function CommissionPage() {
                   </span>
                 )}
 
-                <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#fff0e0] to-white px-5 pb-5 pt-9 ring-1 ring-copper/15">
-                  <Art className="pointer-events-none absolute right-3 top-5 h-28 w-28 text-copper/[0.17]" strokeWidth={1.1} />
-                  <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
-                    <Icon className="h-6 w-6" />
+                <div className="relative flex h-full items-start gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-[#fff0e0] to-white px-4 pb-4 pt-8 ring-1 ring-copper/15 sm:block sm:px-5 sm:pb-5 sm:pt-9">
+                  <Art className="pointer-events-none absolute -right-2 top-4 h-20 w-20 text-copper/[0.14] sm:right-3 sm:top-5 sm:h-28 sm:w-28 sm:text-copper/[0.17]" strokeWidth={1.1} />
+                  <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30 sm:h-14 sm:w-14">
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                   </span>
-                  <p className="relative mt-4 text-base font-bold text-ink">{title}</p>
-                  <p className="relative mt-1.5 max-w-[15rem] text-sm leading-relaxed text-ink/60">{text}</p>
+                  <div className="relative min-w-0 flex-1 sm:static">
+                    <p className="relative text-base font-bold text-ink sm:mt-4">{title}</p>
+                    <p className="relative mt-1 text-sm leading-relaxed text-ink/60 sm:mt-1.5 sm:max-w-[15rem]">{text}</p>
+                  </div>
                 </div>
               </li>
             ))}
@@ -241,7 +244,7 @@ export default async function CommissionPage() {
 
       {/* Rank and monthly bonus */}
       <Reveal>
-        <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.45fr_1fr]">
           {/* your rank */}
           <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
             <div
@@ -265,13 +268,13 @@ export default async function CommissionPage() {
               <div className="absolute inset-0 bg-[#fff3e3]/20" />
             </div>
 
-            <div className="relative flex items-center gap-5">
-              <span className={`flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br ${tier} text-white shadow-xl ring-4 ring-white`}>
-                <Crown className="h-11 w-11" strokeWidth={1.6} />
+            <div className="relative flex items-center gap-4 sm:gap-5">
+              <span className={`flex h-16 w-16 shrink-0 sm:h-[88px] sm:w-[88px] items-center justify-center rounded-2xl bg-gradient-to-br ${tier} text-white shadow-xl ring-4 ring-white sm:rounded-3xl`}>
+                <Crown className="h-8 w-8 sm:h-11 sm:w-11" strokeWidth={1.6} />
               </span>
               <div className="min-w-0 leading-tight">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/55">Your rank</p>
-                <h2 className="mt-1 font-display text-3xl font-bold text-ink sm:text-4xl">{c.rank?.title}</h2>
+                <h2 className="mt-1 [overflow-wrap:anywhere] font-display text-2xl font-bold text-ink sm:text-4xl">{c.rank?.title}</h2>
                 <p className="mt-1.5 text-sm text-ink/60">
                   You earn <b className="text-copper">{c.rank?.rate}%</b> on your own sales
                   {c.rankSince && <> · since {fmtDate(c.rankSince)}</>}
@@ -286,7 +289,7 @@ export default async function CommissionPage() {
               <span className="relative mt-1 text-[10px] font-medium">Your rate</span>
             </span>
 
-            <div className="relative mt-6 rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-black/5">
+            <div className="relative mt-5 rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-black/5 sm:mt-6 sm:p-5">
               {c.next ? (
                 <>
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-3 sm:pr-24">
@@ -333,14 +336,14 @@ export default async function CommissionPage() {
 
           {/* monthly bonus */}
           <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
-            <GiftArt className="pointer-events-none absolute -bottom-2 -right-2 h-40 w-52" />
+            <GiftArt className="pointer-events-none absolute -bottom-2 -right-2 hidden h-40 w-52 sm:block" />
 
-            <div className="relative flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3.5">
+            <div className="relative flex flex-col items-start gap-3.5 sm:flex-row sm:justify-between sm:gap-3">
+              <div className="flex min-w-0 items-center gap-3.5">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fde0d0] text-copper shadow-sm">
                   <Gift className="h-6 w-6" />
                 </span>
-                <div className="leading-tight">
+                <div className="min-w-0 leading-tight">
                   <h2 className="font-display text-2xl font-bold text-ink">Monthly bonus</h2>
                   <p className="mt-1 text-xs text-ink/55">For 12 months after you reach a rank</p>
                 </div>
@@ -359,14 +362,14 @@ export default async function CommissionPage() {
               <span className="text-sm font-semibold text-ink/50">points a month</span>
             </p>
 
-            <ul className="relative mt-5 grid max-w-[22rem] grid-cols-6 gap-2.5">
+            <ul className="relative mt-5 grid max-w-[22rem] grid-cols-6 justify-items-center gap-2 sm:gap-2.5">
               {Array.from({ length: 12 }, (_, i) => {
                 const done = i < monthsDone;
                 const now = i === monthsDone && monthsDone < 12;
                 return (
                   <li key={i}>
                     <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold sm:h-10 sm:w-10 ${
                         done || now
                           ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
                           : "bg-[#ece5dc] text-ink/45"
@@ -402,14 +405,14 @@ export default async function CommissionPage() {
             { icon: Star, art: Crown, value: fmtPoints(monthPoints), label: "Current month points", hint: "Points you earned this month.", bg: "from-[#efe8ff] to-white", chip: "bg-violet-100 text-violet-600", artTone: "text-violet-500" },
           ].map(({ icon: Icon, art: Art, value, label, hint, bg, chip, artTone }) => (
             <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${bg} p-4 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.5)] ring-1 ring-black/5`}>
-              <Art className={`pointer-events-none absolute bottom-2 right-3 h-14 w-14 opacity-20 ${artTone}`} strokeWidth={1.3} />
-              <div className="relative flex items-center gap-3.5">
+              <Art className={`pointer-events-none absolute right-3 top-3 h-12 w-12 opacity-20 sm:bottom-2 sm:top-auto sm:h-14 sm:w-14 ${artTone}`} strokeWidth={1.3} />
+              <div className="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                 <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-sm ${chip}`}>
                   <Icon className="h-6 w-6" />
                 </span>
                 <span className="min-w-0 leading-tight">
-                  <span className="block truncate text-2xl font-extrabold tabular-nums text-ink">{value}</span>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/60">
+                  <span className="block [overflow-wrap:anywhere] text-2xl font-extrabold tabular-nums text-ink">{value}</span>
+                  <span className="mt-1 flex items-start gap-1.5 text-xs text-ink/60 sm:mt-0.5 sm:items-center">
                     {label}
                     <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-ink/35">
                       <title>{hint}</title>
@@ -425,10 +428,10 @@ export default async function CommissionPage() {
       {/* The rules in plain words */}
       <Reveal>
         <section className={card}>
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="flex items-center gap-3 font-display text-2xl font-bold text-ink sm:text-3xl">
-                <CircleHelp className="h-7 w-7 shrink-0 text-copper" />
+              <h2 className="flex items-start gap-3 font-display text-2xl font-bold text-ink sm:items-center sm:text-3xl">
+                <CircleHelp className="mt-1 h-6 w-6 shrink-0 text-copper sm:mt-0 sm:h-7 sm:w-7" />
                 <span>
                   How your commission is <span className="text-copper">worked out</span>
                 </span>
@@ -444,10 +447,10 @@ export default async function CommissionPage() {
             </a>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
             {/* 1: your own sale */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#e3f7ec] to-white p-5 ring-1 ring-emerald-200/60">
-              <CoinPileArt className="pointer-events-none absolute -bottom-2 -right-2 h-28 w-36" />
+              <CoinPileArt className="pointer-events-none absolute -bottom-2 -right-2 hidden h-28 w-36 sm:block" />
               <div className="relative flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-500/30">1</span>
                 <span className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-bold text-emerald-800">Your own sale</span>
@@ -456,14 +459,14 @@ export default async function CommissionPage() {
                 You get your rank&apos;s percentage of the sale value. As <b className="text-ink">{c.rank?.title}</b> that is{" "}
                 <b className="text-emerald-700">{myRate}%</b>.
               </p>
-              <p className="relative mt-4 w-fit max-w-[75%] rounded-xl bg-white px-4 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
+              <p className="relative mt-4 w-fit max-w-full rounded-xl sm:max-w-[75%] bg-white px-4 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
                 ₹10,00,000 × {myRate}% = <b className="text-emerald-700">{fmtPoints(own)} points</b>
               </p>
             </div>
 
             {/* 2: your team's sale */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#e6f1ff] to-white p-5 ring-1 ring-sky-200/60">
-              <OrgChartArt className="pointer-events-none absolute right-3 top-3 h-20 w-24 text-sky-400/30" />
+              <OrgChartArt className="pointer-events-none absolute right-3 top-3 hidden h-20 w-24 text-sky-400/30 sm:block" />
               <div className="relative flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-sky-400 to-sky-600 text-sm font-bold text-white shadow-md shadow-sky-500/30">2</span>
                 <span className="rounded-full bg-sky-100 px-4 py-1.5 text-sm font-bold text-sky-800">Your team&apos;s sale</span>
@@ -492,7 +495,7 @@ export default async function CommissionPage() {
 
             {/* 3: monthly bonus */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#efe7ff] to-white p-5 ring-1 ring-violet-200/60">
-              <VioletGiftArt className="pointer-events-none absolute -bottom-1 -right-1 h-28 w-28" />
+              <VioletGiftArt className="pointer-events-none absolute -bottom-1 -right-1 hidden h-28 w-28 sm:block" />
               <div className="relative flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-violet-400 to-violet-600 text-sm font-bold text-white shadow-md shadow-violet-500/30">3</span>
                 <span className="rounded-full bg-violet-100 px-4 py-1.5 text-sm font-bold text-violet-800">Monthly bonus</span>
@@ -500,7 +503,7 @@ export default async function CommissionPage() {
               <p className="relative mt-4 text-sm leading-relaxed text-ink/70">
                 Every rank gives a fixed bonus each month for 12 months, plus a reward when you reach it.
               </p>
-              <p className="relative mt-4 w-fit max-w-[75%] rounded-xl bg-white px-4 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
+              <p className="relative mt-4 w-fit max-w-full rounded-xl sm:max-w-[75%] bg-white px-4 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
                 {c.rank?.title}: <b className="text-violet-700">{fmtPoints(c.rank?.monthlyBonus)} × 12</b> ={" "}
                 {fmtPoints((c.rank?.monthlyBonus ?? 0) * 12)} points
               </p>
@@ -529,10 +532,10 @@ export default async function CommissionPage() {
 
       {/* Rewards and sales */}
       <Reveal>
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className={card}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:justify-between sm:gap-3">
+              <div className="min-w-0">
                 <h2 className="font-display text-3xl font-bold text-ink">
                   Your <span className="text-copper">rewards</span>
                 </h2>
@@ -551,14 +554,14 @@ export default async function CommissionPage() {
               {c.rewards.map((r) => (
                 <li
                   key={r.no}
-                  className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-white to-[#fff8ef] p-3.5 shadow-sm ring-1 ring-black/5"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl bg-gradient-to-r from-white to-[#fff8ef] p-3.5 shadow-sm ring-1 ring-black/5"
                 >
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f7c85a] to-[#d79a1c] text-white shadow-md">
-                    <Gift className="h-6 w-6" />
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#f7c85a] to-[#d79a1c] text-white shadow-md">
+                    <RewardPic image={r.image} icon={r.icon} alt={r.reward} iconClassName="h-6 w-6" />
                   </span>
-                  <span className="min-w-0 flex-1 leading-tight">
-                    <span className="block truncate text-base font-bold text-ink">{r.reward}</span>
-                    <span className="mt-1 block truncate text-sm text-ink/55">{r.title}</span>
+                  <span className="min-w-0 flex-1 basis-40 leading-tight">
+                    <span className="block [overflow-wrap:anywhere] text-base font-bold text-ink">{r.reward}</span>
+                    <span className="mt-1 block [overflow-wrap:anywhere] text-sm text-ink/55">{r.title}</span>
                   </span>
                   {r.given ? (
                     <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-800">
@@ -590,8 +593,8 @@ export default async function CommissionPage() {
           </section>
 
           <section id="your-sales" className={`${card} scroll-mt-24`}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:justify-between sm:gap-3">
+              <div className="min-w-0">
                 <h2 className="font-display text-3xl font-bold text-ink">
                   Your <span className="text-copper">sales</span>
                 </h2>
@@ -623,7 +626,34 @@ export default async function CommissionPage() {
                 </a>
               </div>
             ) : (
-              <div className="mt-4 overflow-x-auto">
+              <>
+              <ul className="mt-4 space-y-3 sm:hidden">
+                {c.sales.map((s) => (
+                  <li key={s.id} className={`rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/10 ${s.status === "cancelled" ? "opacity-50" : ""}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 [overflow-wrap:anywhere] text-[15px] font-bold leading-snug text-ink">{s.title}</span>
+                      {s.status === "cancelled" && (
+                        <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800">Cancelled</span>
+                      )}
+                    </div>
+                    <dl className="mt-3 grid grid-cols-3 gap-3 rounded-xl bg-[#fbf7f0] px-3.5 py-2.5">
+                      <div className="min-w-0">
+                        <dt className="text-[11px] text-ink/50">Date</dt>
+                        <dd className="mt-0.5 text-[13px] text-ink/80">{fmtDate(s.date)}</dd>
+                      </div>
+                      <div className="min-w-0">
+                        <dt className="text-[11px] text-ink/50">Sq. yards</dt>
+                        <dd className="mt-0.5 text-[13px] tabular-nums text-ink/80">{fmtArea(s.area)}</dd>
+                      </div>
+                      <div className="min-w-0">
+                        <dt className="text-[11px] text-ink/50">Value</dt>
+                        <dd className="mt-0.5 text-[13px] tabular-nums text-ink/80">₹{fmtPoints(s.value)}</dd>
+                      </div>
+                    </dl>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 hidden overflow-x-auto sm:block">
                 <table className="w-full min-w-[460px] text-left text-sm">
                   <thead className="text-[11px] font-semibold uppercase tracking-wider text-ink/50">
                     <tr>
@@ -650,6 +680,7 @@ export default async function CommissionPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </section>
         </div>

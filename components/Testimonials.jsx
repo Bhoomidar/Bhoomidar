@@ -136,10 +136,10 @@ export default function Testimonials({ c, testimonials }) {
                     </span>
                     <span className="min-w-0 leading-tight">
                       <span className="flex items-center gap-1.5 text-base font-bold text-ink">
-                        <span className="truncate">{name}</span>
+                        <span className="[overflow-wrap:anywhere]">{name}</span>
                         <BadgeCheck className="h-[18px] w-[18px] shrink-0 text-copper" />
                       </span>
-                      <span className="mt-1 block truncate text-sm text-ink/60">{role}</span>
+                      <span className="mt-1 block [overflow-wrap:anywhere] text-sm text-ink/60">{role}</span>
                     </span>
                   </span>
                 </figcaption>

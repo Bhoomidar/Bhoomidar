@@ -114,11 +114,11 @@ export default async function DashboardOverview() {
 
       {/* Hero */}
       <div className="fade-up relative overflow-hidden rounded-3xl bg-gradient-to-r from-white via-[#fff7ec] to-[#fbeedd] shadow-[0_28px_60px_-30px_rgba(110,60,20,0.5)] ring-1 ring-black/5">
-        <div className="relative grid lg:min-h-[230px] lg:grid-cols-[1.05fr_1fr]">
-          <div className="relative z-10 flex items-center gap-5 p-6 sm:gap-7 sm:p-7 lg:py-6">
+        <div className="relative grid grid-cols-1 lg:min-h-[230px] lg:grid-cols-[1.05fr_1fr]">
+          <div className="relative z-10 flex min-w-0 flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:gap-7 sm:p-7 lg:py-6">
             <span className="relative shrink-0">
               <span className="absolute -inset-2.5 rounded-full bg-gradient-to-br from-copper-light/55 to-transparent blur-md" />
-              <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-3xl font-bold text-white shadow-xl ring-[5px] ring-white sm:h-28 sm:w-28 sm:text-4xl">
+              <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-3xl font-bold text-white shadow-xl ring-[5px] ring-white sm:h-28 sm:w-28 sm:text-4xl">
                 {partner.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={partner.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -135,10 +135,10 @@ export default async function DashboardOverview() {
                 <span className={`h-2 w-2 rounded-full ${status.dot}`} />
                 {status.text}
               </span>
-              <h1 className="mt-3 truncate font-display text-2xl font-bold leading-tight text-ink sm:text-3xl xl:text-[2.1rem]">
+              <h1 className="mt-3 break-words font-display text-2xl font-bold leading-tight text-ink [overflow-wrap:anywhere] sm:text-3xl xl:text-[2.1rem]">
                 {greeting()}, <span className="text-copper">{partner.firstName}</span> <span aria-hidden>👋</span>
               </h1>
-              <p className="mt-1.5 text-base text-ink/60">Welcome to your Bhoomidar partner account.</p>
+              <p className="mt-1.5 text-sm text-ink/60 sm:text-base">Welcome to your Bhoomidar partner account.</p>
 
               <div className="mt-3.5 flex flex-wrap items-center gap-2">
                 {partner.referralCode && (
@@ -159,20 +159,20 @@ export default async function DashboardOverview() {
           </div>
 
           {/* Soft photos, the handwritten line and the two buttons */}
-          <div className="relative min-h-[230px] lg:min-h-full">
+          <div className="relative min-h-[200px] sm:min-h-[230px] lg:min-h-full">
             <HeroSlides />
 
-            <div className="absolute bottom-5 right-5 z-10 flex flex-wrap justify-end gap-3">
+            <div className="absolute inset-x-4 bottom-4 z-10 flex flex-wrap justify-end gap-2.5 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:gap-3">
               <a
                 href="/properties"
-                className="group inline-flex items-center gap-2.5 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/40 transition hover:-translate-y-0.5"
+                className="group inline-flex flex-1 items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-4 py-3 sm:flex-none sm:px-5 text-sm font-semibold text-white shadow-lg shadow-copper/40 transition hover:-translate-y-0.5"
               >
                 Browse Properties
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
               </a>
               <a
                 href="/dashboard/profile"
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:text-copper"
+                className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-4 py-3 text-sm font-semibold text-ink shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:text-copper sm:flex-none sm:px-5"
               >
                 <UserRound className="h-4 w-4" />
                 My Profile
@@ -188,7 +188,7 @@ export default async function DashboardOverview() {
         <>
           {/* Numbers */}
           <Reveal>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {stats.map(({ icon: Icon, art: Art, label, value, badge, note, href, theme }) => (
                 <a
                   key={label}
@@ -231,7 +231,7 @@ export default async function DashboardOverview() {
 
           {/* Latest referrals and quick actions */}
           <Reveal>
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr]">
               <section className="relative flex flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
@@ -257,8 +257,8 @@ export default async function DashboardOverview() {
                           {initials(p.name || "?")}
                         </span>
                         <span className="min-w-0 flex-1 leading-tight">
-                          <span className="block truncate text-base font-bold text-ink">{p.name || "Partner"}</span>
-                          <span className="mt-1 block truncate text-xs text-ink/55">
+                          <span className="block [overflow-wrap:anywhere] text-base font-bold text-ink">{p.name || "Partner"}</span>
+                          <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-ink/55">
                             {p.code} · Joined {p.joined}
                           </span>
                         </span>

@@ -73,7 +73,7 @@ export default function DashboardHeader({ name, initials, avatarUrl, active, pen
   });
 
   return (
-    <header className="z-30 border-b border-black/10 bg-gradient-to-b from-white to-[#fcf6ee] shadow-[0_16px_32px_-22px_rgba(110,60,20,0.4)] backdrop-blur-xl lg:sticky lg:top-0">
+    <header className="relative z-30 border-b border-black/10 bg-gradient-to-b from-white to-[#fcf6ee] shadow-[0_16px_32px_-22px_rgba(110,60,20,0.4)] backdrop-blur-xl lg:sticky lg:top-0">
       <div className="flex w-full items-center gap-4 px-5 py-4 lg:px-8">
         {/* Where you are */}
         <div className="flex min-w-0 items-center gap-3.5">
@@ -81,8 +81,8 @@ export default function DashboardHeader({ name, initials, avatarUrl, active, pen
             <Icon className="h-6 w-6" />
           </span>
           <div className="min-w-0 leading-tight">
-            <p className="truncate font-display text-2xl font-bold text-ink sm:text-[1.75rem]">{page.title}</p>
-            <p className="mt-1 hidden truncate text-sm text-ink/55 sm:block">{page.note}</p>
+            <p className="[overflow-wrap:anywhere] font-display text-2xl font-bold text-ink sm:text-[1.75rem]">{page.title}</p>
+            <p className="mt-1 hidden [overflow-wrap:anywhere] text-sm text-ink/55 sm:block">{page.note}</p>
           </div>
         </div>
 

@@ -74,8 +74,8 @@ function QuoteCard({ t, status, children }) {
           {name[0].toUpperCase()}
         </span>
         <span className="min-w-0 leading-tight">
-          <span className="block truncate text-[15px] font-bold text-ink">{name}</span>
-          <span className="mt-0.5 block truncate text-sm text-ink/55">{t.role?.trim() || "Role"}</span>
+          <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">{name}</span>
+          <span className="mt-0.5 block [overflow-wrap:anywhere] text-sm text-ink/55">{t.role?.trim() || "Role"}</span>
         </span>
       </div>
 

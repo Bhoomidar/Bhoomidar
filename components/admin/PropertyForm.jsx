@@ -107,7 +107,7 @@ function CardPreview({ form }) {
           )}
         </div>
         <div className="p-4">
-          <p className="truncate font-display text-lg font-bold text-ink">{form.title || "Property title"}</p>
+          <p className="[overflow-wrap:anywhere] font-display text-lg font-bold text-ink">{form.title || "Property title"}</p>
           <p className="mt-0.5 text-xs font-semibold text-copper">{form.category}</p>
           <p className="mt-3 text-2xl font-extrabold tabular-nums text-ink">{form.price || "₹ —"}</p>
           <p className="text-xs text-ink/50">{form.unit}</p>
@@ -118,7 +118,7 @@ function CardPreview({ form }) {
                 return (
                   <li key={i} className="flex items-center gap-2 text-xs text-ink/70">
                     <Icon className="h-3.5 w-3.5 shrink-0 text-copper" />
-                    <span className="truncate">{d.text}</span>
+                    <span className="[overflow-wrap:anywhere]">{d.text}</span>
                   </li>
                 );
               })}
@@ -265,12 +265,12 @@ export default function PropertyForm({ initial, onDone, categories = [] }) {
               {form.details.map((d, i) => {
                 const Icon = DETAIL_ICONS[d.icon] ?? DETAIL_ICONS.MapPin;
                 return (
-                  <div key={i} className="flex items-center gap-2">
+                  <div key={i} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-copper/10 text-copper">
                       <Icon className="h-5 w-5" />
                     </span>
                     <Select
-                      wrapperClassName="w-40 shrink-0"
+                      wrapperClassName="min-w-0 sm:w-40 sm:shrink-0"
                       value={d.icon}
                       onChange={(v) => setDetail(i, { icon: v })}
                       ariaLabel="Icon"
@@ -281,7 +281,7 @@ export default function PropertyForm({ initial, onDone, categories = [] }) {
                       value={d.text}
                       onChange={(e) => setDetail(i, { text: e.target.value })}
                       placeholder="e.g. Gated Community"
-                      className={inputCls}
+                      className={`${inputCls} order-last col-span-3 sm:order-none sm:col-span-1`}
                     />
                     <button
                       type="button"
@@ -392,14 +392,14 @@ export default function PropertyForm({ initial, onDone, categories = [] }) {
             <label className={labelCls}>Key details (boxes like &ldquo;Plot size - 1200 Sq. Yards&rdquo;)</label>
             <div className="space-y-3">
               {form.specs.map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex">
                   <input
                     value={s.label}
                     onChange={(e) =>
                       set("specs", form.specs.map((x, idx) => (idx === i ? { ...x, label: e.target.value } : x)))
                     }
                     placeholder="Name, e.g. Plot size"
-                    className={`${inputCls} w-2/5`}
+                    className={`${inputCls} min-w-0 sm:w-2/5`}
                     aria-label="Name"
                   />
                   <input
@@ -408,7 +408,7 @@ export default function PropertyForm({ initial, onDone, categories = [] }) {
                       set("specs", form.specs.map((x, idx) => (idx === i ? { ...x, value: e.target.value } : x)))
                     }
                     placeholder="Value, e.g. 1200 - 2400 Sq. Yards"
-                    className={inputCls}
+                    className={`${inputCls} order-last col-span-2 sm:order-none sm:col-span-1`}
                     aria-label="Value"
                   />
                   <button

@@ -275,7 +275,7 @@ export default function InquiriesList({ inquiries }) {
                         </span>
                       )}
                     </span>
-                    <span className={`mt-1.5 line-clamp-2 text-sm leading-snug ${isNew ? "text-ink/80" : "text-ink/55"}`}>
+                    <span className={`mt-1.5 [overflow-wrap:anywhere] text-sm leading-snug ${isNew ? "text-ink/80" : "text-ink/55"}`}>
                       {q.message}
                     </span>
                     <span className="mt-1.5 flex flex-wrap items-center gap-x-3 text-xs text-ink/45">
@@ -308,6 +308,7 @@ export default function InquiriesList({ inquiries }) {
 
       {current && (
         <Modal
+          fullOnPhone
           title={current.name}
           subtitle={when(current.created_at)}
           icon={MailOpen}

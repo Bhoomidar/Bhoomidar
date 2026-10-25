@@ -122,11 +122,11 @@ export default async function AdminDashboard() {
     <div className="space-y-8">
       {/* Hero */}
       <div className="fade-up relative overflow-hidden rounded-3xl bg-gradient-to-r from-white via-[#fff7ec] to-[#fbeedd] shadow-[0_28px_60px_-30px_rgba(110,60,20,0.5)] ring-1 ring-black/5">
-        <div className="relative grid lg:min-h-[230px] lg:grid-cols-[1.05fr_1fr]">
-          <div className="relative z-10 flex items-center gap-5 p-6 sm:gap-7 sm:p-7 lg:py-6">
+        <div className="relative grid grid-cols-1 lg:min-h-[230px] lg:grid-cols-[1.05fr_1fr]">
+          <div className="relative z-10 flex min-w-0 flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:gap-7 sm:p-7 lg:py-6">
             <span className="relative shrink-0">
               <span className="absolute -inset-2.5 rounded-full bg-gradient-to-br from-copper-light/55 to-transparent blur-md" />
-              <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-3xl font-bold text-white shadow-xl ring-[5px] ring-white sm:h-28 sm:w-28 sm:text-4xl">
+              <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark font-display text-3xl font-bold text-white shadow-xl ring-[5px] ring-white sm:h-28 sm:w-28 sm:text-4xl">
                 {name[0].toUpperCase()}
               </span>
             </span>
@@ -136,10 +136,10 @@ export default async function AdminDashboard() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Admin panel
               </span>
-              <h1 className="mt-3 truncate font-display text-2xl font-bold leading-tight text-ink sm:text-3xl xl:text-[2.1rem]">
+              <h1 className="mt-3 break-words font-display text-2xl font-bold leading-tight text-ink [overflow-wrap:anywhere] sm:text-3xl xl:text-[2.1rem]">
                 {greeting()}, <span className="text-copper capitalize">{name}</span> <span aria-hidden>👋</span>
               </h1>
-              <p className="mt-1.5 text-base text-ink/60">Here is a quick look at your website today.</p>
+              <p className="mt-1.5 text-sm text-ink/60 sm:text-base">Here is a quick look at your website today.</p>
 
               <div className="mt-3.5 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs text-ink/60 shadow-sm ring-1 ring-black/10">
@@ -156,13 +156,13 @@ export default async function AdminDashboard() {
           </div>
 
           {/* Soft photos and the two buttons */}
-          <div className="relative min-h-[230px] lg:min-h-full">
+          <div className="relative min-h-[200px] sm:min-h-[230px] lg:min-h-full">
             <HeroSlides />
 
-            <div className="absolute bottom-5 right-5 z-10 flex flex-wrap justify-end gap-3">
+            <div className="absolute inset-x-4 bottom-4 z-10 flex flex-wrap justify-end gap-2.5 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:gap-3">
               <a
                 href="/admin/partners"
-                className="group inline-flex items-center gap-2.5 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/40 transition hover:-translate-y-0.5"
+                className="group inline-flex flex-1 items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/40 transition hover:-translate-y-0.5 sm:flex-none sm:px-5"
               >
                 View Partners
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -171,7 +171,7 @@ export default async function AdminDashboard() {
                 href="/"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:text-copper"
+                className="hidden flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-4 py-3 text-sm font-semibold text-ink shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:text-copper sm:inline-flex sm:flex-none sm:px-5"
               >
                 <ExternalLink className="h-4 w-4" />
                 View Website
@@ -183,7 +183,7 @@ export default async function AdminDashboard() {
 
       {/* Numbers */}
       <Reveal>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {stats.map(({ icon: Icon, art: Art, label, value, note, href, theme }) => (
             <a
               key={label}
@@ -209,8 +209,8 @@ export default async function AdminDashboard() {
 
       {/* Newest partners and latest messages */}
       <Reveal>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className={`${card} flex flex-col`}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <section className={`${card} flex min-w-0 flex-col !p-5 sm:!p-6`}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
                 Newest <span className="text-copper">partners</span>
@@ -230,16 +230,19 @@ export default async function AdminDashboard() {
                 {recentPartners.map((p) => (
                   <li
                     key={p.id}
-                    className="flex items-center gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30"
+                    className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30 sm:gap-4 sm:px-4 sm:py-3.5"
                   >
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md">
                       {(p.full_name || p.email)[0].toUpperCase()}
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-base font-bold text-ink">{p.full_name || "—"}</span>
-                      <span className="mt-1 block truncate text-xs text-ink/55">{p.email}</span>
+                      <span className="block break-words text-base font-bold text-ink">{p.full_name || "—"}</span>
+                      <span className="mt-1 block break-words text-xs text-ink/55 [overflow-wrap:anywhere]">{p.email}</span>
+                      <span className="mt-2 inline-block rounded-full bg-[#faf1e6] px-3 py-1 text-[11px] font-semibold text-ink/65 ring-1 ring-black/5 sm:hidden">
+                        {when(p.created_at)}
+                      </span>
                     </span>
-                    <span className="shrink-0 rounded-full bg-[#faf1e6] px-3.5 py-1.5 text-xs font-semibold text-ink/65 ring-1 ring-black/5">
+                    <span className="hidden shrink-0 rounded-full bg-[#faf1e6] px-3.5 py-1.5 text-xs font-semibold text-ink/65 ring-1 ring-black/5 sm:inline-block">
                       {when(p.created_at)}
                     </span>
                   </li>
@@ -254,7 +257,7 @@ export default async function AdminDashboard() {
             </div>
           </section>
 
-          <section className={`${card} flex flex-col`}>
+          <section className={`${card} flex min-w-0 flex-col !p-5 sm:!p-6`}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
                 Latest <span className="text-copper">messages</span>
@@ -274,7 +277,7 @@ export default async function AdminDashboard() {
                 {recentInquiries.map((q) => (
                   <li
                     key={q.id}
-                    className="flex items-center gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30"
+                    className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30 sm:gap-4 sm:px-4 sm:py-3.5"
                   >
                     <span
                       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
@@ -286,8 +289,8 @@ export default async function AdminDashboard() {
                       <Inbox className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-base font-bold text-ink">{q.name}</span>
-                      <span className="mt-1 block truncate text-xs text-ink/55">
+                      <span className="block break-words text-base font-bold text-ink">{q.name}</span>
+                      <span className="mt-1 block break-words text-xs text-ink/55">
                         {q.phone}
                         {q.interest ? ` · ${q.interest}` : ""} · {when(q.created_at)}
                       </span>
@@ -315,7 +318,7 @@ export default async function AdminDashboard() {
           <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
             Customize the <span className="text-copper">website</span>
           </h2>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
             {shortcuts.map(({ icon: Icon, label, text, href }) => (
               <a
                 key={label}

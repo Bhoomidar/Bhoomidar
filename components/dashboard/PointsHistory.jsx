@@ -61,7 +61,7 @@ export default function PointsHistory({ rows }) {
 
   return (
     <div>
-      <div className="no-scrollbar -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+      <div className="flex flex-wrap gap-2 sm:gap-2.5">
         {TABS.map(([key, label]) => (
           <button
             key={key}
@@ -71,7 +71,7 @@ export default function PointsHistory({ rows }) {
               setShown(PAGE);
             }}
             aria-pressed={tab === key}
-            className={`inline-flex shrink-0 items-center gap-2.5 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition sm:gap-2.5 sm:px-5 sm:py-2.5 ${
               tab === key
                 ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
                 : "bg-white text-ink/70 shadow-sm ring-1 ring-black/10 hover:ring-copper"
@@ -89,8 +89,45 @@ export default function PointsHistory({ rows }) {
         ))}
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-2xl bg-white/70 ring-1 ring-black/5">
-        <div className="overflow-x-auto">
+      {list.length > 0 && (
+        <ul className="mt-5 space-y-3 md:hidden">
+          {list.slice(0, shown).map((r) => {
+            const kind = KINDS[r.kind] ?? KINDS.adjustment;
+            const status = statusOf(r.kind);
+            const out = r.points < 0;
+            return (
+              <li key={r.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/10">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="min-w-0 leading-tight">
+                    <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${kind.tone}`}>{kind.label}</span>
+                    {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-xs text-ink/45">{r.rate}%</span>}
+                    <span className="mt-2 block text-xs text-ink/50">{fmtDate(r.at)}</span>
+                  </span>
+                  <span className="shrink-0 text-right leading-tight">
+                    <span
+                      className={`block text-xl font-extrabold tabular-nums ${
+                        r.kind === "payout" ? "text-teal-700" : out ? "text-rose-600" : "text-emerald-600"
+                      }`}
+                    >
+                      {out ? "−" : "+"}
+                      {fmtPoints(Math.abs(r.points))}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-ink/45">Balance {fmtPoints(r.balance)}</span>
+                  </span>
+                </div>
+                {r.note && <p className="mt-3 [overflow-wrap:anywhere] text-sm leading-relaxed text-ink/75">{r.note}</p>}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="min-w-0 [overflow-wrap:anywhere] text-xs text-ink/55">{r.from ? `From ${r.from}` : ""}</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${status.tone}`}>{status.text}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className={`mt-5 overflow-hidden rounded-2xl bg-white/70 ring-1 ring-black/5 ${list.length > 0 ? "hidden md:block" : ""}`}>
+        <div className={`overflow-x-auto ${list.length === 0 ? "hidden md:block" : ""}`}>
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-[#f6f0e7] text-xs text-ink/60">
               <tr>
@@ -121,7 +158,7 @@ export default function PointsHistory({ rows }) {
                         <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${kind.tone}`}>{kind.label}</span>
                         {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-xs text-ink/45">{r.rate}%</span>}
                       </td>
-                      <td className="max-w-[260px] truncate px-4 py-4 text-ink/75" title={r.note}>
+                      <td className="max-w-[260px] [overflow-wrap:anywhere] px-4 py-4 text-ink/75" title={r.note}>
                         {r.note}
                       </td>
                       <td className="px-4 py-4 text-ink/70">{r.from || "—"}</td>
@@ -149,8 +186,8 @@ export default function PointsHistory({ rows }) {
 
         {list.length === 0 && (
           <div className="relative flex min-h-[280px] flex-col items-center justify-center overflow-hidden px-6 py-10 text-center">
-            <LeafArt className="pointer-events-none absolute -bottom-3 left-2 h-44 w-32" />
-            <LeafArt className="pointer-events-none absolute -bottom-3 right-2 h-44 w-32 -scale-x-100" />
+            <LeafArt className="pointer-events-none absolute -bottom-3 left-2 hidden h-44 w-32 sm:block" />
+            <LeafArt className="pointer-events-none absolute -bottom-3 right-2 hidden h-44 w-32 -scale-x-100 sm:block" />
             <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-copper/10 text-copper ring-8 ring-copper/5">
               <FileText className="h-7 w-7" strokeWidth={1.6} />
             </span>

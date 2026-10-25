@@ -23,7 +23,7 @@ import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { getContent } from "@/lib/content";
 import { rankTiers } from "@/lib/data";
-import { rewardIcon } from "@/lib/rankIcons";
+import RewardPic from "@/components/RewardPic";
 import { getRankChart } from "@/lib/plan";
 import { monthlyMonths } from "@/lib/planChart";
 import { bannerProps, isOn, lines } from "@/lib/siteContent";
@@ -348,12 +348,9 @@ export default async function OpportunitiesPage() {
                           <td className={`${cell} px-6 py-4`}>
                             <span className="flex items-center gap-3.5">
                               <span
-                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${rankTiers[i % rankTiers.length]} text-white shadow-md ring-2 ring-white transition duration-300 group-hover:scale-110 group-hover:-rotate-3`}
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${rankTiers[i % rankTiers.length]} text-white shadow-md ring-2 ring-white transition duration-300 group-hover:scale-110 group-hover:-rotate-3`}
                               >
-                                {(() => {
-                                  const RewardIcon = rewardIcon(r.icon);
-                                  return <RewardIcon className="h-5 w-5" strokeWidth={1.7} />;
-                                })()}
+                                <RewardPic image={r.image} icon={r.icon} alt={r.reward} />
                               </span>
                               <span className="text-sm font-semibold text-ink">{r.reward}</span>
                             </span>

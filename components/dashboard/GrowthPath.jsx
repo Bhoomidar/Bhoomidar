@@ -19,7 +19,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { rewardIcon } from "@/lib/rankIcons";
+import RewardPic from "@/components/RewardPic";
 import { fmtArea } from "@/lib/points";
 
 // Icon, colours and number colour of each rank card, in the order of the ranks.
@@ -192,7 +192,6 @@ export default function GrowthPath({ chart: ranks, currentRank, teamArea, next, 
         {ranks.map((r, i) => {
           const look = LOOKS[i] ?? LOOKS[0];
           const Icon = look.icon;
-          const RewardIcon = i === 0 ? Gift : rewardIcon(r.icon);
           const here = i === currentRank;
           const passed = i < currentRank;
           return (
@@ -237,10 +236,10 @@ export default function GrowthPath({ chart: ranks, currentRank, teamArea, next, 
                 <p className="mt-1.5 text-xs text-ink/55">{mins?.length ? range(i, mins) : r.area}</p>
 
                 <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5">
-                  <span className="flex h-10 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#f8f4ee] to-[#ece4d8] text-copper-dark">
-                    <RewardIcon className="h-5 w-5" strokeWidth={1.7} />
+                  <span className="flex h-10 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[#f8f4ee] to-[#ece4d8] text-copper-dark">
+                    <RewardPic image={r.image} icon={i === 0 ? "Gift" : r.icon} alt={r.reward} />
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink/80">{r.reward}</span>
+                  <span className="min-w-0 flex-1 [overflow-wrap:anywhere] text-xs font-semibold text-ink/80">{r.reward}</span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-copper" />
                 </div>
               </div>

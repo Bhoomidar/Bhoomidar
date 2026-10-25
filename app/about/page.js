@@ -269,8 +269,8 @@ export default async function AboutPage() {
                         <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
                       </span>
                       <span className="min-w-0 leading-tight">
-                        <span className="block truncate text-xs font-bold text-ink sm:text-sm">{c.story_chip1_title}</span>
-                        <span className="mt-0.5 block truncate text-[10px] text-ink/55 sm:text-xs">{c.story_chip1_text}</span>
+                        <span className="block [overflow-wrap:anywhere] text-xs font-bold text-ink sm:text-sm">{c.story_chip1_title}</span>
+                        <span className="mt-0.5 block [overflow-wrap:anywhere] text-[10px] text-ink/55 sm:text-xs">{c.story_chip1_text}</span>
                       </span>
                     </div>
                     <div className="absolute right-3 top-14 flex max-w-[58%] items-center gap-2.5 rounded-2xl bg-white/90 px-3 py-2.5 shadow-lg backdrop-blur sm:right-5 sm:top-9 sm:gap-3 sm:px-4 sm:py-3">
@@ -278,8 +278,8 @@ export default async function AboutPage() {
                         <Sprout className="h-4 w-4 sm:h-5 sm:w-5" />
                       </span>
                       <span className="min-w-0 leading-tight">
-                        <span className="block truncate text-xs font-bold text-ink sm:text-sm">{c.story_chip2_title}</span>
-                        <span className="mt-0.5 block truncate text-[10px] text-ink/55 sm:text-xs">{c.story_chip2_text}</span>
+                        <span className="block [overflow-wrap:anywhere] text-xs font-bold text-ink sm:text-sm">{c.story_chip2_title}</span>
+                        <span className="mt-0.5 block [overflow-wrap:anywhere] text-[10px] text-ink/55 sm:text-xs">{c.story_chip2_text}</span>
                       </span>
                     </div>
                   </>

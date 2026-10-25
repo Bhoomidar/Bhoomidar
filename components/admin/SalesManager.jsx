@@ -230,8 +230,8 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
                   <div className="flex items-start gap-3.5">
                     <Avatar url={s.sellerAvatar} name={s.sellerName} />
                     <div className="min-w-0 flex-1 leading-tight">
-                      <p className="truncate text-[15px] font-bold text-ink">{s.title}</p>
-                      <a href={`/admin/partners/${s.sellerId}`} className="mt-1 block truncate text-[13px] text-ink/60">
+                      <p className="[overflow-wrap:anywhere] text-[15px] font-bold text-ink">{s.title}</p>
+                      <a href={`/admin/partners/${s.sellerId}`} className="mt-1 block [overflow-wrap:anywhere] text-[13px] text-ink/60">
                         {s.sellerName} · {s.sellerCode}
                       </a>
                       <p className="mt-0.5 text-xs text-ink/50">
@@ -277,7 +277,7 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
                 {shown.map((s) => (
                   <tr key={s.id} className={`transition hover:bg-[#fffaf3] ${s.status === "cancelled" ? "opacity-60" : ""}`}>
                     <td className="py-4 pl-6 pr-3">
-                      <span className="block max-w-[260px] truncate text-[15px] font-bold text-ink" title={s.title}>
+                      <span className="block max-w-[260px] [overflow-wrap:anywhere] text-[15px] font-bold text-ink" title={s.title}>
                         {s.title}
                       </span>
                       <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -286,7 +286,7 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
                         </span>
                         {s.customer && <span className="text-xs text-ink/55">Buyer: {s.customer}</span>}
                       </span>
-                      {s.note && <span className="mt-1 block max-w-[260px] truncate text-xs text-ink/45">{s.note}</span>}
+                      {s.note && <span className="mt-1 block max-w-[260px] [overflow-wrap:anywhere] text-xs text-ink/45">{s.note}</span>}
                     </td>
                     <td className="px-3 py-4">
                       <div className="flex items-center gap-3">
@@ -294,7 +294,7 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
                         <span className="min-w-0 max-w-[200px] leading-tight">
                           <a
                             href={`/admin/partners/${s.sellerId}`}
-                            className="block truncate text-[15px] font-bold text-ink transition hover:text-copper"
+                            className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink transition hover:text-copper"
                             title="Open full profile"
                           >
                             {s.sellerName}
@@ -492,7 +492,7 @@ function SaleModal({ sellers, propertyTitles, onClose, onDone }) {
           <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
             <Avatar url={seller?.avatarUrl} name={seller?.name} className="h-14 w-14 text-lg" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-base font-bold text-ink">{form.title}</p>
+              <p className="[overflow-wrap:anywhere] text-base font-bold text-ink">{form.title}</p>
               <p className="mt-1 text-sm text-ink/60">
                 Sold by <b className="text-ink">{seller?.name}</b> · {fmtArea(form.area)} sq. yards
               </p>
@@ -575,7 +575,7 @@ function SaleModal({ sellers, propertyTitles, onClose, onDone }) {
               <div className="mt-3 flex items-center gap-3.5 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-copper/20">
                 <Avatar url={seller.avatarUrl} name={seller.name} className="h-11 w-11 text-sm" />
                 <div className="min-w-0 flex-1 leading-tight">
-                  <p className="truncate text-sm font-bold text-ink">{seller.name}</p>
+                  <p className="[overflow-wrap:anywhere] text-sm font-bold text-ink">{seller.name}</p>
                   <p className="mt-1 text-xs text-ink/55">Gets the commission, and so does everyone above them</p>
                 </div>
                 {seller.code && (

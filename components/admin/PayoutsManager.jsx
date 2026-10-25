@@ -195,7 +195,7 @@ export default function PayoutsManager({ overview }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <Stat key={s.label} {...s} />
         ))}
@@ -266,8 +266,8 @@ export default function PayoutsManager({ overview }) {
                   <div className="flex items-center gap-3.5">
                     <Avatar url={r.avatarUrl} name={r.name} />
                     <a href={`/admin/partners/${r.id}`} className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-[15px] font-bold text-ink">{r.name}</span>
-                      <span className="mt-1 block truncate text-xs text-ink/55">
+                      <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">{r.name}</span>
+                      <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-ink/55">
                         {r.code} · {r.rank}
                         {!r.active && " · switched off"}
                       </span>
@@ -315,7 +315,7 @@ export default function PayoutsManager({ overview }) {
                         <span className="min-w-0 max-w-[240px] leading-tight">
                           <a
                             href={`/admin/partners/${r.id}`}
-                            className="block truncate text-[15px] font-bold text-ink transition hover:text-copper"
+                            className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink transition hover:text-copper"
                             title="Open full profile"
                           >
                             {r.name}
@@ -389,8 +389,8 @@ export default function PayoutsManager({ overview }) {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className={card}>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className={`${card} min-w-0`}>
           <SectionTitle icon={Gift} count={rewards.length}>
             Rewards to <span className="text-copper">hand over</span>
           </SectionTitle>
@@ -405,7 +405,7 @@ export default function PayoutsManager({ overview }) {
                 <li key={r.partnerId + r.rankNo} className={rowCard}>
                   <Avatar url={r.avatarUrl} name={r.name} />
                   <span className="min-w-0 flex-1 leading-tight">
-                    <a href={`/admin/partners/${r.partnerId}`} className="block truncate text-base font-bold text-ink transition hover:text-copper">
+                    <a href={`/admin/partners/${r.partnerId}`} className="block [overflow-wrap:anywhere] text-base font-bold text-ink transition hover:text-copper">
                       {r.name}
                     </a>
                     <span className="mt-1 block text-xs text-ink/55">
@@ -429,7 +429,7 @@ export default function PayoutsManager({ overview }) {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={`${card} min-w-0`}>
           <SectionTitle icon={BadgeIndianRupee} count={recent.length}>
             Latest <span className="text-copper">payouts</span>
           </SectionTitle>
@@ -444,10 +444,10 @@ export default function PayoutsManager({ overview }) {
                 <li key={p.id} className={rowCard}>
                   <Avatar url={p.avatarUrl} name={p.name} />
                   <span className="min-w-0 flex-1 leading-tight">
-                    <a href={`/admin/partners/${p.partnerId}`} className="block truncate text-base font-bold text-ink transition hover:text-copper">
+                    <a href={`/admin/partners/${p.partnerId}`} className="block [overflow-wrap:anywhere] text-base font-bold text-ink transition hover:text-copper">
                       {p.name}
                     </a>
-                    <span className="mt-1 block truncate text-xs text-ink/55">
+                    <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-ink/55">
                       {fmtDate(p.at)}
                       {p.note && ` · ${p.note}`}
                     </span>
@@ -530,7 +530,7 @@ function PayModal({ partner, onClose, onDone }) {
         <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
           <Avatar url={partner.avatarUrl} name={partner.name} className="h-14 w-14 text-lg" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-base font-bold text-ink">{partner.name}</p>
+            <p className="[overflow-wrap:anywhere] text-base font-bold text-ink">{partner.name}</p>
             <p className="mt-1 text-sm text-ink/55">
               {partner.code} · {partner.rank}
             </p>

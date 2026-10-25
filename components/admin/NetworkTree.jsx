@@ -80,7 +80,7 @@ export function Node({ id, depth, tree, open, toggle, forceOpen, visible, matche
       }
     >
       <div
-        className={`flex items-center gap-2.5 rounded-2xl bg-white px-2.5 py-3 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 transition duration-300 hover:-translate-y-0.5 sm:gap-4 sm:px-4 ${
+        className={`flex items-start gap-2 rounded-2xl bg-white px-2.5 py-3 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 transition duration-300 hover:-translate-y-0.5 sm:items-center sm:gap-4 sm:px-4 ${
           hit ? "ring-2 ring-copper" : "ring-black/5 hover:ring-copper/30"
         } ${dim ? "opacity-60" : ""}`}
       >
@@ -90,12 +90,12 @@ export function Node({ id, depth, tree, open, toggle, forceOpen, visible, matche
           disabled={!kids.length}
           aria-label={isOpen ? "Collapse" : "Expand"}
           aria-expanded={isOpen}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper transition enabled:hover:bg-copper enabled:hover:text-white disabled:opacity-0 sm:h-8 sm:w-8"
+          className="mt-2.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper transition enabled:hover:bg-copper enabled:hover:text-white disabled:opacity-0 sm:mt-0 sm:h-8 sm:w-8"
         >
           <ChevronRight className={`h-4 w-4 transition ${isOpen ? "rotate-90" : ""}`} />
         </button>
 
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-base font-bold text-white shadow-md shadow-copper/30 ring-2 ring-white sm:h-12 sm:w-12">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-base font-bold text-white shadow-md shadow-copper/30 ring-2 ring-white sm:h-12 sm:w-12">
           {p.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -105,10 +105,10 @@ export function Node({ id, depth, tree, open, toggle, forceOpen, visible, matche
         </span>
 
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="flex flex-wrap items-center gap-2">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <a
               href={`/admin/partners/${p.id}`}
-              className="truncate text-[15px] font-bold text-ink transition hover:text-copper"
+              className="w-full break-words text-[15px] font-bold text-ink transition hover:text-copper sm:w-auto"
               title="Open full profile"
             >
               {p.full_name || p.email}
@@ -128,11 +128,16 @@ export function Node({ id, depth, tree, open, toggle, forceOpen, visible, matche
               </span>
             )}
           </p>
-          <p className="mt-1.5 truncate text-[13px] text-ink/55">
+          <p className="mt-1.5 hidden text-[13px] text-ink/55 sm:block">
             {[p.email, p.phone, `Joined ${date(p.created_at)}`].filter(Boolean).join(" · ")}
           </p>
+          <div className="mt-2 space-y-0.5 text-[12.5px] text-ink/55 sm:hidden">
+            <p className="break-all">{p.email}</p>
+            {p.phone && <p>{p.phone}</p>}
+            <p>Joined {date(p.created_at)}</p>
+          </div>
           {/* the direct / team boxes are hidden on phones, so say it here */}
-          <p className="mt-1 text-xs text-ink/60 sm:hidden">
+          <p className="mt-1.5 text-xs text-ink/60 sm:hidden">
             <b className="text-ink">{direct}</b> direct · <b className="text-ink">{total}</b> in team
           </p>
         </div>
@@ -158,14 +163,14 @@ export function Node({ id, depth, tree, open, toggle, forceOpen, visible, matche
           href={`/admin/partners/${p.id}`}
           aria-label={`Open ${p.full_name || p.email}`}
           title="Open full profile"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-copper shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-copper shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white sm:h-9 sm:w-9"
         >
           <ArrowUpRight className="h-4 w-4" />
         </a>
       </div>
 
       {isOpen && kids.length > 0 && (
-        <ul className="ml-4 mt-3 space-y-3 pl-5 sm:ml-10 sm:pl-6">
+        <ul className="ml-2 mt-3 space-y-3 pl-5 sm:ml-10 sm:pl-6">
           {kids.map((k) => (
             <Node
               key={k}
@@ -288,7 +293,7 @@ export default function NetworkTree({ people }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <Stat key={s.label} {...s} />
         ))}
@@ -323,7 +328,7 @@ export default function NetworkTree({ people }) {
             {matches.size} {matches.size === 1 ? "match" : "matches"}
           </p>
         )}
-        <div className="flex gap-2 lg:ml-auto">
+        <div className="flex gap-2 lg:ml-auto [&>button]:flex-1 lg:[&>button]:flex-none">
           <button type="button" onClick={expandAll} className={ghostBtn}>
             Expand all
           </button>
@@ -333,7 +338,7 @@ export default function NetworkTree({ people }) {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-4 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-6">
+      <div className="rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-3 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-6">
         {roots.length === 0 ? (
           <div className="flex flex-col items-center py-10 text-center">
             <TeamArt className="h-24 w-36" />

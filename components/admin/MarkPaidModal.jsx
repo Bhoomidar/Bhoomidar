@@ -33,8 +33,8 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
       <form onSubmit={submit} className="space-y-6">
         <div className="flex items-center justify-between gap-4 rounded-2xl bg-[#fbf7f0] p-5 ring-1 ring-black/5">
           <div className="min-w-0 leading-tight">
-            <p className="truncate font-semibold text-ink">{partner.full_name || partner.email}</p>
-            <p className="mt-1 truncate text-sm text-ink/55">{partner.email}</p>
+            <p className="[overflow-wrap:anywhere] font-semibold text-ink">{partner.full_name || partner.email}</p>
+            <p className="mt-1 [overflow-wrap:anywhere] text-sm text-ink/55">{partner.email}</p>
           </div>
           <div className="shrink-0 text-right leading-tight">
             <p className="text-xs text-ink/55">Joining payment</p>

@@ -400,8 +400,8 @@ export default async function PropertyPage({ params }) {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.25)] backdrop-blur-md lg:hidden">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[11px] text-ink/55">{p.unit || c.pd_price_label}</p>
-            <p className="truncate text-xl font-extrabold tabular-nums text-copper-dark">{p.price}</p>
+            <p className="[overflow-wrap:anywhere] text-[11px] text-ink/55">{p.unit || c.pd_price_label}</p>
+            <p className="[overflow-wrap:anywhere] text-xl font-extrabold tabular-nums text-copper-dark">{p.price}</p>
           </div>
           <a
             href={phoneHref(c.contact_phone)}

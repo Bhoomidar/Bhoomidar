@@ -201,7 +201,7 @@ export default function Hero({ c }) {
                 </span>
                 <span className="min-w-0 flex-1 leading-tight">
                   <span className="block text-xs text-ink/55">{label}</span>
-                  <span className="mt-0.5 block truncate text-base font-semibold text-ink">{value}</span>
+                  <span className="mt-0.5 block [overflow-wrap:anywhere] text-base font-semibold text-ink">{value}</span>
                 </span>
                 {i === 1 && (
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-md ring-1 ring-black/5">

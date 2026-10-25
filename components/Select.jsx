@@ -197,7 +197,7 @@ export default function Select({
           open ? "border-copper ring-4 ring-copper/15" : ""
         } ${className}`}
       >
-        <span className={`min-w-0 flex-1 truncate ${selected ? "" : "text-ink/45"}`}>
+        <span className={`min-w-0 flex-1 [overflow-wrap:anywhere] ${selected ? "" : "text-ink/45"}`}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown className={`${chevron} shrink-0 text-copper/80 transition ${open ? "rotate-180" : ""}`} />
@@ -282,8 +282,8 @@ export default function Select({
                     )}
                     {ItemIcon && !item.avatar && <ItemIcon className="h-[18px] w-[18px] shrink-0 text-copper" />}
                     <span className="min-w-0 flex-1 leading-snug">
-                      <span className="block truncate">{item.label}</span>
-                      {item.hint && <span className="block truncate text-xs font-normal text-ink/50">{item.hint}</span>}
+                      <span className="block [overflow-wrap:anywhere]">{item.label}</span>
+                      {item.hint && <span className="block [overflow-wrap:anywhere] text-xs font-normal text-ink/50">{item.hint}</span>}
                     </span>
                     {isSel && <Check className="h-4 w-4 shrink-0 text-copper" strokeWidth={3} />}
                   </li>
@@ -403,7 +403,7 @@ export function Suggest({ options, value, onChange, className = "", wrapperClass
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(o)}
                 onMouseEnter={() => setActive(i)}
-                className={`cursor-pointer truncate rounded-xl px-3 py-2.5 text-sm transition ${
+                className={`cursor-pointer [overflow-wrap:anywhere] rounded-xl px-3 py-2.5 text-sm transition ${
                   i === active ? "bg-copper/10 text-copper-dark" : "text-ink"
                 }`}
               >

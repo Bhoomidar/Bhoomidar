@@ -212,7 +212,7 @@ export default function PropertiesManager({ properties, categories = [] }) {
                   {p.location && (
                     <p className="mt-1 flex items-center gap-1.5 text-sm text-ink/55">
                       <MapPin className="h-3.5 w-3.5 shrink-0 text-copper" />
-                      <span className="truncate">{p.location}</span>
+                      <span className="[overflow-wrap:anywhere]">{p.location}</span>
                     </p>
                   )}
                   <p className="mt-3 text-2xl font-extrabold tabular-nums text-ink">
@@ -226,7 +226,7 @@ export default function PropertiesManager({ properties, categories = [] }) {
                         return (
                           <li key={k} className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#faf1e6] px-3 py-1 text-xs text-ink/70 ring-1 ring-black/5">
                             <Icon className="h-3 w-3 shrink-0 text-copper" />
-                            <span className="truncate">{d.text}</span>
+                            <span className="[overflow-wrap:anywhere]">{d.text}</span>
                           </li>
                         );
                       })}
@@ -368,7 +368,7 @@ export default function PropertiesManager({ properties, categories = [] }) {
           Showing {shown.length} of {properties.length}
         </p>
 
-        <div className="flex items-center gap-3 xl:ml-auto">
+        <div className="flex flex-wrap items-center gap-3 xl:ml-auto">
           <div className="inline-flex gap-1 rounded-2xl bg-[#faf1e6] p-1 ring-1 ring-black/5">
             {[
               ["table", Table, "Table"],
@@ -445,7 +445,7 @@ export default function PropertiesManager({ properties, categories = [] }) {
                                 </span>
                               </span>
                               <span className="min-w-0 max-w-[280px] leading-tight">
-                                <span className="block truncate text-[15px] font-bold text-ink" title={p.title}>
+                                <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink" title={p.title}>
                                   {p.title}
                                 </span>
                                 <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -459,9 +459,9 @@ export default function PropertiesManager({ properties, categories = [] }) {
                                   )}
                                 </span>
                                 {p.location && (
-                                  <span className="mt-1.5 flex items-center gap-1 truncate text-xs text-ink/55">
+                                  <span className="mt-1.5 flex items-center gap-1 [overflow-wrap:anywhere] text-xs text-ink/55">
                                     <MapPin className="h-3 w-3 shrink-0 text-copper" />
-                                    <span className="truncate">{p.location}</span>
+                                    <span className="[overflow-wrap:anywhere]">{p.location}</span>
                                   </span>
                                 )}
                               </span>

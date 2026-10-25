@@ -280,7 +280,7 @@ export default function SettingsEditor({ tabs, initial, top, aside, nav = "side"
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-lg shadow-copper/30">
             <Sparkles className="h-6 w-6" />
           </span>
-          <div className="min-w-0 flex-1 leading-tight">
+          <div className="min-w-[10rem] flex-1 leading-tight">
             <p className="font-display text-xl font-bold text-ink">
               {tabs.length} sections <span className="text-copper">to customize</span>
             </p>
@@ -299,7 +299,7 @@ export default function SettingsEditor({ tabs, initial, top, aside, nav = "side"
               href={siteHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-ink shadow-[0_8px_20px_-14px_rgba(110,60,20,0.45)] ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:text-copper hover:ring-copper"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-ink shadow-[0_8px_20px_-14px_rgba(110,60,20,0.45)] ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:text-copper hover:ring-copper sm:w-auto"
             >
               <ExternalLink className="h-4 w-4 text-copper" />
               {siteLabel}
@@ -345,7 +345,7 @@ export default function SettingsEditor({ tabs, initial, top, aside, nav = "side"
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-sm font-bold">{t.label}</span>
+                      <span className="block [overflow-wrap:anywhere] text-sm font-bold">{t.label}</span>
                       <span className={`mt-0.5 block text-xs ${on ? "text-white/75" : "text-ink/50"}`}>
                         {hasToggle ? "show / hide" : `${t.fields.length} settings`}
                       </span>

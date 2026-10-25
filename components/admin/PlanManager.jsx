@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, ExternalLink, Info, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { recheckRanks, saveRankPlan, saveRules } from "@/actions/admin/plan";
 import { buildChart } from "@/lib/planChart";
-import { REWARD_ICON_NAMES, rewardIcon } from "@/lib/rankIcons";
+import { iconForReward, rewardIcon } from "@/lib/rankIcons";
+import RewardPic from "../RewardPic";
+import ImageUploader from "./ImageUploader";
 import { btnGhost, btnPrimary, card, iconBtn, inputCls, labelCls } from "./ui";
 
 const smallInput = `${inputCls} !py-2.5`;
@@ -53,6 +55,12 @@ function RanksCard({ initial, months }) {
     [rows, months],
   );
 
+  // Typing the reward also picks the small fallback picture (used while there is no photo).
+  const setReward = (i, text) => {
+    const fit = iconForReward(text);
+    set(i, { reward: text, ...(fit ? { icon: fit } : {}) });
+  };
+
   const add = () => {
     const last = rows[rows.length - 1];
     const min = Math.round((Number(last?.min_area) || 0) * 2) || 500;
@@ -66,6 +74,7 @@ function RanksCard({ initial, months }) {
         monthly_bonus: String(Math.round((Number(last?.monthly_bonus) || 1000) * 1.5)),
         reward: "",
         icon: "Gift",
+        image_url: "",
         team_example: "",
         partners: 0,
         isNew: true,
@@ -115,18 +124,20 @@ function RanksCard({ initial, months }) {
           const canRemove = i === last && rows.length > 1 && (r.isNew || !r.partners);
           return (
             <li key={r.rank_no} className="rounded-2xl border border-black/10 bg-[#fbf7f0] p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-copper-light to-copper-dark text-sm font-bold text-white shadow">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-copper-light to-copper-dark text-sm font-bold text-white shadow">
                     {i + 1}
                   </span>
-                  <span className="text-sm font-semibold text-ink">{r.title || "Rank"}</span>
-                  {!r.isNew && (
-                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-ink/55 ring-1 ring-black/5">
-                      {r.partners} partner{r.partners === 1 ? "" : "s"} here
-                    </span>
-                  )}
-                </span>
+                  <span className="min-w-0 leading-tight">
+                    <span className="block break-words text-sm font-semibold text-ink">{r.title || "Rank"}</span>
+                    {!r.isNew && (
+                      <span className="mt-1.5 inline-block rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-ink/55 ring-1 ring-black/5">
+                        {r.partners} partner{r.partners === 1 ? "" : "s"} here
+                      </span>
+                    )}
+                  </span>
+                </div>
                 {i === last && rows.length > 1 && (
                   <button
                     type="button"
@@ -134,15 +145,15 @@ function RanksCard({ initial, months }) {
                     onClick={() => setRows(rows.slice(0, -1))}
                     title={canRemove ? "Remove this rank" : "Partners are on this rank, so it cannot be removed"}
                     aria-label="Remove the last rank"
-                    className={`${iconBtn} hover:!border-rose-500 hover:!text-rose-600`}
+                    className={`${iconBtn} shrink-0 hover:!border-rose-500 hover:!text-rose-600`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}
               </div>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-                <div className="lg:col-span-2">
+              <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-4 lg:grid-cols-6">
+                <div className="col-span-2 lg:col-span-3">
                   <label className={labelCls}>Rank name</label>
                   <input value={r.title} onChange={(e) => set(i, { title: e.target.value })} maxLength={60} className={smallInput} />
                 </div>
@@ -157,31 +168,52 @@ function RanksCard({ initial, months }) {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Own sale commission %</label>
+                  <label className={labelCls}>
+                    <span className="sm:hidden">Commission %</span>
+                    <span className="hidden sm:inline">Own sale commission %</span>
+                  </label>
                   <input value={r.ps_rate} onChange={(e) => set(i, { ps_rate: e.target.value })} inputMode="decimal" className={smallInput} />
                 </div>
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                   <label className={labelCls}>Monthly bonus (₹)</label>
                   <input value={r.monthly_bonus} onChange={(e) => set(i, { monthly_bonus: e.target.value })} inputMode="numeric" className={smallInput} />
                 </div>
-                <div>
-                  <label className={labelCls}>Reward</label>
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-copper/10 text-copper">
-                      <Icon className="h-5 w-5" />
+
+                {/* the reward and its picture: the picture follows the name until you pick one yourself */}
+                <div className="col-span-2 rounded-2xl bg-white p-3.5 ring-1 ring-black/5 sm:p-4 lg:col-span-6">
+                  <div className="flex items-end gap-3">
+                    <span
+                      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
+                      title={r.reward}
+                    >
+                      <RewardPic image={r.image_url} icon={r.icon} iconClassName="h-6 w-6" />
                     </span>
-                    <select value={r.icon} onChange={(e) => set(i, { icon: e.target.value })} className={`${smallInput} w-full`} aria-label="Reward picture">
-                      {REWARD_ICON_NAMES.map((n) => (
-                        <option key={n}>{n}</option>
-                      ))}
-                    </select>
+                    <div className="min-w-0 flex-1">
+                      <label className={labelCls}>Reward</label>
+                      <input
+                        value={r.reward}
+                        onChange={(e) => setReward(i, e.target.value)}
+                        maxLength={60}
+                        placeholder="e.g. Smart Watch"
+                        className={smallInput}
+                      />
+                    </div>
                   </div>
+
+                  <p className="mb-2 mt-3.5 text-xs font-semibold text-ink/60">
+                    Photo of the reward{" "}
+                    <span className="font-normal text-ink/45">(shown on the website and in every partner&apos;s dashboard)</span>
+                  </p>
+                  <ImageUploader
+                    value={r.image_url}
+                    onChange={(url) => set(i, { image_url: url })}
+                    aspect="aspect-[4/3]"
+                    maxWidth="max-w-[220px]"
+                    optional
+                  />
                 </div>
-                <div className="sm:col-span-2 lg:col-span-3">
-                  <label className={labelCls}>Reward name</label>
-                  <input value={r.reward} onChange={(e) => set(i, { reward: e.target.value })} maxLength={60} placeholder="e.g. Smart Watch" className={smallInput} />
-                </div>
-                <div className="sm:col-span-2 lg:col-span-3">
+
+                <div className="col-span-2 lg:col-span-6">
                   <label className={labelCls}>Team commission example (printed on the chart)</label>
                   <input
                     value={r.team_example}

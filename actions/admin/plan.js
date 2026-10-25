@@ -13,6 +13,12 @@ function refreshSite() {
 
 const clean = (v, max) => String(v ?? "").trim().slice(0, max);
 
+// Only our own pictures (/images/...) or an https address; anything else is dropped.
+const safeImage = (v) => {
+  const u = clean(v, 500);
+  return u.startsWith("/") && !u.startsWith("//") ? u : /^https:[/][/]/.test(u) ? u : "";
+};
+
 // Everything the Commission Plan page shows: the ranks, the rules and how many partners are on each rank.
 export async function getPlanAdmin() {
   await requireAdmin();
@@ -20,7 +26,7 @@ export async function getPlanAdmin() {
   const [ranksRes, setRes, histRes, codeRes] = await Promise.all([
     db
       .from("rank_plan")
-      .select("rank_no, title, min_area, ps_rate, monthly_bonus, reward, icon, team_example")
+      .select("rank_no, title, min_area, ps_rate, monthly_bonus, reward, icon, image_url, team_example")
       .order("rank_no", { ascending: true }),
     db
       .from("site_settings")
@@ -52,6 +58,7 @@ export async function getPlanAdmin() {
       monthly_bonus: String(r.monthly_bonus),
       reward: r.reward,
       icon: r.icon || "Gift",
+      image_url: r.image_url || "",
       team_example: r.team_example || "",
       partners: onRank[r.rank_no] ?? 0,
     })),
@@ -97,6 +104,7 @@ export async function saveRankPlan(rows) {
       monthly_bonus: bonus,
       reward,
       icon: REWARD_ICON_NAMES.includes(r.icon) ? r.icon : "Gift",
+      image_url: safeImage(r.image_url),
       team_example: clean(r.team_example, 80),
     });
   }

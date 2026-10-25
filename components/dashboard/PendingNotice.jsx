@@ -48,7 +48,7 @@ export default async function PendingNotice({ name = "", email = "" }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Left: what to do, and who to talk to */}
         <div className="flex flex-col gap-6 lg:col-span-3">
           <section className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-9">
@@ -148,7 +148,7 @@ export default async function PendingNotice({ name = "", email = "" }) {
               </div>
 
               {hasContact ? (
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {contact.phone && (
                     <a
                       href={phoneHref(contact.phone)}
@@ -309,7 +309,7 @@ export default async function PendingNotice({ name = "", email = "" }) {
           <p className="text-sm text-ink/55">Pay the joining fee and all of this opens up.</p>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {locked.map(({ icon: Icon, title, text }, i) => (
             <div
               key={title}

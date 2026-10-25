@@ -52,7 +52,7 @@ function InfoRow({ icon: Icon, label, children, action }) {
 // "Add >" in copper; opens the edit window, or goes to the page you give it.
 function AddLink({ href, children = "Add" }) {
   const cls =
-    "inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold text-copper transition hover:text-copper-dark";
+    "inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-semibold text-copper transition hover:text-copper-dark";
   if (href) {
     return (
       <a href={href} className={cls}>
@@ -77,12 +77,12 @@ const Verified = () => (
 
 function SectionHeader({ icon: Icon, title, note, right }) {
   return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex items-center gap-3.5">
+    <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:gap-3">
+      <div className="flex min-w-0 items-center gap-3.5">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-md shadow-copper/30">
           <Icon className="h-5 w-5" />
         </span>
-        <div className="leading-tight">
+        <div className="min-w-0 leading-tight">
           <h2 className="font-display text-2xl font-bold text-ink">{title}</h2>
           <p className="mt-1 text-sm text-ink/55">{note}</p>
         </div>
@@ -95,7 +95,7 @@ function SectionHeader({ icon: Icon, title, note, right }) {
 // A step of the account journey: done, happening now, or still to come.
 function Step({ state, icon: Icon, title, note }) {
   return (
-    <div className="flex w-24 shrink-0 flex-col items-center text-center sm:w-44">
+    <div className="flex w-[86px] shrink-0 flex-col items-center text-center min-[400px]:w-24 sm:w-44">
       <div className="relative">
         {state === "now" && <span className="absolute inset-0 animate-ping rounded-full bg-amber-400/40" />}
         <span
@@ -117,7 +117,7 @@ function Step({ state, icon: Icon, title, note }) {
       </div>
       <p className={`mt-3.5 text-sm font-bold sm:text-base ${state === "next" ? "text-ink/45" : "text-ink"}`}>{title}</p>
       <p
-        className={`mt-1.5 rounded-full px-3 py-1 text-xs font-medium sm:text-[13px] ${
+        className={`mt-1.5 rounded-full px-2 py-1 text-xs font-medium min-[400px]:px-3 sm:text-[13px] ${
           state === "done"
             ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100"
             : state === "now"
@@ -308,7 +308,7 @@ export default async function ProfilePage() {
 
       {/* Details */}
       <Reveal>
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className={card}>
             <SectionHeader
               icon={UserRound}
@@ -386,8 +386,13 @@ export default async function ProfilePage() {
               }
             />
             <ul className="mt-3 divide-y divide-black/5">
-              <InfoRow icon={Mail} label="Email" action={emailVerified && <Verified />}>
-                {partner.email}
+              <InfoRow icon={Mail} label="Email" action={emailVerified && <span className="hidden sm:inline-flex"><Verified /></span>}>
+                <span className="[overflow-wrap:anywhere]">{partner.email}</span>
+                {emailVerified && (
+                  <span className="mt-1.5 block sm:hidden">
+                    <Verified />
+                  </span>
+                )}
               </InfoRow>
               <InfoRow icon={Phone} label="Mobile number" action={!partner.phone && <AddLink />}>
                 {partner.phone || <span className="font-medium text-ink/45">Not added</span>}

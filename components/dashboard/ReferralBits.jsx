@@ -82,13 +82,13 @@ export function ReferralStrip({ code, link, locked, referredCount, joinedThisMon
     <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
       <div className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-copper-light/20 blur-3xl" />
 
-      <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,330px)] lg:gap-0">
-        <div className="lg:pr-8">
+      <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,330px)] lg:gap-0">
+        <div className="min-w-0 lg:pr-8">
           <div className="flex items-center gap-3.5">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-md shadow-copper/30">
               <Gift className="h-5 w-5" />
             </span>
-            <div className="leading-tight">
+            <div className="min-w-0 leading-tight">
               <h2 className="font-display text-2xl font-bold text-ink">Your referral</h2>
               <p className="mt-1 text-sm text-ink/55">Share your code and invite more people to grow your network.</p>
             </div>
@@ -101,7 +101,7 @@ export function ReferralStrip({ code, link, locked, referredCount, joinedThisMon
             </p>
           ) : (
             <div className="mt-5 flex flex-wrap items-stretch gap-3">
-              <div className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-copper/35 bg-white/70 px-4 py-3">
+              <div className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-copper/35 bg-white/70 px-4 py-3 sm:w-auto sm:justify-start">
                 <span className="leading-tight">
                   <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-copper">Your referral code</span>
                   <span className="mt-1 block whitespace-nowrap text-2xl font-extrabold tabular-nums tracking-[0.04em] text-copper-dark">
@@ -131,7 +131,7 @@ export function ReferralStrip({ code, link, locked, referredCount, joinedThisMon
                   aria-label="Copy referral link"
                   className="group mt-1.5 flex w-full items-center gap-2 rounded-xl bg-white py-2 pl-3 pr-2 text-left shadow-sm ring-1 ring-black/10 transition hover:ring-copper/50"
                 >
-                  <span className="min-w-0 flex-1 truncate font-mono text-xs text-ink/75">{link}</span>
+                  <span className="min-w-0 flex-1 break-all font-mono text-xs leading-snug text-ink/75 [overflow-wrap:anywhere]">{link}</span>
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition ${
                       copied === "link" ? "bg-emerald-500 text-white" : "bg-copper/10 text-copper group-hover:bg-copper group-hover:text-white"

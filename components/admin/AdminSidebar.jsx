@@ -163,8 +163,8 @@ export default function AdminSidebar({ email, newInquiries }) {
               {(email?.[0] ?? "A").toUpperCase()}
             </span>
             <span className="min-w-0 flex-1 leading-tight">
-              <span className="block truncate text-sm font-semibold text-white">View website</span>
-              <span className="mt-1 block truncate text-xs text-white/50">{email}</span>
+              <span className="block [overflow-wrap:anywhere] text-sm font-semibold text-white">View website</span>
+              <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-white/50">{email}</span>
             </span>
             <ExternalLink className="h-4 w-4 shrink-0 text-white/40 transition group-hover:text-copper-light" />
           </a>

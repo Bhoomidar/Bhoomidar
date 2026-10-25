@@ -75,7 +75,7 @@ function Tile({ icon: Icon, label, ok, detail }) {
           </p>
         </div>
       </div>
-      <p className="mt-3 truncate text-xs text-ink/55">{detail}</p>
+      <p className="mt-3 break-words text-xs text-ink/55">{detail}</p>
     </div>
   );
 }
@@ -200,7 +200,7 @@ function Preview({ form }) {
             {contact.phone && (
               <li className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-2.5 ring-1 ring-black/5">
                 <PhoneCall className="h-4 w-4 shrink-0 text-copper" />
-                <span className="truncate text-sm font-bold text-ink">{contact.phone}</span>
+                <span className="[overflow-wrap:anywhere] text-sm font-bold text-ink">{contact.phone}</span>
               </li>
             )}
             {contact.whatsapp && (
@@ -212,7 +212,7 @@ function Preview({ form }) {
             {contact.email && (
               <li className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-2.5 ring-1 ring-black/5">
                 <Mail className="h-4 w-4 shrink-0 text-copper" />
-                <span className="truncate text-sm font-bold text-ink">{contact.email}</span>
+                <span className="[overflow-wrap:anywhere] text-sm font-bold text-ink">{contact.email}</span>
               </li>
             )}
           </ul>

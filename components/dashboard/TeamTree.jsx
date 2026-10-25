@@ -151,7 +151,7 @@ function Tile({ icon: Icon, label, value, side, onClick }) {
       </span>
       <span className="min-w-0 flex-1 leading-tight">
         <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/50">{label}</span>
-        <span className="mt-1 block truncate text-lg font-bold text-ink">{value}</span>
+        <span className="mt-1 block [overflow-wrap:anywhere] text-lg font-bold text-ink">{value}</span>
       </span>
       {side}
     </Tag>
@@ -210,7 +210,7 @@ function Details({ p, tree, onClose, onFull }) {
           <div className="relative flex items-center gap-5 sm:gap-6">
             <Avatar p={p} size="h-24 w-24 sm:h-28 sm:w-28" text="text-3xl" />
             <div className="min-w-0 leading-tight">
-              <h3 className="truncate font-display text-3xl font-bold text-ink">{p.name}</h3>
+              <h3 className="[overflow-wrap:anywhere] font-display text-3xl font-bold text-ink">{p.name}</h3>
               <p className="mt-1.5 font-mono text-base font-semibold text-copper-dark">{p.code}</p>
               <p className="mt-3 flex flex-wrap items-center gap-2.5">
                 <StatusPill status={p.status} />
@@ -223,7 +223,7 @@ function Details({ p, tree, onClose, onFull }) {
         </div>
 
         <div className="space-y-3 p-5 sm:p-6">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Tile icon={Crown} label="Rank" value={p.rankTitle || "Sales Partner"} />
             <Tile
               icon={Package}
@@ -246,7 +246,7 @@ function Details({ p, tree, onClose, onFull }) {
             />
           </div>
 
-          <div className="grid overflow-hidden rounded-2xl bg-gradient-to-br from-white to-[#fdf6ec] ring-1 ring-copper/10 sm:grid-cols-2 sm:divide-x sm:divide-black/5">
+          <div className="grid grid-cols-1 overflow-hidden rounded-2xl bg-gradient-to-br from-white to-[#fdf6ec] ring-1 ring-copper/10 sm:grid-cols-2 sm:divide-x sm:divide-black/5">
             <div className="relative flex items-center gap-4 overflow-hidden p-4 pr-16">
               <MapPin className="pointer-events-none absolute bottom-2 right-3 h-12 w-12 text-copper/15" strokeWidth={1.3} />
               <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-copper/10 text-copper">
@@ -350,19 +350,19 @@ export function ReferralsTable({ nodes, rootId, children }) {
 
   return (
     <section className="rounded-3xl bg-white p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3.5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3.5">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-copper/10 text-copper ring-1 ring-copper/15">
             <Users className="h-5 w-5" />
           </span>
-          <div className="leading-tight">
+          <div className="min-w-0 leading-tight">
             <h2 className="text-lg font-bold text-ink sm:text-xl">People you referred</h2>
             <p className="mt-1 text-sm text-ink/55">Track all the people who joined using your code.</p>
           </div>
         </div>
 
         <Select
-          wrapperClassName="shrink-0"
+          wrapperClassName="w-full sm:w-auto sm:shrink-0"
           variant="pill"
           value={filter}
           onChange={(v) => {
@@ -393,7 +393,62 @@ export function ReferralsTable({ nodes, rootId, children }) {
         <p className="py-12 text-center text-sm text-ink/55">No one matches this filter.</p>
       ) : (
         <div className="mt-5">
-          <div className="overflow-x-auto rounded-2xl ring-1 ring-black/5">
+          <ul className="space-y-3 md:hidden">
+            {rows.slice(0, shown).map((p) => (
+              <li key={p.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/10">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-sm">
+                    {p.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.avatar} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initialsOf(p.name)
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">{p.name}</span>
+                    {p.rankTitle && <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-ink/50">{p.rankTitle}</span>}
+                  </span>
+                  <StatusPill status={p.status} />
+                </div>
+
+                <dl className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-[#fbf7f0] px-3.5 py-2.5">
+                  <div className="min-w-0">
+                    <dt className="text-[11px] text-ink/50">Partner ID</dt>
+                    <dd className="mt-0.5 font-mono text-[13px] text-ink/80 [overflow-wrap:anywhere]">{p.code}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[11px] text-ink/50">Joined on</dt>
+                    <dd className="mt-0.5 text-[13px] text-ink/80">{p.joined}</dd>
+                  </div>
+                </dl>
+
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetailsId(p.id)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-[13px] font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                  >
+                    <Eye className="h-4 w-4 text-copper" />
+                    View details
+                  </button>
+                  <button
+                    type="button"
+                    data-row-menu
+                    onClick={(e) => openMenu(e, p.id)}
+                    aria-label="More actions"
+                    aria-expanded={menu?.id === p.id}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-ink/70 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  {copied === p.id && <span className="text-xs font-semibold text-emerald-600">Copied</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto rounded-2xl ring-1 ring-black/5 md:block">
             <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-[#f6f0e7] text-xs font-semibold text-ink/60">
                 <tr>
@@ -420,8 +475,8 @@ export function ReferralsTable({ nodes, rootId, children }) {
                           )}
                         </span>
                         <span className="min-w-0 leading-tight">
-                          <span className="block truncate font-bold text-ink">{p.name}</span>
-                          {p.rankTitle && <span className="mt-0.5 block truncate text-[11px] text-ink/45">{p.rankTitle}</span>}
+                          <span className="block [overflow-wrap:anywhere] font-bold text-ink">{p.name}</span>
+                          {p.rankTitle && <span className="mt-0.5 block [overflow-wrap:anywhere] text-[11px] text-ink/45">{p.rankTitle}</span>}
                         </span>
                       </span>
                     </td>
@@ -683,7 +738,7 @@ function OrgNode({ id, tree, open, toggle, forceOpen, visible, onDetails }) {
           <span className="flex justify-center">
             <Avatar p={p} size="h-14 w-14" />
           </span>
-          <span className="mt-3 block truncate text-sm font-bold text-ink" title={p.name}>
+          <span className="mt-3 block [overflow-wrap:anywhere] text-sm font-bold text-ink" title={p.name}>
             {p.name}
           </span>
           <span className="mt-0.5 block font-mono text-[11px] font-semibold text-copper-dark/80">{p.code}</span>
@@ -741,7 +796,7 @@ function YouCard({ me, teamSize, isOpen, onToggle, hasKids }) {
           )}
         </span>
       </div>
-      <p className="relative mt-3 truncate text-lg font-bold">{me.name} (You)</p>
+      <p className="relative mt-3 [overflow-wrap:anywhere] text-lg font-bold">{me.name} (You)</p>
       <p className="relative mt-0.5 font-mono text-xs font-semibold text-white/80">{me.code}</p>
       {me.rankTitle && (
         <p className="relative mt-2.5 inline-flex rounded-full bg-black/30 px-3.5 py-1 text-xs font-semibold">{me.rankTitle}</p>
@@ -944,6 +999,23 @@ export default function TeamTree({ nodes, rootId, me }) {
     setScale(1);
     setTimeout(centre, 50);
   };
+
+  // On a phone the tree opens fitted to the screen and centred on you, not scrolled to its left edge.
+  useEffect(() => {
+    if (view !== "tree") return;
+    const el = canvas.current;
+    const box = inner.current;
+    if (!el || !box) return;
+    if (el.clientWidth < 640 && box.scrollWidth > el.clientWidth) {
+      setScale(Math.min(1, Math.max(0.4, Math.round((el.clientWidth / box.scrollWidth) * 100) / 100)));
+    }
+    const t = setTimeout(() => {
+      el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+    }, 60);
+    return () => clearTimeout(t);
+    // only when the tree view opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
   const onDown = (e) => {
     if (e.target.closest("button, a, input, select")) return;
     const el = canvas.current;
@@ -1036,14 +1108,14 @@ export default function TeamTree({ nodes, rootId, me }) {
           {/* what the team adds up to */}
           <div className="relative mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {summary.map(({ art: Art, icon: Icon, label, value, tone, artTone }) => (
-              <div key={label} className="relative z-10 flex items-center gap-3.5 overflow-hidden rounded-2xl bg-white p-4 pr-16 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.5)] ring-1 ring-black/5">
-                <Art className={`pointer-events-none absolute right-3 top-3 h-11 w-14 ${artTone}`} />
+              <div key={label} className="relative z-10 flex min-w-0 flex-col items-start gap-3 overflow-hidden rounded-2xl bg-white p-4 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.5)] ring-1 ring-black/5 sm:flex-row sm:items-center sm:gap-3.5 sm:pr-16">
+                <Art className={`pointer-events-none absolute right-3 top-3 hidden h-11 w-14 sm:block ${artTone}`} />
                 <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone}`}>
                   <Icon className="h-5 w-5" />
                 </span>
                 <span className="relative min-w-0 leading-tight">
                   <b className="block text-3xl font-extrabold tabular-nums text-ink">{value}</b>
-                  <span className="mt-0.5 block text-xs text-ink/55">{label}</span>
+                  <span className="mt-1 block text-xs text-ink/55 sm:mt-0.5">{label}</span>
                 </span>
               </div>
             ))}
@@ -1118,7 +1190,7 @@ export default function TeamTree({ nodes, rootId, me }) {
                 type="button"
                 onClick={() => setFiltersOpen((v) => !v)}
                 aria-expanded={filtersOpen}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
               >
                 <Filter className="h-4 w-4" />
                 More filters
@@ -1169,11 +1241,11 @@ export default function TeamTree({ nodes, rootId, me }) {
               )}
             </div>
 
-            <div className="flex gap-2 lg:ml-auto">
+            <div className="flex gap-2 lg:ml-auto [&>button]:flex-1 lg:[&>button]:flex-none">
               <button
                 type="button"
                 onClick={() => setOpen(new Set(tree.children.keys()))}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
               >
                 <Maximize2 className="h-4 w-4" />
                 Expand all
@@ -1184,7 +1256,7 @@ export default function TeamTree({ nodes, rootId, me }) {
                   setOpen(new Set());
                   setRootOpen(true);
                 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
               >
                 <Minimize2 className="h-4 w-4" />
                 Collapse all

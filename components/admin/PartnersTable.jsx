@@ -187,11 +187,11 @@ export default function PartnersTable({ partners, fee }) {
                             </span>
                           )}
                         </a>
-                        <span className="mt-1 block truncate text-[13px] text-ink/55" title={p.email}>
+                        <span className="mt-1 block [overflow-wrap:anywhere] text-[13px] text-ink/55" title={p.email}>
                           {p.email}
                         </span>
                         {p.phone && (
-                          <span className="mt-0.5 block truncate text-[13px] text-ink/55 min-[1500px]:hidden">{p.phone}</span>
+                          <span className="mt-0.5 block [overflow-wrap:anywhere] text-[13px] text-ink/55 min-[1500px]:hidden">{p.phone}</span>
                         )}
                       </span>
                     </div>

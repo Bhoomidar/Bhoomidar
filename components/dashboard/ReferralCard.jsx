@@ -61,7 +61,7 @@ export default function ReferralCard({ code, link }) {
       />
       <div className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-copper-light/20 blur-3xl" />
 
-      <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.95fr)] lg:gap-0">
+      <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.95fr)] lg:gap-0">
         {/* Code */}
         <div className="flex flex-col justify-center lg:pr-7">
           <div className="rounded-2xl border-2 border-dashed border-copper/35 bg-white/70 p-5 sm:p-6">
@@ -122,11 +122,11 @@ export default function ReferralCard({ code, link }) {
               </span>
             </button>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => copy("link", link)}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-3.5 py-2.5 text-[13px] font-bold text-white shadow-md shadow-copper/30 transition hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-3.5 py-2.5 text-[13px] font-bold text-white shadow-md shadow-copper/30 transition hover:-translate-y-0.5"
               >
                 {copied === "link" ? <Check className="h-4 w-4" strokeWidth={3} /> : <Copy className="h-4 w-4" />}
                 {copied === "link" ? "Copied" : "Copy link"}
@@ -135,7 +135,7 @@ export default function ReferralCard({ code, link }) {
                 href={whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-[#2bd96b] to-[#1aa850] px-3.5 py-2.5 text-[13px] font-bold text-white shadow-md shadow-[#25D366]/30 transition hover:-translate-y-0.5 hover:brightness-110"
+                className="order-first col-span-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-b from-[#2bd96b] to-[#1aa850] px-3.5 py-2.5 sm:order-none sm:col-span-1 text-[13px] font-bold text-white shadow-md shadow-[#25D366]/30 transition hover:-translate-y-0.5 hover:brightness-110"
               >
                 <FaWhatsapp className="h-4 w-4" />
                 Share on WhatsApp
@@ -143,7 +143,7 @@ export default function ReferralCard({ code, link }) {
               <button
                 type="button"
                 onClick={shareMore}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-[13px] font-bold text-copper-dark shadow-sm ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:ring-copper"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3.5 py-2.5 text-[13px] font-bold text-copper-dark shadow-sm ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:ring-copper"
               >
                 <Share2 className="h-4 w-4" />
                 Share more

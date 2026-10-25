@@ -91,7 +91,7 @@ export default async function NetworkPage() {
 
           {/* Numbers */}
           <Reveal>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {stats.map(({ icon: Icon, art: Art, label, value, badge, note, theme }) => (
                 <div
                   key={label}

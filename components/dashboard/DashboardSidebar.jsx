@@ -140,8 +140,8 @@ export default function DashboardSidebar({ name, email, initials, avatarUrl }) {
               )}
             </span>
             <span className="min-w-0 flex-1 leading-tight">
-              <span className="block truncate text-sm font-semibold text-white">{name}</span>
-              <span className="mt-1 block truncate text-xs text-white/50">{email}</span>
+              <span className="block [overflow-wrap:anywhere] text-sm font-semibold text-white">{name}</span>
+              <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-white/50">{email}</span>
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-copper-light" />
           </a>
