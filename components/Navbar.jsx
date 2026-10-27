@@ -64,8 +64,8 @@ export default function Navbar() {
     };
   }, [open]);
 
-  const home = pathname === "/" || pathname === "/contact"; // pages with the floating pill bar
-  const wide = home || pathname.startsWith("/properties"); // pages whose content runs wide, so the bar lines up
+  const home = true; // every page has the same floating pill bar as the home page
+  const wide = true;
   const showLogin = !user;
   const primaryHref = user ? "/dashboard" : "/contact";
   const primaryLabel = user ? "My Dashboard" : "Contact Us";

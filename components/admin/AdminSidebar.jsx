@@ -157,14 +157,14 @@ export default function AdminSidebar({ email, newInquiries }) {
             href="/"
             target="_blank"
             rel="noreferrer"
-            className="group flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-copper/40"
+            className="group flex items-center gap-2.5 rounded-2xl bg-white/[0.06] p-2.5 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-copper/40"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md ring-2 ring-white/20">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md ring-2 ring-white/20">
               {(email?.[0] ?? "A").toUpperCase()}
             </span>
             <span className="min-w-0 flex-1 leading-tight">
               <span className="block [overflow-wrap:anywhere] text-sm font-semibold text-white">View website</span>
-              <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-white/50">{email}</span>
+              <span className="mt-1 block [overflow-wrap:anywhere] text-[11px] text-white/50">{email}</span>
             </span>
             <ExternalLink className="h-4 w-4 shrink-0 text-white/40 transition group-hover:text-copper-light" />
           </a>

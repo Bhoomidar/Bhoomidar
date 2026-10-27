@@ -3,7 +3,7 @@ import { Check, Home, TrendingUp, Users } from "lucide-react";
 import Logo from "../Logo";
 
 const perks = [
-  "Earn 2% to 4% commission on sales",
+  "Earn commission on every sale",
   "Bonus and monthly rewards",
   "Clear rules, clear earnings",
 ];

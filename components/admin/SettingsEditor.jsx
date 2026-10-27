@@ -203,7 +203,8 @@ export default function SettingsEditor({ tabs, initial, top, aside, nav = "side"
 
   const allFields = tabs.flatMap((t) => t.fields);
   const toggles = allFields.filter((f) => f.type === "toggle");
-  const hiddenCount = toggles.filter((f) => !isOn(form[f.key])).length;
+  // a switch that is off by default (like "show the numbers") is an option, not something hidden
+  const hiddenCount = toggles.filter((f) => f.default !== "0" && !isOn(form[f.key])).length;
   const unsavedTabs = tabs.filter(dirty).length;
 
   const save = () =>

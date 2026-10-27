@@ -4,6 +4,7 @@ import {
   ChartNoAxesColumnIncreasing,
   ClipboardList,
   Gift,
+  Check,
   Crown,
   Handshake,
   MoveHorizontal,
@@ -25,7 +26,6 @@ import { getContent } from "@/lib/content";
 import { rankTiers } from "@/lib/data";
 import RewardPic from "@/components/RewardPic";
 import { getRankChart } from "@/lib/plan";
-import { monthlyMonths } from "@/lib/planChart";
 import { bannerProps, isOn, lines } from "@/lib/siteContent";
 
 // The browser tab title and the Google description come from the admin (Partner Page > Browser Title).
@@ -55,6 +55,21 @@ export default async function OpportunitiesPage() {
   const c = await getContent();
   const showStrip = isOn(c.partner_show_strip);
   const showTrust = isOn(c.partner_show_trust);
+  // the chart: which columns, and whether the real numbers show or only a "you get this" badge
+  const numbers = c.partner_chart_numbers === "1";
+  const col = {
+    area: isOn(c.partner_chart_show_area),
+    personal: isOn(c.partner_chart_show_personal),
+    team: isOn(c.partner_chart_show_team),
+    monthly: isOn(c.partner_chart_show_monthly),
+    reward: isOn(c.partner_chart_show_reward),
+  };
+  const badge = (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
+      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+      {c.partner_chart_yes}
+    </span>
+  );
 
   const steps = [1, 2, 3].map((n) => ({
     icon: STEP_ICONS[n - 1],
@@ -266,22 +281,24 @@ export default async function OpportunitiesPage() {
 
           {/* Full chart. Scrolls sideways on phones. */}
           <Reveal className="mt-10">
-            <p className="mb-3 flex items-center gap-2 text-xs text-ink/50 lg:hidden">
-              <MoveHorizontal className="h-4 w-4" />
-              Swipe sideways to see the full chart
-            </p>
+            {c.partner_chart_swipe && (
+              <p className="mb-3 flex items-center gap-2 text-xs text-ink/50 lg:hidden">
+                <MoveHorizontal className="h-4 w-4" />
+                {c.partner_chart_swipe}
+              </p>
+            )}
 
             <div className="relative overflow-hidden rounded-3xl bg-white/60 shadow-[0_30px_60px_-30px_rgba(110,60,20,0.45)] ring-1 ring-copper/15 backdrop-blur">
               <div className="relative overflow-x-auto">
                 <table className="w-full min-w-[1000px] border-separate border-spacing-0 text-left">
                   <thead>
                     <tr className="text-[11px] font-bold uppercase tracking-[0.16em] text-copper-dark">
-                      <th className="px-6 py-5">Rank</th>
-                      <th className="px-4 py-5">Eligibility</th>
-                      <th className="px-4 py-5">Personal Sales Commission</th>
-                      <th className="px-4 py-5">Team Sales Defence (TSD)</th>
-                      <th className="px-4 py-5">Monthly Bonus ({monthlyMonths(c)} months)</th>
-                      <th className="px-6 py-5">Reward</th>
+                      <th className="px-6 py-5">{c.partner_col_rank}</th>
+                      {col.area && <th className="px-4 py-5">{c.partner_col_area}</th>}
+                      {col.personal && <th className="px-4 py-5">{c.partner_col_personal}</th>}
+                      {col.team && <th className="px-4 py-5">{c.partner_col_team}</th>}
+                      {col.monthly && <th className="px-4 py-5">{c.partner_col_monthly}</th>}
+                      {col.reward && <th className="px-6 py-5">{c.partner_col_reward}</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -302,49 +319,66 @@ export default async function OpportunitiesPage() {
                               </span>
                               <span className="leading-tight">
                                 <span className="block text-[15px] font-bold text-ink">{r.title}</span>
-                                {top && (
+                                {top && c.partner_chart_top_badge && (
                                   <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-copper/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-copper-dark">
                                     <Crown className="h-3 w-3" />
-                                    Top rank
+                                    {c.partner_chart_top_badge}
                                   </span>
                                 )}
                               </span>
                             </span>
                           </td>
 
-                          <td className={`${cell} px-4 py-4 text-sm font-medium text-ink/75`}>{r.area}</td>
+                          {col.area && <td className={`${cell} px-4 py-4 text-sm font-medium text-ink/75`}>{r.area}</td>}
 
-                          <td className={`${cell} px-4 py-4`}>
-                            <span className="block text-2xl font-bold leading-none text-copper">
-                              {r.commission}
-                            </span>
-                            <span className="mt-2 block h-1.5 w-28 overflow-hidden rounded-full bg-black/10">
-                              <span
-                                className="block h-full rounded-full bg-gradient-to-r from-copper to-copper-light"
-                                style={{ width: `${(r.rate / topRate) * 100}%` }}
-                              />
-                            </span>
-                            <span className="mt-2 block text-[11px] text-ink/50">{r.example}</span>
-                          </td>
+                          {col.personal && (
+                            <td className={`${cell} px-4 py-4`}>
+                              {numbers ? (
+                                <>
+                                  <span className="block text-2xl font-bold leading-none text-copper">{r.commission}</span>
+                                  <span className="mt-2 block h-1.5 w-28 overflow-hidden rounded-full bg-black/10">
+                                    <span
+                                      className="block h-full rounded-full bg-gradient-to-r from-copper to-copper-light"
+                                      style={{ width: `${(r.rate / topRate) * 100}%` }}
+                                    />
+                                  </span>
+                                  <span className="mt-2 block text-[11px] text-ink/50">{r.example}</span>
+                                </>
+                              ) : (
+                                badge
+                              )}
+                            </td>
+                          )}
 
-                          <td className={`${cell} px-4 py-4`}>
-                            <span className={`block text-[15px] font-bold ${r.teamExample ? "text-ink" : "text-ink/50"}`}>
-                              {r.team}
-                            </span>
-                            {r.teamExample && (
-                              <span className="mt-1 block text-[11px] text-ink/50">{r.teamExample}</span>
-                            )}
-                          </td>
+                          {col.team && (
+                            <td className={`${cell} px-4 py-4`}>
+                              {numbers ? (
+                                <>
+                                  <span className={`block text-[15px] font-bold ${r.teamExample ? "text-ink" : "text-ink/50"}`}>{r.team}</span>
+                                  {r.teamExample && <span className="mt-1 block text-[11px] text-ink/50">{r.teamExample}</span>}
+                                </>
+                              ) : (
+                                badge
+                              )}
+                            </td>
+                          )}
 
-                          <td className={`${cell} px-4 py-4`}>
-                            <span className="block text-[15px] font-bold text-ink">
-                              {r.monthly.replace(" x ", " × ")}
-                            </span>
-                            <span className="mt-1.5 inline-flex rounded-full bg-copper/10 px-2.5 py-0.5 text-xs font-semibold text-copper-dark ring-1 ring-copper/25">
-                              {r.monthlyTotal}
-                            </span>
-                          </td>
+                          {col.monthly && (
+                            <td className={`${cell} px-4 py-4`}>
+                              {numbers ? (
+                                <>
+                                  <span className="block text-[15px] font-bold text-ink">{r.monthly.replace(" x ", " × ")}</span>
+                                  <span className="mt-1.5 inline-flex rounded-full bg-copper/10 px-2.5 py-0.5 text-xs font-semibold text-copper-dark ring-1 ring-copper/25">
+                                    {r.monthlyTotal}
+                                  </span>
+                                </>
+                              ) : (
+                                badge
+                              )}
+                            </td>
+                          )}
 
+                          {col.reward && (
                           <td className={`${cell} px-6 py-4`}>
                             <span className="flex items-center gap-3.5">
                               <span
@@ -355,6 +389,7 @@ export default async function OpportunitiesPage() {
                               <span className="text-sm font-semibold text-ink">{r.reward}</span>
                             </span>
                           </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -362,6 +397,7 @@ export default async function OpportunitiesPage() {
                 </table>
               </div>
             </div>
+            {c.partner_chart_note && <p className="mt-4 text-center text-sm text-ink/55">{c.partner_chart_note}</p>}
           </Reveal>
 
           {/* C.T.O. bonus and notes */}
