@@ -4,7 +4,7 @@ import Logo from "../Logo";
 
 const perks = [
   "Earn commission on every sale",
-  "Bonus and monthly rewards",
+  "Monthly bonus and lifetime rewards",
   "Clear rules, clear earnings",
 ];
 

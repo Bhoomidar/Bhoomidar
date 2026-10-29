@@ -35,9 +35,9 @@ const quickActions = [
   },
   {
     icon: Handshake,
-    title: "Partner Program",
-    text: "How commission and rewards work",
-    href: "/opportunities",
+    title: "My Plan",
+    text: "Every income and reward explained",
+    href: "/dashboard/commission#plan",
   },
   {
     icon: PhoneCall,

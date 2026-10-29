@@ -386,7 +386,10 @@ export default async function OpportunitiesPage() {
                               >
                                 <RewardPic image={r.image} icon={r.icon} alt={r.reward} />
                               </span>
-                              <span className="text-sm font-semibold text-ink">{r.reward}</span>
+                              <span className="leading-tight">
+                                <span className="block text-sm font-semibold text-ink">{r.reward}</span>
+                                {r.rewardValue && <span className="mt-0.5 block text-xs text-ink/50">worth {r.rewardValue}</span>}
+                              </span>
                             </span>
                           </td>
                           )}

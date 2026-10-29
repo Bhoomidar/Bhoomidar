@@ -13,6 +13,7 @@ import {
   Fingerprint,
   Gift,
   IdCard,
+  Landmark,
   Layers,
   LogIn,
   Mail,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import AadhaarReveal from "@/components/admin/AadhaarReveal";
+import BankReveal from "@/components/admin/BankReveal";
 import PartnerControls from "@/components/admin/PartnerControls";
 import TeamView from "@/components/admin/TeamView";
 import { card } from "@/components/admin/ui";
@@ -519,6 +521,28 @@ export default async function PartnerPage({ params }) {
                 </a>
               </li>
             )}
+          </Section>
+
+          <Section
+            icon={Landmark}
+            title="Bank details"
+            note={p.bank_updated_at ? `Added by the partner. Last saved ${day(p.bank_updated_at)}.` : "Where to pay this partner's points."}
+          >
+            <Row icon={UserRound} label="Account holder">
+              {p.bank_holder}
+            </Row>
+            <Row icon={Landmark} label="Bank">
+              {p.bank_name && `${p.bank_name}${p.bank_branch ? `, ${p.bank_branch}` : ""}`}
+            </Row>
+            <Row icon={IdCard} label="IFSC code">
+              {p.bank_ifsc && <span className="font-mono tracking-wider">{p.bank_ifsc}</span>}
+            </Row>
+            <Row icon={Wallet} label="Account number">
+              {p.bank_account_last4 ? <BankReveal id={p.id} last4={p.bank_account_last4} /> : ""}
+            </Row>
+            <Row icon={Mail} label="UPI id">
+              {p.upi_id}
+            </Row>
           </Section>
 
           <Section icon={Wallet} title="Payment and account" note="Joining payment and sign-in history.">

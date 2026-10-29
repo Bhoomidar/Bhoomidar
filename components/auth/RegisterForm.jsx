@@ -20,7 +20,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { register } from "@/actions/auth";
+import { register, sendRegisterCode, verifyRegisterCode } from "@/actions/auth";
 import { lookupReferral } from "@/actions/referral";
 import { lookupPincode } from "@/actions/pincode";
 import { PHONE_PATTERN, keepDigits } from "@/lib/phone";
@@ -93,11 +93,16 @@ function Panel({ n, icon: Icon, title, hint, delay = 0, flat = false, children }
 
 // A label above its input. `span` is the width on wide screens (out of 6 columns).
 // The icon at the start of the field lights up while the field is in use.
-function Field({ id, label, span = "col-span-2 sm:col-span-3", note, children }) {
+function Field({ id, label, span = "col-span-2 sm:col-span-3", note, required = false, children }) {
   return (
     <div className={span}>
       <label htmlFor={id} className="mb-2.5 block text-sm font-semibold text-ink/80 lg:mb-1.5 lg:text-[13px]">
         {label}
+        {required && (
+          <span className="ml-0.5 text-rose-600" aria-hidden>
+            *
+          </span>
+        )}
       </label>
       <div className="relative transition focus-within:[&>svg:first-child]:text-copper focus-within:[&>svg:first-child]:scale-110 [&>svg:first-child]:transition">
         {children}
@@ -134,6 +139,42 @@ export default function RegisterForm({
   }, []);
   const v = state.values ?? {};
 
+  // Email: proved with a 6-digit code sent to it. The server also checks this when the form is sent.
+  const [email, setEmail] = useState(v.email ?? "");
+  const [mail, setMail] = useState("idle"); // idle | sending | sent | verifying | verified
+  const [mailError, setMailError] = useState("");
+  const [mailCode, setMailCode] = useState("");
+  const [mailWait, setMailWait] = useState(0);
+  useEffect(() => {
+    if (mailWait <= 0) return;
+    const t = setTimeout(() => setMailWait((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [mailWait]);
+
+  async function sendMailCode() {
+    setMailError("");
+    setMail("sending");
+    const res = await sendRegisterCode(email);
+    if (res.error) {
+      setMail(mail === "sent" ? "sent" : "idle");
+      return setMailError(res.error);
+    }
+    setMail("sent");
+    setMailWait(45);
+  }
+
+  async function checkMailCode() {
+    if (mailCode.length !== 6) return setMailError("Enter the 6-digit code.");
+    setMailError("");
+    setMail("verifying");
+    const res = await verifyRegisterCode(email, mailCode);
+    if (res.error) {
+      setMail("sent");
+      return setMailError(res.error);
+    }
+    setMail("verified");
+  }
+
   // Referral code: tick it and show the referrer's name as soon as it is a real code.
   const [ref, setRef] = useState(v.referral_code ?? refCode);
   const [refCheck, setRefCheck] = useState(
@@ -142,7 +183,8 @@ export default function RegisterForm({
   useEffect(() => {
     const code = ref.trim().toUpperCase();
     if (!code) return setRefCheck({ status: "idle" });
-    if (!/^[A-Z]{2,5}-\d{4,}$/.test(code)) return setRefCheck({ status: "typing" });
+    // codes made now have no dash (UP810011), older ones do (UP-8101): the same shapes the server accepts
+    if (!/^[A-Z]{2,5}-?[A-Z0-9]{4,}$/.test(code)) return setRefCheck({ status: "typing" });
     if (refCheck.status === "valid" && refCheck.code === code) return;
     if (code === refCode && referrerName) {
       return setRefCheck({ status: "valid", name: referrerName, code });
@@ -165,10 +207,12 @@ export default function RegisterForm({
 
   // Pincode: show the place it belongs to, and fill in the city and state.
   const [city, setCity] = useState(v.city ?? "");
+  const [district, setDistrict] = useState(v.district ?? "");
   const [pin, setPin] = useState(v.pincode ?? "");
   const [pinInfo, setPinInfo] = useState(null);
   const [stateFill, setStateFill] = useState(null);
   const autoCity = useRef("");
+  const autoDistrict = useRef("");
   useEffect(() => {
     if (!/^[1-9]\d{5}$/.test(pin)) return setPinInfo(null);
     let cancelled = false;
@@ -182,6 +226,10 @@ export default function RegisterForm({
       const previous = autoCity.current;
       setCity((cur) => (!cur.trim() || cur === previous ? res.district : cur));
       autoCity.current = res.district;
+      // The same for the district: the one the pincode gives, unless they typed their own.
+      const prevDistrict = autoDistrict.current;
+      setDistrict((cur) => (!cur.trim() || cur === prevDistrict ? res.district : cur));
+      autoDistrict.current = res.district;
       if (res.stateCode) setStateFill({ code: res.stateCode });
     }, 300);
     return () => {
@@ -232,7 +280,7 @@ export default function RegisterForm({
         <ErrorToast error={state.error} trigger={state} />
 
         <Panel n={1} icon={User} title="Personal details" hint="Exactly as on your Aadhaar card.">
-          <Field id="full_name" label="Full name">
+          <Field id="full_name" label="Full name" required>
             <User className={iconClass} />
             <input
               required
@@ -245,7 +293,7 @@ export default function RegisterForm({
             />
           </Field>
 
-          <Field id="father_name" label="Father's name">
+          <Field id="father_name" label="Father's name" required>
             <User className={iconClass} />
             <input
               required
@@ -259,7 +307,7 @@ export default function RegisterForm({
             />
           </Field>
 
-          <Field id="nominee_name" label="Nominee's name">
+          <Field id="nominee_name" label="Nominee's name" required>
             <User className={iconClass} />
             <input
               required
@@ -273,7 +321,7 @@ export default function RegisterForm({
             />
           </Field>
 
-          <Field id="phone" label="Mobile number">
+          <Field id="phone" label="Mobile number" required>
             <Phone className={iconClass} />
             <input
               required
@@ -295,7 +343,78 @@ export default function RegisterForm({
             </span>
           </Field>
 
-          <Field id="email" label="Email address">
+          <Field
+            id="email"
+            label="Email address"
+            required
+            note={
+              <div aria-live="polite" className="mt-2.5 space-y-2.5 lg:mt-1.5">
+                {mail === "verified" ? (
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 lg:text-xs">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Email verified
+                  </p>
+                ) : mail === "idle" || mail === "sending" ? (
+                  <button
+                    type="button"
+                    onClick={sendMailCode}
+                    disabled={mail === "sending" || !email.trim()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-copper-dark shadow-sm ring-1 ring-copper/30 transition hover:bg-copper hover:text-white disabled:pointer-events-none disabled:opacity-60 lg:py-1.5 lg:text-[13px]"
+                  >
+                    {mail === "sending" ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-copper border-t-transparent" />
+                        Sending code...
+                      </>
+                    ) : (
+                      "Send code to verify"
+                    )}
+                  </button>
+                ) : (
+                  <>
+                    <p className="text-sm text-ink/65 lg:text-xs">
+                      We sent a 6-digit code to <b className="[overflow-wrap:anywhere] text-ink">{email.trim()}</b>. It works for 10 minutes.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        aria-label="6-digit code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        value={mailCode}
+                        onChange={(e) => setMailCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            checkMailCode();
+                          }
+                        }}
+                        placeholder="123456"
+                        className="w-36 rounded-xl border border-black/10 bg-white px-4 py-3 text-base tracking-[0.35em] text-ink outline-none transition placeholder:tracking-normal placeholder:text-ink/40 focus:border-copper focus:ring-4 focus:ring-copper/15 lg:py-2 lg:text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={checkMailCode}
+                        disabled={mail === "verifying"}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-5 py-3 text-sm font-semibold text-white shadow-md shadow-copper/30 transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60 lg:py-2 lg:text-[13px]"
+                      >
+                        {mail === "verifying" ? "Checking..." : "Verify"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={sendMailCode}
+                        disabled={mailWait > 0}
+                        className="text-sm font-semibold text-copper transition hover:text-copper-dark disabled:pointer-events-none disabled:text-ink/40 lg:text-xs"
+                      >
+                        {mailWait > 0 ? `Send again in ${mailWait}s` : "Send again"}
+                      </button>
+                    </div>
+                  </>
+                )}
+                {mailError && <p className="text-sm font-medium text-rose-600 lg:text-xs">{mailError}</p>}
+              </div>
+            }
+          >
             <Mail className={iconClass} />
             <input
               required
@@ -303,13 +422,20 @@ export default function RegisterForm({
               name="email"
               type="email"
               autoComplete="email"
-              defaultValue={v.email}
+              readOnly={mail === "verified"}
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setMail("idle");
+                setMailCode("");
+                setMailError("");
+              }}
               placeholder="you@example.com"
-              className={input}
+              className={`${input} ${mail === "verified" ? "!border-emerald-500 !bg-emerald-50" : ""}`}
             />
           </Field>
 
-          <Field id="dob" label="Date of birth">
+          <Field id="dob" label="Date of birth" required>
             <DobPicker
               id="dob"
               name="dob"
@@ -323,6 +449,7 @@ export default function RegisterForm({
           <Field
             id="aadhaar"
             label="Aadhaar number"
+            required
           >
             <IdCard className={iconClass} />
             <input
@@ -348,7 +475,7 @@ export default function RegisterForm({
         </Panel>
 
         <Panel n={2} icon={Home} title="Address" hint="Where you live right now." delay={120}>
-          <Field id="address_line" label="House no., street, area" span="col-span-2 sm:col-span-6">
+          <Field id="address_line" label="House no., street, area" required span="col-span-2 sm:col-span-6">
             <MapPin className={iconClass} />
             <input
               required
@@ -361,7 +488,7 @@ export default function RegisterForm({
             />
           </Field>
 
-          <Field id="city" label="City" span="col-span-1 sm:col-span-2">
+          <Field id="city" label="City" required span="col-span-1 sm:col-span-3">
             <Building2 className={iconClass} />
             <input
               required
@@ -375,7 +502,20 @@ export default function RegisterForm({
             />
           </Field>
 
-          <Field id="state" label="State" span="col-span-1 sm:col-span-2">
+          <Field id="district" label="District" required span="col-span-1 sm:col-span-3">
+            <MapPin className={iconClass} />
+            <input
+              required
+              id="district"
+              name="district"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              placeholder="District"
+              className={input}
+            />
+          </Field>
+
+          <Field id="state" label="State" required span="col-span-1 sm:col-span-3">
             <StatePicker
               id="state"
               name="state"
@@ -385,7 +525,7 @@ export default function RegisterForm({
             />
           </Field>
 
-          <Field id="pincode" label="Pincode" span="col-span-2 sm:col-span-2">
+          <Field id="pincode" label="Pincode" required span="col-span-1 sm:col-span-3">
             <MapPin className={iconClass} />
             <input
               required
@@ -448,7 +588,8 @@ export default function RegisterForm({
         >
           <Field
             id="referral_code"
-            label="Referral code (optional)"
+            label="Referral code"
+            required
             note={
               <p aria-live="polite" className="mt-2.5 min-h-5 text-sm font-medium lg:mt-1 lg:min-h-4 lg:text-xs">
                 {refCheck.status === "valid" && (
@@ -462,13 +603,14 @@ export default function RegisterForm({
           >
             <Gift className={iconClass} />
             <input
+              required
               id="referral_code"
               name="referral_code"
               autoComplete="off"
               maxLength={16}
               value={ref}
               onChange={(e) => setRef(e.target.value.toUpperCase())}
-              placeholder="e.g. UP-8101"
+              placeholder="e.g. UP810011"
               className={`${input} pr-12 uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal ${refTone}`}
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -480,7 +622,7 @@ export default function RegisterForm({
             </span>
           </Field>
 
-          <Field id="password" label="Create password">
+          <Field id="password" label="Create password" required>
             <Lock className={iconClass} />
             <input
               required

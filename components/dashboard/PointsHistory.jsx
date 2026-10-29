@@ -7,9 +7,9 @@ import { fmtDate, fmtPoints, KINDS } from "@/lib/points";
 
 const TABS = [
   ["all", "All", null],
-  ["sales", "My sales", ["sale"]],
-  ["team", "Team", ["team"]],
-  ["bonus", "Bonus", ["monthly", "cto"]],
+  ["sales", "My sales", ["sale", "self_monthly"]],
+  ["team", "Team", ["team", "team_monthly"]],
+  ["bonus", "Bonus", ["monthly", "partnership", "cto"]],
   ["paid", "Redeemed", ["payout"]],
 ];
 
@@ -101,6 +101,7 @@ export default function PointsHistory({ rows }) {
                   <span className="min-w-0 leading-tight">
                     <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${kind.tone}`}>{kind.label}</span>
                     {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-xs text-ink/45">{r.rate}%</span>}
+                    {r.level ? <span className="ml-2 text-xs text-ink/45">level {r.level}</span> : null}
                     <span className="mt-2 block text-xs text-ink/50">{fmtDate(r.at)}</span>
                   </span>
                   <span className="shrink-0 text-right leading-tight">
@@ -157,6 +158,7 @@ export default function PointsHistory({ rows }) {
                       <td className="px-4 py-4">
                         <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${kind.tone}`}>{kind.label}</span>
                         {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-xs text-ink/45">{r.rate}%</span>}
+                        {r.level ? <span className="ml-2 text-xs text-ink/45">level {r.level}</span> : null}
                       </td>
                       <td className="max-w-[260px] [overflow-wrap:anywhere] px-4 py-4 text-ink/75" title={r.note}>
                         {r.note}

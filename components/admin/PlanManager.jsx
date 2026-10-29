@@ -3,11 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ExternalLink, Info, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { recheckRanks, saveRankPlan, saveRules } from "@/actions/admin/plan";
-import { buildChart } from "@/lib/planChart";
+import { recheckRanks, saveRankPlan, savePlanRules, saveRules } from "@/actions/admin/plan";
+import { buildChart, inr } from "@/lib/planChart";
+import { RULE_KEYS, closeDaysText, hourText, monthlyShare, pctText, readRules } from "@/lib/planRules";
 import { iconForReward, rewardIcon } from "@/lib/rankIcons";
 import RewardPic from "../RewardPic";
 import ImageUploader from "./ImageUploader";
+import Switch from "./Switch";
 import { btnGhost, btnPrimary, card, iconBtn, inputCls, labelCls } from "./ui";
 
 const smallInput = `${inputCls} !py-2.5`;
@@ -28,7 +30,7 @@ function Notice({ ok, children }) {
 
 // The rank table: one row per rank. The lines under each row are worked out from what is typed,
 // so the admin sees what the website will print before saving.
-function RanksCard({ initial, months }) {
+function RanksCard({ initial, rules }) {
   const router = useRouter();
   const [rows, setRows] = useState(initial);
   const [pending, start] = useTransition();
@@ -45,14 +47,14 @@ function RanksCard({ initial, months }) {
           title: r.title || "-",
           min_area: Number(String(r.min_area).replace(/,/g, "")) || 0,
           ps_rate: Number(String(r.ps_rate).replace(/%/g, "")) || 0,
-          monthly_bonus: Number(String(r.monthly_bonus).replace(/,/g, "")) || 0,
+          reward_value: Number(String(r.reward_value).replace(/[,₹\s]/g, "")) || 0,
           reward: r.reward,
           icon: r.icon,
           team_example: r.team_example,
         })),
-        months,
+        rules,
       ),
-    [rows, months],
+    [rows, rules],
   );
 
   // Typing the reward also picks the small fallback picture (used while there is no photo).
@@ -71,7 +73,7 @@ function RanksCard({ initial, months }) {
         title: "New rank",
         min_area: String(min),
         ps_rate: String((Number(last?.ps_rate) || 2) + 0.25),
-        monthly_bonus: String(Math.round((Number(last?.monthly_bonus) || 1000) * 1.5)),
+        reward_value: "0",
         reward: "",
         icon: "Gift",
         image_url: "",
@@ -114,7 +116,7 @@ function RanksCard({ initial, months }) {
       </h2>
       <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-ink/60">
         The same table is used for the website chart, the partners&apos; dashboards and the commission worked out on every sale. A partner reaches a
-        rank when their whole team has sold that many sq. yards. A new rate is used only for sales you record after saving.
+        rank when their whole team has sold that many sq. yards. A new rate is used only for sales you record after saving. The monthly bonus is the same for every rank, you set it in Bonuses &amp; closing dates below.
       </p>
 
       <ul className="mt-6 space-y-4">
@@ -153,7 +155,7 @@ function RanksCard({ initial, months }) {
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-4 lg:grid-cols-6">
-                <div className="col-span-2 lg:col-span-3">
+                <div className="col-span-2 lg:col-span-4">
                   <label className={labelCls}>Rank name</label>
                   <input value={r.title} onChange={(e) => set(i, { title: e.target.value })} maxLength={60} className={smallInput} />
                 </div>
@@ -174,11 +176,6 @@ function RanksCard({ initial, months }) {
                   </label>
                   <input value={r.ps_rate} onChange={(e) => set(i, { ps_rate: e.target.value })} inputMode="decimal" className={smallInput} />
                 </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className={labelCls}>Monthly bonus (₹)</label>
-                  <input value={r.monthly_bonus} onChange={(e) => set(i, { monthly_bonus: e.target.value })} inputMode="numeric" className={smallInput} />
-                </div>
-
                 {/* the reward and its picture: the picture follows the name until you pick one yourself */}
                 <div className="col-span-2 rounded-2xl bg-white p-3.5 ring-1 ring-black/5 sm:p-4 lg:col-span-6">
                   <div className="flex items-end gap-3">
@@ -198,6 +195,16 @@ function RanksCard({ initial, months }) {
                         className={smallInput}
                       />
                     </div>
+                    <div className="w-32 shrink-0 sm:w-44">
+                      <label className={labelCls}>Worth (₹)</label>
+                      <input
+                        value={r.reward_value}
+                        onChange={(e) => set(i, { reward_value: e.target.value.replace(/[^0-9]/g, "") })}
+                        inputMode="numeric"
+                        placeholder="5000"
+                        className={smallInput}
+                      />
+                    </div>
                   </div>
 
                   <p className="mb-2 mt-3.5 text-xs font-semibold text-ink/60">
@@ -214,12 +221,12 @@ function RanksCard({ initial, months }) {
                 </div>
 
                 <div className="col-span-2 lg:col-span-6">
-                  <label className={labelCls}>Team commission example (printed on the chart)</label>
+                  <label className={labelCls}>Team difference example (printed on the chart)</label>
                   <input
                     value={r.team_example}
                     onChange={(e) => set(i, { team_example: e.target.value })}
                     maxLength={80}
-                    placeholder="e.g. 30L BV x 0.25% = 7,500 Rs"
+                    placeholder="e.g. 10L BV x 0.25% = 2,500 Rs"
                     className={smallInput}
                   />
                 </div>
@@ -234,11 +241,13 @@ function RanksCard({ initial, months }) {
                     Example <b className="text-ink">{pv.example}</b>
                   </span>
                   <span>
-                    Team commission <b className="text-ink">{pv.team}</b>
+                    Team difference <b className="text-ink">{pv.team}</b>
                   </span>
-                  <span>
-                    Monthly bonus <b className="text-ink">{pv.monthly}</b> = <b className="text-ink">{pv.monthlyTotal}</b>
-                  </span>
+                  {pv.rewardValue && (
+                    <span>
+                      Reward worth <b className="text-ink">{pv.rewardValue}</b>
+                    </span>
+                  )}
                 </p>
               )}
             </li>
@@ -276,7 +285,7 @@ function RanksCard({ initial, months }) {
   );
 }
 
-// The monthly bonus length and the referral code pattern.
+// The referral code pattern.
 function RulesCard({ rules, prefixes }) {
   const router = useRouter();
   const [v, setV] = useState(rules);
@@ -284,8 +293,7 @@ function RulesCard({ rules, prefixes }) {
   const [msg, setMsg] = useState({ ok: false, text: "" });
   const set = (patch) => setV((p) => ({ ...p, ...patch }));
 
-  const letters = v.mode === "fixed" ? v.prefix.toUpperCase() : "UP";
-  const sample = `${letters || "??"}-${"8101234567".slice(0, Math.max(4, Math.min(8, Number(v.digits) || 4)))}`;
+  const sample = v.mode === "fixed" ? `${v.prefix.toUpperCase() || "??"}0011` : "UP810011";
 
   const save = () =>
     start(async () => {
@@ -312,8 +320,8 @@ function RulesCard({ rules, prefixes }) {
             <p className={labelCls}>Letters at the start</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
-                ["state", "State letters", "Two letters of the partner's state, like UP-8101 or MH-4420."],
-                ["fixed", "One fixed prefix", "Every code starts with the same letters, like BHM-8101."],
+                ["state", "State and district", "State letters, the district number and a running number from 0011, like UP810011 (UP = state, 81 = Aligarh). Numbers ending in 13 are skipped. After 9999 a letter is added: UP81A0011."],
+                ["fixed", "One fixed prefix", "Every code starts with the same letters and only a running number follows, like BH0011."],
               ].map(([key, title, note]) => (
                 <button
                   key={key}
@@ -331,26 +339,14 @@ function RulesCard({ rules, prefixes }) {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelCls}>{v.mode === "fixed" ? "Prefix (2 to 5 letters)" : "Letters when the state is not known"}</label>
-              <input
-                value={v.prefix}
-                onChange={(e) => set({ prefix: e.target.value.replace(/[^A-Za-z]/g, "").slice(0, 5).toUpperCase() })}
-                placeholder="BH"
-                className={`${inputCls} uppercase tracking-wider`}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Digits after the dash</label>
-              <select value={v.digits} onChange={(e) => set({ digits: e.target.value })} className={inputCls}>
-                {[4, 5, 6, 7, 8].map((n) => (
-                  <option key={n} value={n}>
-                    {n} digits
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="max-w-xs">
+            <label className={labelCls}>{v.mode === "fixed" ? "Prefix (2 to 5 letters)" : "Letters when the state is not known"}</label>
+            <input
+              value={v.prefix}
+              onChange={(e) => set({ prefix: e.target.value.replace(/[^A-Za-z]/g, "").slice(0, 5).toUpperCase() })}
+              placeholder="BH"
+              className={`${inputCls} uppercase tracking-wider`}
+            />
           </div>
         </div>
 
@@ -372,19 +368,168 @@ function RulesCard({ rules, prefixes }) {
         </p>
       )}
 
-      <div className="mt-8 border-t border-black/5 pt-6">
-        <h3 className="font-display text-xl font-bold text-ink">
-          Monthly <span className="text-copper">bonus</span>
-        </h3>
-        <div className="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label className={labelCls}>Paid for how many months</label>
-            <input value={v.months} onChange={(e) => set({ months: e.target.value.replace(/\D/g, "").slice(0, 2) })} inputMode="numeric" className={`${inputCls} w-40`} />
-          </div>
-          <p className="max-w-md pb-3 text-xs leading-relaxed text-ink/55">
-            After a partner reaches a rank, the bonus of that rank is added once for each completed month, up to this many months.
-          </p>
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={save} disabled={pending} className={btnPrimary}>
+          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+          Save
+        </button>
+      </div>
+      <div className="mt-4">
+        <Notice ok={msg.ok}>{msg.text}</Notice>
+      </div>
+    </section>
+  );
+}
+
+// A small number box with a label, a unit and a line of help.
+function Num({ label, value, onChange, unit, help, wide = false }) {
+  return (
+    <div className={wide ? "sm:col-span-2" : ""}>
+      <label className={labelCls}>{label}</label>
+      <div className="relative">
+        <input value={value} onChange={(e) => onChange(e.target.value)} inputMode="decimal" className={`${inputCls} ${unit ? "pr-16" : ""}`} />
+        {unit && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-ink/45">{unit}</span>}
+      </div>
+      {help && <p className="mt-1.5 text-[11px] leading-snug text-ink/50">{help}</p>}
+    </div>
+  );
+}
+
+function Group({ title, accent, note, children }) {
+  return (
+    <div className="mt-8 border-t border-black/5 pt-6 first:mt-6 first:border-0 first:pt-0">
+      <h3 className="font-display text-xl font-bold text-ink">
+        {title} <span className="text-copper">{accent}</span>
+      </h3>
+      {note && <p className="mt-1.5 max-w-3xl text-xs leading-relaxed text-ink/55">{note}</p>}
+      <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">{children}</div>
+    </div>
+  );
+}
+
+// Every number of the paper plan that is not a rank: when points are added, the monthly bonus and
+// the levels it pays, the partnership and C.T.O. bonus, and the 50:50 reward condition.
+function BonusRulesCard({ initial, rankNames }) {
+  const router = useRouter();
+  const [v, setV] = useState(initial);
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState({ ok: false, text: "" });
+  const set = (key) => (value) => setV((p) => ({ ...p, [key]: value }));
+
+  const r = readRules(Object.fromEntries(Object.entries(RULE_KEYS).map(([k, key]) => [key, v[k]])));
+  const own = monthlyShare(1000000, r.selfPct, r.months);
+  const lvl = monthlyShare(1000000, r.levelPct, r.months);
+
+  const save = () =>
+    start(async () => {
+      setMsg({ ok: false, text: "" });
+      const res = await savePlanRules(v);
+      if (res.success) {
+        setMsg({ ok: true, text: "Saved. It is used for the sales you record from now on. Sales already recorded keep the way they were worked out." });
+        router.refresh();
+      } else setMsg({ ok: false, text: res.error });
+    });
+
+  return (
+    <section className={card}>
+      <h2 className="font-display text-2xl font-bold text-ink">
+        Bonuses &amp; <span className="text-copper">closing dates</span>
+      </h2>
+      <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-ink/60">
+        Everything of the plan that is not a rank. The sales bonus of a sale is added on a closing date, the monthly bonus is added every month.
+      </p>
+
+      <Group
+        title="When points are"
+        accent="added"
+        note={`A sale made on the 1st to 10th is added on the 11th, a sale of the 11th to 20th on the 21st and a sale of the 21st to the end of the month on the 1st. Until then the partner sees the points as pending.`}
+      >
+        <Num label="Closing days of the month" value={v.closeDays} onChange={set("closeDays")} help="Days 1 to 28, like 11, 21, 1" />
+        <Num label="Closing hour" value={v.closeHour} onChange={set("closeHour")} unit="0 - 23" help={`Now ${hourText(r.closeHour)} (India time)`} />
+        <Num label="Monthly bonus is added on day" value={v.monthDay} onChange={set("monthDay")} help="Every month, at the closing hour" />
+      </Group>
+
+      <Group
+        title="Monthly"
+        accent="bonus"
+        note="A percentage of every sale, paid in equal instalments over the months. The seller gets one percentage, and each level of the team above the seller gets another."
+      >
+        <Num label="Seller (own sale)" value={v.selfPct} onChange={set("selfPct")} unit="%" help="Of the sale value" />
+        <Num label="Each level above" value={v.levelPct} onChange={set("levelPct")} unit="%" help="Of the sale value, for every open level" />
+        <Num label="Number of levels" value={v.levels} onChange={set("levels")} help="Levels of the team that are paid" />
+        <Num label="Paid over" value={v.months} onChange={set("months")} unit="months" help="Instalments, one a month" />
+      </Group>
+
+      <Group
+        title="Which levels are"
+        accent="open"
+        note="A level pays a partner only when it is open for them. Either their own sales open levels, or each direct partner opens one level. They get whichever opens more."
+      >
+        <Num label="Own sales that open levels" value={v.openArea} onChange={set("openArea")} unit="sq. yd" help="Every time they sell this much" />
+        <Num label="Levels it opens" value={v.openStep} onChange={set("openStep")} help={`${r.openArea} sq. yd opens ${r.openStep}, ${r.openArea * 2} opens ${r.openStep * 2}...`} />
+      </Group>
+
+      <Group
+        title="Partnership"
+        accent="bonus"
+        note="A percentage of the company's sales of a month, shared equally by all active partners. You share it from Points & Payouts once the month is over."
+      >
+        <Num label="Share of the company's sales" value={v.partnershipPct} onChange={set("partnershipPct")} unit="%" />
+        <Num label="Most a partner can get" value={v.capX} onChange={set("capX")} unit="times" help="Times the joining fee. 0 = no limit" />
+      </Group>
+
+      <Group
+        title="C.T.O."
+        accent="bonus"
+        note="A percentage of the company's sales of a month, shared equally by the partners who reached the rank below."
+      >
+        <Num label="Share of the company's sales" value={v.ctoPct} onChange={set("ctoPct")} unit="%" />
+        <div>
+          <label className={labelCls}>Shared by the rank</label>
+          <select value={v.ctoRank} onChange={(e) => set("ctoRank")(e.target.value)} className={inputCls}>
+            {rankNames.map((name, i) => (
+              <option key={i} value={i + 1}>
+                {i + 1}. {name} and above
+              </option>
+            ))}
+          </select>
         </div>
+      </Group>
+
+      <Group
+        title="Shared"
+        accent="by itself"
+        note="Every night at 1 AM (India time) the system looks at the date. From the day below on, it shares last month's partnership bonus and C.T.O. bonus by itself, once. Switch it off to share them by hand on Points & Payouts."
+      >
+        <div className="sm:col-span-2">
+          <p className={labelCls}>Share them by itself</p>
+          <div className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3">
+            <Switch checked={String(v.poolAuto) !== "0"} onChange={(on) => set("poolAuto")(on ? "1" : "0")} label="Share the pool bonuses by itself" />
+            <span className="text-sm text-ink/70">{String(v.poolAuto) !== "0" ? "On: shared at 1 AM by itself" : "Off: you share them by hand"}</span>
+          </div>
+        </div>
+        <Num label="From day of the month" value={v.poolDay} onChange={set("poolDay")} help="1 = on the 1st. A later day gives time to record late sales." />
+      </Group>
+
+      <Group
+        title="Reward"
+        accent="condition"
+        note="For a reward at, say, 1000 sq. yards, the strongest leg of the team counts for only this much of it. The rest must come from the other legs and the partner's own sales."
+      >
+        <Num label="Strongest leg counts at most" value={v.powerPct} onChange={set("powerPct")} unit="%" help={`${r.powerPct}:${100 - r.powerPct}`} />
+      </Group>
+
+      <div className="mt-8 rounded-2xl bg-[#fff8ef] p-4 text-sm leading-relaxed text-ink/70 ring-1 ring-copper/15">
+        <p className="font-semibold text-ink">A sale of ₹10,00,000 pays the monthly bonus like this</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px]">
+          <li>
+            Seller: {pctText(r.selfPct)}% = ₹{inr(own.total)}, that is ₹{own.each.toLocaleString("en-IN")} a month for {r.months} months.
+          </li>
+          <li>
+            Each open level: {pctText(r.levelPct)}% = ₹{inr(lvl.total)}, that is ₹{lvl.each.toLocaleString("en-IN")} a month for {r.months} months (up to level {r.levels}).
+          </li>
+          <li>The sales bonus of the rank (2% to 4%) is added on {closeDaysText(r)} at {hourText(r.closeHour)}.</li>
+        </ul>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -403,7 +548,11 @@ function RulesCard({ rules, prefixes }) {
 export default function PlanManager({ plan }) {
   return (
     <div className="space-y-8">
-      <RanksCard initial={plan.ranks} months={Number(plan.rules.months) || 12} />
+      <RanksCard
+        initial={plan.ranks}
+        rules={readRules(Object.fromEntries(Object.entries(RULE_KEYS).map(([k, key]) => [key, plan.bonus[k]])))}
+      />
+      <BonusRulesCard initial={plan.bonus} rankNames={plan.ranks.map((x) => x.title)} />
       <RulesCard rules={plan.rules} prefixes={plan.prefixes} />
 
       <section className={card}>
@@ -415,8 +564,8 @@ export default function PlanManager({ plan }) {
             ["/admin/payment", "Joining payment", "The amount a new partner pays before the account is activated, and the bank, UPI and contact details."],
             ["/admin/partners", "Activating a partner", "Open a partner and mark the payment as paid. You can write the amount actually received."],
             ["/admin/sales", "Recording a sale", "The seller and everyone above them in the team get their commission points when you record it."],
-            ["/admin/payouts", "Redeeming points", "Add a payout when you pay a partner their points. 1 point = ₹1."],
-            ["/admin/partner-page", "Words on the plan page", "Partner bonus, sales bonus, C.T.O. bonus and the notes printed under the chart."],
+            ["/admin/payouts", "Points, payouts and pool bonuses", "Add a payout when you pay a partner. Share the partnership and C.T.O. bonus here once a month. 1 point = ₹1."],
+            ["/admin/partner-page", "Words on the plan page", "Partnership bonus, sales bonus, monthly bonus, C.T.O. bonus and the notes printed under the chart."],
           ].map(([href, title, text]) => (
             <li key={href}>
               <a

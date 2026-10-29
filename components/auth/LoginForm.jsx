@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Image from "next/image";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
-import { login } from "@/actions/auth";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, Lock, ShieldCheck, UserRound } from "lucide-react";
+import { login, loginWithCode, sendLoginCode } from "@/actions/auth";
 import Logo from "../Logo";
 import ErrorToast from "./ErrorToast";
 import { iconClass, inputClass, submitClass } from "./fields";
@@ -24,9 +24,133 @@ function Field({ id, label, children }) {
   );
 }
 
-export default function LoginForm({ redirectTo }) {
+const tabClass = (on) =>
+  `flex-1 rounded-xl px-3 py-2.5 text-sm font-bold transition ${
+    on ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30" : "text-ink/65 hover:text-copper-dark"
+  }`;
+
+// Log in with a 6-digit code sent to the partner's email, instead of the password.
+function CodeLogin({ redirectTo }) {
+  const [state, formAction, pending] = useActionState(loginWithCode, {});
+  const [who, setWho] = useState("");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [problem, setProblem] = useState({ text: "", n: 0 });
+  const [wait, setWait] = useState(0);
+
+  // the "send again" button opens again after a little while
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
+
+  async function send() {
+    if (!who.trim()) return setProblem((p) => ({ text: "Please enter your email or referral code.", n: p.n + 1 }));
+    setSending(true);
+    const res = await sendLoginCode(who);
+    setSending(false);
+    if (res.error) return setProblem((p) => ({ text: res.error, n: p.n + 1 }));
+    setSent(true);
+    setWait(45);
+  }
+
+  return (
+    <form action={formAction} className="mt-6 space-y-5 [@media(max-height:820px)]:space-y-4">
+      <input type="hidden" name="redirect_to" value={redirectTo} />
+      <ErrorToast error={problem.text} trigger={problem} />
+      <ErrorToast error={state.error} trigger={state} />
+
+      <Field id="login-who" label="Email or referral code">
+        <UserRound className={iconClass} />
+        <input
+          required
+          id="login-who"
+          name="email"
+          type="text"
+          inputMode="email"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          value={who}
+          onChange={(e) => {
+            setWho(e.target.value);
+            setSent(false);
+          }}
+          placeholder="you@example.com or UP810011"
+          className={input}
+        />
+      </Field>
+
+      {!sent ? (
+        <button type="button" onClick={send} disabled={sending} className={`${submitClass} btn-shimmer !rounded-2xl py-4 text-base`}>
+          {sending ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Sending code...
+            </>
+          ) : (
+            "Send code to my email"
+          )}
+        </button>
+      ) : (
+        <>
+          <p className="flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-3 text-[13px] leading-snug text-emerald-900 ring-1 ring-emerald-600/15">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            If this account exists, we have sent a 6-digit code to its email. It works for 10 minutes.
+          </p>
+
+          <Field id="login-code" label="6-digit code">
+            <KeyRound className={iconClass} />
+            <input
+              required
+              id="login-code"
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              pattern="\d{6}"
+              title="Enter the 6-digit code"
+              onInput={(e) => (e.currentTarget.value = e.currentTarget.value.replace(/\D/g, ""))}
+              placeholder="123456"
+              className={`${input} tracking-[0.4em]`}
+            />
+          </Field>
+
+          <button type="submit" disabled={pending} className={`${submitClass} btn-shimmer group !rounded-2xl py-4 text-base`}>
+            {pending ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Logging in...
+              </>
+            ) : (
+              <>
+                Log in
+                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+              </>
+            )}
+          </button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={send}
+              disabled={sending || wait > 0}
+              className="text-sm font-semibold text-copper transition hover:text-copper-dark disabled:pointer-events-none disabled:text-ink/40"
+            >
+              {wait > 0 ? `Send the code again in ${wait}s` : "Send the code again"}
+            </button>
+          </div>
+        </>
+      )}
+    </form>
+  );
+}
+
+export default function LoginForm({ redirectTo, notice = "" }) {
   const [state, formAction, pending] = useActionState(login, {});
   const [show, setShow] = useState(false);
+  const [mode, setMode] = useState("password");
 
   return (
     <div className="space-y-4">
@@ -73,20 +197,41 @@ export default function LoginForm({ redirectTo }) {
           <p className="mt-2 text-[15px] text-ink/60">Log in to your partner account.</p>
         </div>
 
-        <form action={formAction} className="mt-7 space-y-5 [@media(max-height:820px)]:mt-5 [@media(max-height:820px)]:space-y-4">
+        {notice && (
+          <p className="mt-5 flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-3 text-sm font-medium leading-snug text-emerald-900 ring-1 ring-emerald-600/15">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            {notice}
+          </p>
+        )}
+
+        <div role="tablist" aria-label="How to log in" className="mt-6 flex gap-1.5 rounded-2xl bg-[#f4ece0] p-1.5">
+          <button type="button" role="tab" aria-selected={mode === "password"} onClick={() => setMode("password")} className={tabClass(mode === "password")}>
+            Password
+          </button>
+          <button type="button" role="tab" aria-selected={mode === "code"} onClick={() => setMode("code")} className={tabClass(mode === "code")}>
+            Email code (OTP)
+          </button>
+        </div>
+
+        {mode === "code" && <CodeLogin redirectTo={redirectTo} />}
+
+        <form action={formAction} hidden={mode !== "password"} className="mt-6 space-y-5 [@media(max-height:820px)]:space-y-4">
           <input type="hidden" name="redirect_to" value={redirectTo} />
 
           <ErrorToast error={state.error} trigger={state} />
 
-          <Field id="login-email" label="Email address">
-            <Mail className={iconClass} />
+          <Field id="login-email" label="Email or referral code">
+            <UserRound className={iconClass} />
             <input
               required
               id="login-email"
               name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
+              type="text"
+              inputMode="email"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="you@example.com or UP810011"
               className={input}
             />
           </Field>
@@ -113,7 +258,7 @@ export default function LoginForm({ redirectTo }) {
           </Field>
 
           <div className="-mt-1 text-right">
-            <a href="/contact" className="text-sm font-semibold text-copper transition hover:text-copper-dark">
+            <a href="/forgot-password" className="text-sm font-semibold text-copper transition hover:text-copper-dark">
               Forgot password?
             </a>
           </div>

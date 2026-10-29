@@ -172,7 +172,7 @@ export default function AdminSidebar({ email, newInquiries }) {
           <form action={adminLogout}>
             <button
               type="submit"
-              className="flex w-full items-center gap-3 rounded-2xl border border-rose-500/45 bg-rose-500/[0.06] px-4 py-3 text-sm font-semibold text-rose-400 transition hover:bg-rose-500/15 hover:text-rose-300"
+              className="mx-auto flex w-3/4 items-center justify-center gap-2.5 rounded-2xl border border-rose-500/45 bg-rose-500/[0.06] px-4 py-3 text-sm font-semibold text-rose-400 transition hover:bg-rose-500/15 hover:text-rose-300"
             >
               <LogOut className="h-5 w-5" strokeWidth={1.8} />
               Log out

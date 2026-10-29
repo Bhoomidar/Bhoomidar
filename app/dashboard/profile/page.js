@@ -5,7 +5,11 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  AtSign,
+  CreditCard,
+  Hash,
   IdCard,
+  Landmark,
   Lock,
   Mail,
   MapPin,
@@ -216,6 +220,7 @@ export default async function ProfilePage() {
                       nominee_name: partner.nomineeName,
                       ...partner.addressParts,
                     }}
+                    bank={{ ...partner.bank, holder: partner.bank.holder || partner.name }}
                   />
                 </div>
               </div>
@@ -352,7 +357,11 @@ export default async function ProfilePage() {
                 action={<AddLink href="/contact">Add / Update</AddLink>}
               >
                 <span className="flex flex-wrap items-center gap-2.5">
-                  <span className="tracking-wider">{maskAadhaar(partner.aadhaarLast4)}</span>
+                  {partner.aadhaarLast4 ? (
+                    <span className="tracking-wider">{maskAadhaar(partner.aadhaarLast4)}</span>
+                  ) : (
+                    <span className="font-medium text-ink/45">Not added</span>
+                  )}
                   {partner.aadhaarLast4 && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
                       <ShieldCheck className="h-3 w-3" />
@@ -373,7 +382,7 @@ export default async function ProfilePage() {
             </p>
           </section>
 
-          <section className={card}>
+          <section className={`${card} flex flex-col`}>
             <SectionHeader
               icon={Mail}
               title="Contact and address"
@@ -385,7 +394,7 @@ export default async function ProfilePage() {
                 </ProfileOpenButton>
               }
             />
-            <ul className="mt-3 divide-y divide-black/5">
+            <ul className="mb-3 mt-3 divide-y divide-black/5">
               <InfoRow icon={Mail} label="Email" action={emailVerified && <span className="hidden sm:inline-flex"><Verified /></span>}>
                 <span className="[overflow-wrap:anywhere]">{partner.email}</span>
                 {emailVerified && (
@@ -400,9 +409,80 @@ export default async function ProfilePage() {
               <InfoRow icon={MapPin} label="Address" action={!partner.address && <AddLink />}>
                 {partner.address || <span className="font-medium text-ink/45">Not added</span>}
               </InfoRow>
+              <InfoRow icon={UserPlus} label="Referred by">
+                {referrer ? referrer.name : "Direct signup"}
+              </InfoRow>
+              <InfoRow icon={BadgeCheck} label="Member since">
+                {partner.joined}
+              </InfoRow>
             </ul>
+            <p className="mt-auto flex items-start gap-2.5 rounded-xl bg-[#fbf7f0] px-3.5 py-3 text-xs text-ink/55 ring-1 ring-black/5">
+              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-copper" />
+              <span>
+                Your email is your login id and can be changed only by our team.{" "}
+                <a href="/contact" className="font-semibold text-copper hover:text-copper-dark">
+                  Contact us
+                </a>
+              </span>
+            </p>
           </section>
         </div>
+      </Reveal>
+
+      {/* Bank details */}
+      <Reveal>
+        <section className={card}>
+          <SectionHeader
+            icon={Landmark}
+            title="Bank details"
+            note="Where we pay your points."
+            right={
+              <ProfileOpenButton what="bank" className={editBtn}>
+                <Pencil className="h-4 w-4 text-copper" />
+                {partner.bank.added ? "Edit" : "Add"}
+              </ProfileOpenButton>
+            }
+          />
+          {partner.bank.added ? (
+            <ul className="mt-3 lg:grid lg:grid-cols-2 lg:gap-x-12 [&>li]:border-b [&>li]:border-black/5 [&>li:last-child]:border-b-0">
+              <InfoRow icon={UserRound} label="Account holder">
+                {partner.bank.holder}
+              </InfoRow>
+              <InfoRow icon={Landmark} label="Bank">
+                {[partner.bank.name, partner.bank.branch].filter(Boolean).join(", ")}
+              </InfoRow>
+              <InfoRow icon={Hash} label="IFSC code">
+                <span className="font-mono tracking-wider">{partner.bank.ifsc}</span>
+              </InfoRow>
+              <InfoRow icon={CreditCard} label="Account number">
+                <span className="font-mono tracking-wider">XXXXXX{partner.bank.last4}</span>
+              </InfoRow>
+              <InfoRow icon={AtSign} label="UPI id">
+                {partner.bank.upi || <span className="font-medium text-ink/45">Not added</span>}
+              </InfoRow>
+            </ul>
+          ) : (
+            <div className="mt-5 flex flex-col gap-4 rounded-2xl bg-[#fff8ef] p-5 ring-1 ring-copper/15 sm:flex-row sm:items-center">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper">
+                <Landmark className="h-6 w-6" />
+              </span>
+              <p className="min-w-0 flex-1 text-sm leading-relaxed text-ink/70">
+                Add your bank account so our team can pay your commission points to you. You can also add a UPI id.
+              </p>
+              <ProfileOpenButton what="bank" className={`${editBtn} shrink-0`}>
+                <Landmark className="h-4 w-4 text-copper" />
+                Add bank details
+              </ProfileOpenButton>
+            </div>
+          )}
+          <p className="mt-4 flex items-start gap-2.5 rounded-xl bg-[#fbf7f0] px-3.5 py-3 text-xs text-ink/55 ring-1 ring-black/5">
+            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-copper" />
+            <span>
+              Only you and our team can see these details. The account number is stored encrypted, and you only see its last 4 digits
+              here.{partner.bank.updatedOn && ` Last saved on ${partner.bank.updatedOn}.`}
+            </span>
+          </p>
+        </section>
       </Reveal>
 
       {/* Referral */}

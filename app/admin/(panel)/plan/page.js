@@ -13,7 +13,7 @@ export default async function PlanPage() {
         label="Partners"
         title="Commission"
         accent="Plan"
-        text="The ranks, the commission, the monthly bonus and the referral code pattern. Everything here is used by the website and by every sale you record."
+        text="The ranks and rewards, the bonuses, the closing dates and the referral code pattern. Everything here is used by the website and by every sale you record."
       />
       <PlanManager plan={plan} />
     </>

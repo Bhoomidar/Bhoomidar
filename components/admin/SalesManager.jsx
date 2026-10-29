@@ -33,7 +33,20 @@ const today = () => new Date().toLocaleDateString("en-CA");
 
 const blank = () => ({ sellerId: "", title: "", customer: "", area: "", value: "", date: today(), note: "" });
 
-const KIND_TEXT = { sale: "Own sale (personal commission)", team: "Team commission" };
+const KIND_TEXT = {
+  sale: "Sales bonus (own sale)",
+  team: "Team difference",
+  self_monthly: "Own sale (monthly bonus)",
+  team_monthly: "Team monthly bonus",
+};
+
+// "11 Nov 2026, 1 AM"
+const when = (iso) =>
+  iso
+    ? `${new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}, ${new Date(iso)
+        .toLocaleTimeString("en-IN", { hour: "numeric", hour12: true, timeZone: "Asia/Kolkata" })
+        .toUpperCase()}`
+    : "";
 
 const field =
   "w-full rounded-2xl border border-black/10 bg-white text-sm text-ink shadow-[0_8px_20px_-14px_rgba(110,60,20,0.45)] outline-none transition placeholder:text-ink/45 focus:border-copper focus:ring-4 focus:ring-copper/15";
@@ -239,8 +252,11 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
                         {s.customer && ` · Buyer: ${s.customer}`}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-extrabold tabular-nums text-copper-dark ring-1 ring-amber-200">
-                      {fmtPoints(s.commission)}
+                    <span className="shrink-0 text-right">
+                      <span className="inline-block rounded-full bg-amber-50 px-3 py-1.5 text-sm font-extrabold tabular-nums text-copper-dark ring-1 ring-amber-200">
+                        {fmtPoints(s.commission)}
+                      </span>
+                      {s.monthly > 0 && <span className="mt-1 block text-[11px] text-ink/50">+ {fmtPoints(s.monthly)} monthly</span>}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
@@ -318,6 +334,7 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
                       <span className="inline-block rounded-full bg-amber-50 px-3.5 py-1.5 text-base font-extrabold tabular-nums text-copper-dark ring-1 ring-amber-200">
                         {fmtPoints(s.commission)}
                       </span>
+                      {s.monthly > 0 && <span className="mt-1 block text-[11px] text-ink/50">+ {fmtPoints(s.monthly)} monthly</span>}
                     </td>
                     <td className="py-4 pl-3 pr-6 text-right">
                       {s.status === "cancelled" ? (
@@ -366,8 +383,7 @@ export default function SalesManager({ sales, sellers, propertyTitles }) {
           text={
             <>
               <b className="text-ink">{cancelling.title}</b> sold by <b className="text-ink">{cancelling.sellerName}</b>{" "}
-              will be cancelled and the <b className="text-ink">{fmtPoints(cancelling.commission)}</b> commission points
-              given for it are taken back.
+              will be cancelled. The points already added for it are taken back, and the monthly instalments still to come are removed.
             </>
           }
           confirmText="Yes, cancel sale"
@@ -503,41 +519,93 @@ function SaleModal({ sellers, propertyTitles, onClose, onDone }) {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/10">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gradient-to-b from-white to-[#fcf6ee] text-[11px] font-semibold uppercase tracking-wider text-ink/55">
-                <tr>
-                  <th className="px-4 py-3">Partner</th>
-                  <th className="px-4 py-3">For</th>
-                  <th className="px-4 py-3 text-right">Rate</th>
-                  <th className="px-4 py-3 text-right">Points</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                {preview.rows.map((r) => (
-                  <tr key={r.partnerId + r.kind}>
-                    <td className="px-4 py-3 font-semibold text-ink">{r.name}</td>
-                    <td className="px-4 py-3 text-ink/65">
-                      {KIND_TEXT[r.kind]}
-                      {r.level > 0 && <span className="text-ink/40"> · level {r.level} up</span>}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{r.rate}%</td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums text-copper">{fmtPoints(r.points)}</td>
+          <div>
+            <p className="mb-2 flex flex-wrap items-baseline gap-x-2 text-sm font-bold text-ink">
+              Sales bonus
+              <span className="text-xs font-medium text-ink/55">added on {when(preview.closesAt)}</span>
+            </p>
+            <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-black/10">
+              <table className="w-full min-w-[460px] text-left text-sm">
+                <thead className="bg-gradient-to-b from-white to-[#fcf6ee] text-[11px] font-semibold uppercase tracking-wider text-ink/55">
+                  <tr>
+                    <th className="px-4 py-3">Partner</th>
+                    <th className="px-4 py-3">For</th>
+                    <th className="px-4 py-3 text-right">Rate</th>
+                    <th className="px-4 py-3 text-right">Points</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-[#fcf6ee]">
-                <tr>
-                  <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-ink">Total points given</td>
-                  <td className="px-4 py-3 text-right text-base font-extrabold tabular-nums text-copper-dark">{fmtPoints(preview.total)}</td>
-                </tr>
-              </tfoot>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-black/5">
+                  {preview.rows.map((r) => (
+                    <tr key={r.partnerId + r.kind}>
+                      <td className="px-4 py-3 font-semibold text-ink">{r.name}</td>
+                      <td className="px-4 py-3 text-ink/65">
+                        {KIND_TEXT[r.kind]}
+                        {r.level > 0 && <span className="text-ink/40"> · level {r.level} up</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">{r.rate}%</td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums text-copper">{fmtPoints(r.points)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-[#fcf6ee]">
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-ink">Sales bonus in all</td>
+                    <td className="px-4 py-3 text-right text-base font-extrabold tabular-nums text-copper-dark">{fmtPoints(preview.total)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 flex flex-wrap items-baseline gap-x-2 text-sm font-bold text-ink">
+              Monthly bonus
+              <span className="text-xs font-medium text-ink/55">
+                {preview.months} instalments, from {when(preview.firstMonthly)} to {when(preview.lastMonthly)}
+              </span>
+            </p>
+            <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-black/10">
+              <table className="w-full min-w-[460px] text-left text-sm">
+                <thead className="bg-gradient-to-b from-white to-[#fcf6ee] text-[11px] font-semibold uppercase tracking-wider text-ink/55">
+                  <tr>
+                    <th className="px-4 py-3">Partner</th>
+                    <th className="px-4 py-3">For</th>
+                    <th className="px-4 py-3 text-right">Rate</th>
+                    <th className="px-4 py-3 text-right">A month</th>
+                    <th className="px-4 py-3 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/5">
+                  {preview.monthly.map((r) => (
+                    <tr key={r.partnerId + r.kind + r.level}>
+                      <td className="px-4 py-3 font-semibold text-ink">{r.name}</td>
+                      <td className="px-4 py-3 text-ink/65">
+                        {KIND_TEXT[r.kind]}
+                        {r.level > 0 && <span className="text-ink/40"> · level {r.level}</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">{r.rate}%</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{fmtPoints(r.each)}</td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums text-copper">{fmtPoints(r.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-[#fcf6ee]">
+                  <tr>
+                    <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-ink">Monthly bonus in all</td>
+                    <td className="px-4 py-3 text-right text-base font-extrabold tabular-nums text-copper-dark">{fmtPoints(preview.monthlyTotal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <p className="mt-2 text-xs text-ink/50">
+              A level is paid only if it is open for that partner (100 sq. yards of their own sales opens 2 levels, or one level for each direct partner). Levels
+              that are not open are not listed.
+            </p>
           </div>
 
           <p className="rounded-xl bg-[#fbf7f0] px-3.5 py-3 text-xs text-ink/55 ring-1 ring-black/5">
-            1 point = ₹1. The area is added to the seller and everyone above them, and their ranks update right away.
-            You can cancel a sale later; its commission is then taken back.
+            1 point = ₹1. Until the dates above the partners see these points as pending. The area is added to the seller and everyone above them, and their
+            ranks update right away. You can cancel a sale later: what was added is taken back and the instalments still to come are removed.
           </p>
           {error && <p className="text-sm font-medium text-rose-700">{error}</p>}
 

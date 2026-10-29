@@ -16,11 +16,13 @@ import {
 } from "lucide-react";
 import {
   addPoints,
-  creditMonthlyBonuses,
   markRewardGiven,
+  previewBonusRun,
   recordPayout,
+  runBonusRun,
 } from "@/actions/admin/commission";
 import { fmtDate, fmtPoints } from "@/lib/points";
+import BankReveal from "./BankReveal";
 import { CoinPileArt, CoinsArt, BarsArt, PeopleArt, TeamArt, ClipboardArt } from "@/components/dashboard/StatArt";
 import ConfirmDialog from "../ConfirmDialog";
 import Select from "../Select";
@@ -103,7 +105,7 @@ function PaidBar({ earned, paid }) {
 
 export default function PayoutsManager({ overview }) {
   const router = useRouter();
-  const { rows, rewards, recent, totals } = overview;
+  const { rows, rewards, recent, runs, auto, totals } = overview;
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [paying, setPaying] = useState(null);
@@ -134,20 +136,6 @@ export default function PayoutsManager({ overview }) {
     [shown],
   );
 
-  const monthly = () =>
-    start(async () => {
-      setError("");
-      setMessage("");
-      const res = await creditMonthlyBonuses();
-      if (!res.success) return setError(res.error);
-      setMessage(
-        res.added > 0
-          ? `Credited ${res.added} monthly bonus${res.added === 1 ? "" : "es"}.`
-          : "Nothing new is due. All monthly bonuses are already credited.",
-      );
-      router.refresh();
-    });
-
   const confirmGiven = () =>
     start(async () => {
       const r = giving;
@@ -164,7 +152,7 @@ export default function PayoutsManager({ overview }) {
       art: CoinPileArt,
       label: "Points owed",
       value: fmtPoints(totals.owed),
-      note: "to be paid to partners (1 point = ₹1)",
+      note: totals.pending > 0 ? `+ ${fmtPoints(totals.pending)} still to come on closing dates` : "to be paid to partners (1 point = ₹1)",
       theme: { bg: "from-[#fff1cf] to-[#fffaf0]", ring: "ring-amber-300/30", chip: "bg-amber-200/80 text-amber-700" },
     },
     {
@@ -180,7 +168,7 @@ export default function PayoutsManager({ overview }) {
       art: CoinsArt,
       label: "Total earned",
       value: fmtPoints(totals.earned),
-      note: "all points partners have earned",
+      note: "all points added to partners so far",
       theme: { bg: "from-[#fdebdc] to-[#fff6ec]", ring: "ring-copper/10", chip: "bg-[#f9d6b8] text-copper", art: "text-copper" },
     },
     {
@@ -229,10 +217,6 @@ export default function PayoutsManager({ overview }) {
           Showing {shown.length} of {rows.length}
         </p>
         <div className="flex flex-wrap gap-3 xl:ml-auto">
-          <button onClick={monthly} disabled={pending} className={`${btnGhost} !rounded-2xl !px-5 !py-3 shadow-[0_8px_20px_-14px_rgba(110,60,20,0.45)]`}>
-            <CalendarClock className="h-4 w-4 text-copper" />
-            Credit monthly bonus
-          </button>
           <button onClick={() => setAdding(true)} className={`${btnPrimary} !rounded-2xl !px-5 !py-3`}>
             <Plus className="h-4 w-4" />
             Add bonus / adjustment
@@ -275,6 +259,7 @@ export default function PayoutsManager({ overview }) {
                     <span className="shrink-0 text-right leading-tight">
                       <span className="block text-[11px] text-ink/50">Balance</span>
                       <span className="mt-0.5 block text-lg font-extrabold tabular-nums text-copper">{fmtPoints(r.balance)}</span>
+                      {r.pending > 0 && <span className="block text-[11px] font-semibold text-amber-700">+{fmtPoints(r.pending)} to come</span>}
                     </span>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3">
@@ -356,6 +341,7 @@ export default function PayoutsManager({ overview }) {
                       >
                         {fmtPoints(r.balance)}
                       </span>
+                      {r.pending > 0 && <span className="mt-1 block text-[11px] font-semibold text-amber-700">+{fmtPoints(r.pending)} to come</span>}
                     </td>
                     <td className="py-4 pl-3 pr-6 text-right">
                       <button
@@ -389,6 +375,8 @@ export default function PayoutsManager({ overview }) {
         )}
       </div>
 
+      <PoolBonuses runs={runs} auto={auto} />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className={`${card} min-w-0`}>
           <SectionTitle icon={Gift} count={rewards.length}>
@@ -409,7 +397,17 @@ export default function PayoutsManager({ overview }) {
                       {r.name}
                     </a>
                     <span className="mt-1 block text-xs text-ink/55">
-                      {r.rank} · <b className="text-copper-dark">{r.reward}</b> · {fmtDate(r.at)}
+                      {r.rank} · <b className="text-copper-dark">{r.reward}</b>
+                      {r.value > 0 && ` (₹${fmtPoints(r.value)})`} · {fmtDate(r.at)}
+                    </span>
+                    <span
+                      className={`mt-1.5 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ${
+                        r.ready ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-amber-50 text-amber-800 ring-amber-200"
+                      }`}
+                    >
+                      {r.ready
+                        ? "50:50 condition met"
+                        : `50:50 not met: ${fmtPoints(r.counted)} of ${fmtPoints(r.need)} sq. yd count`}
                     </span>
                   </span>
                   <button
@@ -425,7 +423,8 @@ export default function PayoutsManager({ overview }) {
             </ul>
           )}
           <p className="mt-5 rounded-xl bg-[#fbf7f0] px-3.5 py-3 text-xs text-ink/55 ring-1 ring-black/5">
-            Reward condition on the plan: Power 50% BV, Rest 50% BV. Check it before you hand a reward over.
+            Reward condition (50:50): the strongest leg counts for at most half of the sq. yards of the reward, the rest must come from the other legs and the
+            partner&apos;s own sales. A reward marked &quot;not met&quot; needs more sales from the other legs first.
           </p>
         </section>
 
@@ -503,6 +502,203 @@ export default function PayoutsManager({ overview }) {
   );
 }
 
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// The twelve months that are over, newest first: [{ value: "2026-09", label: "September 2026" }, ...]
+function finishedMonths() {
+  const now = new Date();
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 1 - i, 1);
+    return { value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}` };
+  });
+}
+
+const KIND_LABEL = { partnership: "Partnership bonus", cto: "C.T.O. bonus" };
+
+// Shares the partnership bonus or the C.T.O. bonus of a finished month, once.
+function PoolBonuses({ runs, auto }) {
+  const router = useRouter();
+  const months = useMemo(finishedMonths, []);
+  const [kind, setKind] = useState("partnership");
+  const [month, setMonth] = useState(months[0].value);
+  const [pv, setPv] = useState(null);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState("");
+  const [sure, setSure] = useState(false);
+  const [pending, start] = useTransition();
+
+  const reset = () => {
+    setPv(null);
+    setDone("");
+    setError("");
+  };
+
+  const check = () =>
+    start(async () => {
+      reset();
+      const res = await previewBonusRun({ kind, month });
+      if (!res.success) return setError(res.error);
+      setPv(res);
+    });
+
+  const share = () =>
+    start(async () => {
+      setError("");
+      const res = await runBonusRun({ kind, month });
+      setSure(false);
+      if (!res.success) return setError(res.error);
+      setPv(null);
+      setDone(`${KIND_LABEL[kind]} for ${months.find((m) => m.value === month)?.label} is shared.`);
+      router.refresh();
+    });
+
+  const blocked = pv && (pv.already || !pv.finished || pv.pool <= 0 || pv.partners === 0);
+
+  return (
+    <section className={`${card} min-w-0`}>
+      <SectionTitle icon={CalendarClock} count={runs.length}>
+        Partnership &amp; <span className="text-copper">C.T.O. bonus</span>
+      </SectionTitle>
+      <p className="mt-3 max-w-3xl text-sm leading-relaxed text-ink/60">
+        A percentage of the company&apos;s sales of a month, shared equally. The partnership bonus goes to every active partner (up to the limit of the plan),
+        the C.T.O. bonus to the partners of the top rank. Share a month once it is over; each month can be shared only once.
+      </p>
+      <p
+        className={`mt-3 flex items-start gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold ring-1 ${
+          auto?.on ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-amber-50 text-amber-800 ring-amber-200"
+        }`}
+      >
+        <CalendarClock className="mt-px h-4 w-4 shrink-0" />
+        {auto?.on
+          ? `Shared by itself: every night at 1 AM the system checks, and from day ${auto.day} of the month on it shares last month. You can still share a month here before that.`
+          : "Sharing by itself is off (Commission Plan > Bonuses & closing dates). Share each month here."}
+      </p>
+
+      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-end">
+        <div>
+          <p className={labelCls}>Bonus</p>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(KIND_LABEL).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setKind(value);
+                  reset();
+                }}
+                aria-pressed={kind === value}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  kind === value
+                    ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
+                    : "bg-white text-ink/70 ring-1 ring-black/10 hover:ring-copper"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="lg:w-56">
+          <label className={labelCls} htmlFor="pool-month">Month</label>
+          <Select
+            id="pool-month"
+            value={month}
+            onChange={(v) => {
+              setMonth(v);
+              reset();
+            }}
+            options={months}
+            ariaLabel="Month"
+          />
+        </div>
+        <button type="button" onClick={check} disabled={pending} className={`${btnGhost} !rounded-2xl !px-5 !py-3`}>
+          {pending && !sure ? "Working it out..." : "See what is shared"}
+        </button>
+      </div>
+
+      {error && <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 ring-1 ring-rose-200">{error}</p>}
+      {done && (
+        <p className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">
+          <Check className="h-4 w-4" strokeWidth={3} />
+          {done}
+        </p>
+      )}
+
+      {pv && (
+        <div className="mt-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/10 sm:p-5">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-5">
+            {[
+              ["Company sales", `₹${fmtPoints(pv.turnover)}`],
+              [`Pool (${fmtPoints(pv.pct)}%)`, fmtPoints(pv.pool)],
+              ["Partners sharing", fmtPoints(pv.partners)],
+              ["Each gets", fmtPoints(pv.per)],
+              ["Total shared", fmtPoints(pv.total)],
+            ].map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-ink/50">{label}</dt>
+                <dd className="mt-1 text-lg font-extrabold tabular-nums text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          {pv.capped > 0 && (
+            <p className="mt-3 text-xs text-amber-800">
+              {pv.capped} partner{pv.capped === 1 ? "" : "s"} reach the limit of the plan, so they get less (or nothing) and the total is lower.
+            </p>
+          )}
+          {pv.already && <p className="mt-3 text-sm font-semibold text-amber-800">This month was already shared.</p>}
+          {!pv.finished && <p className="mt-3 text-sm font-semibold text-amber-800">This month is not over yet.</p>}
+          {pv.finished && !pv.already && (pv.pool <= 0 || pv.partners === 0) && (
+            <p className="mt-3 text-sm font-semibold text-amber-800">There is nothing to share for this month.</p>
+          )}
+          <div className="mt-4 flex justify-end">
+            <button type="button" onClick={() => setSure(true)} disabled={pending || blocked} className={btnPrimary}>
+              Share it with the partners
+            </button>
+          </div>
+        </div>
+      )}
+
+      {runs.length > 0 && (
+        <div className="mt-6">
+          <p className={labelCls}>Already shared</p>
+          <ul className="space-y-2">
+            {runs.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-[#fbf7f0] px-4 py-3 text-sm ring-1 ring-black/5">
+                <span className="font-bold text-ink">{KIND_LABEL[r.kind]}</span>
+                <span className="text-ink/60">
+                  {fmtDate(r.from)} to {fmtDate(r.to)}
+                </span>
+                <span className="text-ink/60">
+                  {fmtPoints(r.partners)} partners × {fmtPoints(r.per)}
+                </span>
+                <span className="ml-auto font-extrabold tabular-nums text-copper-dark">{fmtPoints(r.total)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sure && pv && (
+        <ConfirmDialog
+          tone="warn"
+          icon={Gift}
+          title={`Share the ${KIND_LABEL[kind]}?`}
+          text={
+            <>
+              <b className="text-ink">{fmtPoints(pv.total)}</b> points will be added to <b className="text-ink">{fmtPoints(pv.partners)}</b> partners for{" "}
+              <b className="text-ink">{months.find((m) => m.value === month)?.label}</b>. This cannot be shared again for the same month.
+            </>
+          }
+          confirmText="Yes, share it"
+          busy={pending}
+          onConfirm={share}
+          onCancel={() => setSure(false)}
+        />
+      )}
+    </section>
+  );
+}
+
 function PayModal({ partner, onClose, onDone }) {
   const [points, setPoints] = useState(String(partner.balance));
   const [mode, setMode] = useState("UPI");
@@ -539,6 +735,39 @@ function PayModal({ partner, onClose, onDone }) {
             <p className="text-xs text-ink/55">Balance</p>
             <p className="mt-1 text-2xl font-extrabold tabular-nums text-copper">{fmtPoints(partner.balance)}</p>
           </div>
+        </div>
+
+        <div className="rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/50">Pay to</p>
+          {partner.bank?.added || partner.bank?.upi ? (
+            <dl className="mt-2.5 grid grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2">
+              {[
+                ["Account holder", partner.bank.holder],
+                ["Bank", [partner.bank.name, partner.bank.branch].filter(Boolean).join(", ")],
+                ["IFSC code", partner.bank.ifsc],
+                ["UPI id", partner.bank.upi],
+              ]
+                .filter(([, v]) => v)
+                .map(([label, value]) => (
+                  <div key={label} className="min-w-0">
+                    <dt className="text-xs text-ink/50">{label}</dt>
+                    <dd className="mt-0.5 [overflow-wrap:anywhere] font-semibold text-ink">{value}</dd>
+                  </div>
+                ))}
+              {partner.bank.added && (
+                <div className="min-w-0 sm:col-span-2">
+                  <dt className="text-xs text-ink/50">Account number</dt>
+                  <dd className="mt-0.5 font-semibold text-ink">
+                    <BankReveal id={partner.id} last4={partner.bank.last4} />
+                  </dd>
+                </div>
+              )}
+            </dl>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-amber-800">
+              This partner has not added bank details yet. Ask them to add it on their profile, or pay another way.
+            </p>
+          )}
         </div>
 
         <div>
@@ -668,12 +897,13 @@ function AddModal({ partners, onClose, onDone }) {
           </div>
           <div>
             <label className={labelCls} htmlFor="add-note">Note (the partner sees it)</label>
-            <input id="add-note" required value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="C.T.O. bonus, October" className={inputCls} />
+            <input id="add-note" required value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="Festival bonus, October" className={inputCls} />
           </div>
         </div>
 
         <p className="rounded-xl bg-[#fbf7f0] px-3.5 py-3 text-xs text-ink/55 ring-1 ring-black/5">
-          The C.T.O. bonus is added by hand because its amount is not worked out by the system. Use Adjustment to correct a mistake; a minus number takes points away.
+          The partnership bonus and the C.T.O. bonus of a month are shared above, in Partnership &amp; C.T.O. bonus. Use this for a one-off bonus, or Adjustment to
+          correct a mistake; a minus number takes points away.
         </p>
         {error && <p className="text-sm text-rose-700">{error}</p>}
 

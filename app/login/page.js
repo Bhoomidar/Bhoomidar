@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata = { title: "Log In | Bhoomidar" };
 
 export default async function LoginPage({ searchParams }) {
-  const { redirect: next } = await searchParams;
+  const { redirect: next, reset } = await searchParams;
   const redirectTo =
     typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
       ? next
@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }) {
 
   return (
     <AuthShell bare>
-      <LoginForm redirectTo={redirectTo} />
+      <LoginForm redirectTo={redirectTo} notice={reset ? "Your password was changed. Log in with the new password." : ""} />
     </AuthShell>
   );
 }

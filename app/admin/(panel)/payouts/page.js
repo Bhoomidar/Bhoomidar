@@ -13,7 +13,7 @@ export default async function PayoutsPage() {
         label="Commission"
         title="Points &"
         accent="Payouts"
-        text="Each partner's commission points. When you pay a partner, mark it here and those points leave their balance."
+        text="Each partner's commission points, and what is still to come on the closing dates. When you pay a partner, mark it here and those points leave their balance. Share the partnership and C.T.O. bonus once a month."
       />
       <PayoutsManager overview={overview} />
     </>

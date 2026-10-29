@@ -1,12 +1,8 @@
 import Image from "next/image";
 import {
   ArrowRight,
-  Banknote,
-  BadgeCheck,
-  CalendarClock,
   Check,
   ChevronRight,
-  CircleHelp,
   Clock,
   Coins,
   Crown,
@@ -19,7 +15,6 @@ import {
   Network,
   Share2,
   ShieldCheck,
-  ShoppingBag,
   Star,
   Target,
   Trophy,
@@ -33,21 +28,19 @@ import {
   BarsArt,
   ClipboardArt,
   CoinPileArt,
-  GiftArt,
   HouseArt,
-  OrgChartArt,
-  VioletGiftArt,
 } from "@/components/dashboard/StatArt";
 import { getCurrentPartner } from "@/lib/profile";
 import { getPartnerCommission } from "@/lib/commission";
-import { fmtArea, fmtDate, fmtPoints } from "@/lib/points";
+import { KINDS, fmtArea, fmtDate, fmtPoints } from "@/lib/points";
+import { closeDaysText, hourText } from "@/lib/planRules";
 import { rankTiers } from "@/lib/data";
 import { rewardIcon } from "@/lib/rankIcons";
 import RewardPic from "@/components/RewardPic";
+import CommissionTabs from "@/components/dashboard/CommissionTabs";
+import PlanGuide from "@/components/dashboard/PlanGuide";
 
 export const metadata = { title: "Commission | Bhoomidar" };
-
-const SAMPLE_SALE = 1000000; // the example sale used in the explanations: Rs 10 lakh
 
 const card =
   "rounded-3xl bg-white p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7";
@@ -81,20 +74,21 @@ export default async function CommissionPage() {
   const tier = rankTiers[rankIndex % rankTiers.length];
   const nextTier = c.next ? rankTiers[(c.next.no - 1) % rankTiers.length] : tier;
 
-  // Where the points came from.
-  const sum = (kinds) => c.ledger.filter((e) => kinds.includes(e.kind)).reduce((t, e) => t + e.points, 0);
+  // Where the points came from (only what has been added already).
+  const kinds = (...list) => list.reduce((t, k) => t + (c.byKind[k] ?? 0), 0);
   const parts = [
-    { label: "Your own sales", value: sum(["sale"]), bar: "bg-emerald-500", dot: "bg-emerald-500" },
-    { label: "Your team's sales", value: sum(["team"]), bar: "bg-sky-500", dot: "bg-sky-500" },
-    { label: "Monthly bonus", value: sum(["monthly"]), bar: "bg-violet-500", dot: "bg-violet-500" },
-    { label: "Other", value: sum(["cto", "adjustment", "reversal"]), bar: "bg-amber-400", dot: "bg-amber-400" },
+    { label: "Sales bonus", value: kinds("sale"), bar: "bg-emerald-500", dot: "bg-emerald-500" },
+    { label: "Team difference", value: kinds("team"), bar: "bg-sky-500", dot: "bg-sky-500" },
+    { label: "Monthly bonus", value: kinds("self_monthly", "team_monthly", "monthly"), bar: "bg-violet-500", dot: "bg-violet-500" },
+    { label: "Partnership & C.T.O.", value: kinds("partnership", "cto"), bar: "bg-orange-400", dot: "bg-orange-400" },
+    { label: "Other", value: kinds("adjustment", "reversal"), bar: "bg-amber-400", dot: "bg-amber-400" },
   ];
   const positive = parts.map((p) => ({ ...p, share: Math.max(0, p.value) }));
   const shareTotal = positive.reduce((t, p) => t + p.share, 0);
 
   // One timeline: points in and points paid out, with the balance after each line.
   const timeline = [
-    ...c.ledger.map((e) => ({ id: e.id, kind: e.kind, points: e.points, note: e.note, from: e.from, rate: e.rate, at: e.at })),
+    ...c.ledger.map((e) => ({ id: e.id, kind: e.kind, points: e.points, note: e.note, from: e.from, rate: e.rate, level: e.level, at: e.at })),
     ...c.payouts.map((p) => ({
       id: `p-${p.id}`,
       kind: "payout",
@@ -112,28 +106,134 @@ export default async function CommissionPage() {
   }
   timeline.reverse();
 
-  // The examples, worked out with the partner's own rate.
-  const baseRate = c.plan[0]?.rate ?? 2;
-  const myRate = c.rank?.rate ?? baseRate;
-  const own = Math.round((SAMPLE_SALE * myRate) / 100);
-  const teamDiff = Math.max(0, myRate - baseRate);
-  const team = Math.round((SAMPLE_SALE * teamDiff) / 100);
-  const monthsDone = Math.min(c.monthsPaid, 12);
+  // The rules the admin set (the plan itself is explained by PlanGuide).
+  const rules = c.rules;
+  const monthlyDone = kinds("self_monthly", "team_monthly", "monthly");
+  // The partner sees the monthly bonus one instalment at a time, never the whole sum still to come.
+  const isMonthly = (x) => x.kind === "self_monthly" || x.kind === "team_monthly";
+  const monthlyComing = c.coming.filter(isMonthly).reduce((t, x) => t + x.total, 0);
+  const nextMonthlyAt = c.coming.find(isMonthly)?.at ?? null;
+  const nextMonthly = nextMonthlyAt ? c.coming.filter((x) => isMonthly(x) && x.at === nextMonthlyAt).reduce((t, x) => t + x.total, 0) : 0;
+  const pendingBonus = Math.max(0, c.pending - monthlyComing);
+  const nextBonusAt = c.coming.find((x) => !isMonthly(x))?.at ?? null;
   const monthOf = (d) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).slice(0, 7);
   const thisMonth = monthOf(new Date());
   const monthPoints = c.ledger.filter((e) => monthOf(e.at) === thisMonth).reduce((t, e) => t + e.points, 0);
+  const closing = closeDaysText(rules);
+  const closeAt = hourText(rules.closeHour);
+
+  // What is still to come, day by day.
+  const comingDays = [];
+  for (const x of c.coming) {
+    const day = comingDays.find((d) => d.at === x.at);
+    if (day) {
+      day.total += x.total;
+      day.parts.push(x);
+    } else comingDays.push({ at: x.at, total: x.total, parts: [x] });
+  }
 
   const steps = [
     { icon: FileText, art: Handshake, title: "A sale happens", text: "You or someone in your team sells land." },
     { icon: ShieldCheck, art: FileCheck2, title: "We confirm it", text: "Our team checks the sale and records it." },
-    { icon: Coins, art: Coins, title: "Points are added", text: "Commission points land here. 1 point = ₹1." },
+    { icon: Coins, art: Coins, title: "Points are added", text: `Commission points land here on the closing dates (${closing}). 1 point = ₹1.` },
     { icon: Wallet, art: Wallet, title: "We pay you", text: "Our team pays your points and marks them as paid." },
   ];
+
+
+  // The next three things to aim for, all in one place: rank, level and reward.
+  const waitingReward = c.rewards.find((r) => !r.given && !r.ready && r.legs);
+  const rewardLeft = waitingReward
+    ? [
+        { name: "your power leg", left: Math.max(0, waitingReward.legs.powerCap - waitingReward.legs.power) },
+        { name: "your weaker legs", left: Math.max(0, waitingReward.legs.otherNeed - waitingReward.legs.other) },
+      ].filter((x) => x.left > 0)
+    : [];
+  const hint = c.levels.hint;
+  const goals = [
+    {
+      icon: Target,
+      tag: "Next rank",
+      title: c.next ? c.next.title : "Top rank reached",
+      text: c.next ? `${fmtArea(c.areaToNext)} sq. yd more land sold by you and your team.` : "You are at the top. Congratulations!",
+      pct: c.next ? c.progress : 100,
+      tone: "from-[#fff0e0] to-white ring-copper/15",
+      chip: "bg-gradient-to-br from-copper-light to-copper-dark text-white shadow-copper/30",
+      bar: "bg-gradient-to-r from-copper to-copper-light",
+    },
+    {
+      icon: Network,
+      tag: "Next level",
+      title: hint.target ? `Open level ${hint.target}` : `All ${c.levels.max} levels open`,
+      text: hint.target
+        ? `Sell ${fmtArea(hint.moreArea)} more sq. yd yourself, or add ${hint.moreDirects} more direct partner${hint.moreDirects === 1 ? "" : "s"}.`
+        : "You are paid on every level of your team.",
+      pct: (c.levels.open / c.levels.max) * 100,
+      tone: "from-[#efe7ff] to-white ring-violet-200/60",
+      chip: "bg-gradient-to-b from-violet-400 to-violet-600 text-white shadow-violet-500/30",
+      bar: "bg-gradient-to-r from-violet-400 to-violet-600",
+    },
+    {
+      icon: Gift,
+      tag: "Next reward",
+      title: waitingReward ? waitingReward.reward : c.next ? c.next.reward : "All rewards unlocked",
+      text: waitingReward
+        ? rewardLeft.length
+          ? `You have the rank. ${rewardLeft.map((x) => `${fmtArea(x.left)} sq. yd more from ${x.name}`).join(" and ")} to unlock it (50:50).`
+          : "Your 50:50 condition is complete."
+        : c.next
+          ? `Comes with the ${c.next.title} rank.`
+          : "You have every reward. Well done!",
+      pct: waitingReward ? (waitingReward.need > 0 ? (waitingReward.counted / waitingReward.need) * 100 : 100) : c.next ? c.progress : 100,
+      tone: "from-[#e3f7ec] to-white ring-emerald-200/60",
+      chip: "bg-gradient-to-b from-emerald-400 to-emerald-600 text-white shadow-emerald-500/30",
+      bar: "bg-gradient-to-r from-emerald-400 to-emerald-600",
+    },
+  ];
+  const goalsStrip = (
+    <Reveal>
+      <section className={card}>
+        <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">
+          Your next <span className="text-copper">goals</span>
+        </h2>
+        <p className="mt-1.5 text-sm text-ink/55">Three small steps that take you forward.</p>
+        <ul className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {goals.map(({ icon: Icon, tag, title, text, pct, tone, chip, bar }) => (
+            <li key={tag} className={`rounded-2xl bg-gradient-to-br p-4 ring-1 sm:p-5 ${tone}`}>
+              <div className="flex items-center gap-3">
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-md ${chip}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 leading-tight">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-ink/50">{tag}</span>
+                  <span className="mt-0.5 block [overflow-wrap:anywhere] text-base font-bold text-ink">{title}</span>
+                </span>
+              </div>
+              <div className="mt-3.5 h-2.5 overflow-hidden rounded-full bg-black/10">
+                <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.max(6, Math.min(100, pct))}%` }} />
+              </div>
+              <p className="mt-2.5 text-xs leading-relaxed text-ink/65">{text}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </Reveal>
+  );
+
 
   return (
     <div className="space-y-8">
       <Heading />
 
+      <CommissionTabs
+        tabs={[
+          { id: "overview", label: "Overview", hint: "Money and next goals" },
+          { id: "bonuses", label: "My plan", hint: "Every income explained", alias: ["plan", "monthly", "bonus"] },
+          { id: "rank", label: "Rank & rewards", short: "Rewards", hint: "Your level and gifts", alias: ["rewards"] },
+          { id: "history", label: "History", hint: "Points and sales", alias: ["your-sales", "sales"] },
+        ]}
+        panels={{
+          overview: (
+            <div className="space-y-8">
       {/* Balance, and where the points came from */}
       <div className="fade-up relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7 lg:min-h-[250px]">
@@ -151,6 +251,27 @@ export default async function CommissionPage() {
               <p className="mt-3 text-sm font-semibold text-ink/75">
                 = ₹{fmtPoints(c.balance)} <span className="font-normal text-ink/50">(1 point = ₹1)</span>
               </p>
+              <div className="mt-3 space-y-2 sm:max-w-[15rem] lg:max-w-[17rem]">
+                {pendingBonus > 0 && (
+                  <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold leading-snug text-amber-800 ring-1 ring-amber-200">
+                    <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      ₹{fmtPoints(pendingBonus)} more is on the way{nextBonusAt ? <>, next on {fmtDate(nextBonusAt)}</> : null}
+                    </span>
+                  </p>
+                )}
+                {nextMonthly > 0 && (
+                  <p className="flex items-start gap-2 rounded-xl bg-violet-50 px-3 py-2 text-xs font-semibold leading-snug text-violet-800 ring-1 ring-violet-200">
+                    <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Next monthly instalment ₹{fmtPoints(nextMonthly)} on {fmtDate(nextMonthlyAt)}
+                    </span>
+                  </p>
+                )}
+                <p className="text-xs leading-snug text-ink/50">
+                  Points of a sale are added on the {closing} of the month, at {closeAt}.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -163,7 +284,7 @@ export default async function CommissionPage() {
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-copper shadow-md ring-1 ring-black/5">
               <Clock className="h-5 w-5" />
             </span>
-            <h2 className="min-w-0 font-display text-xl font-bold text-ink sm:text-2xl">Where your points came from</h2>
+            <h2 className="min-w-0 font-display text-lg font-bold leading-tight text-ink min-[400px]:text-xl sm:text-2xl">Where your points came from</h2>
           </div>
 
           {shareTotal > 0 ? (
@@ -196,16 +317,95 @@ export default async function CommissionPage() {
         </section>
       </div>
 
+{goalsStrip}
+
+      {/* The four numbers */}
+      <Reveal>
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          {[
+            { icon: Coins, art: BarsArt, value: fmtPoints(c.earned), label: "Total earned", hint: "All the points you have earned so far.", bg: "from-[#e1f7ec] to-white", chip: "bg-emerald-100 text-emerald-600", artTone: "text-emerald-500" },
+            { icon: Wallet, art: Wallet, value: fmtPoints(c.paid), label: "Points redeemed", hint: "Points our team has already paid you.", bg: "from-[#ffeadf] to-white", chip: "bg-[#fdd9c6] text-copper", artTone: "text-copper" },
+            { icon: Users, art: BarsArt, value: `${fmtArea(c.teamArea)} sq. yd`, label: "Land sold by team", hint: "Land sold by you and your whole team.", bg: "from-[#e4f0ff] to-white", chip: "bg-sky-100 text-sky-600", artTone: "text-sky-500" },
+            { icon: Star, art: Crown, value: fmtPoints(monthPoints), label: "Current month points", hint: "Points you earned this month.", bg: "from-[#efe8ff] to-white", chip: "bg-violet-100 text-violet-600", artTone: "text-violet-500" },
+          ].map(({ icon: Icon, art: Art, value, label, hint, bg, chip, artTone }) => (
+            <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${bg} p-4 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.5)] ring-1 ring-black/5`}>
+              <Art className={`pointer-events-none absolute right-3 top-3 h-12 w-12 opacity-20 sm:bottom-2 sm:top-auto sm:h-14 sm:w-14 ${artTone}`} strokeWidth={1.3} />
+              <div className="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
+                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-sm ${chip}`}>
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="min-w-0 leading-tight">
+                  <span className="block [overflow-wrap:anywhere] text-2xl font-extrabold tabular-nums text-ink">{value}</span>
+                  <span className="mt-1 flex items-start gap-1.5 text-xs text-ink/60 sm:mt-0.5 sm:items-center">
+                    {label}
+                    <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-ink/35">
+                      <title>{hint}</title>
+                    </Info>
+                  </span>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* What is still to come */}
+      {comingDays.length > 0 && (
+        <Reveal>
+          <section className={card}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">
+                Coming <span className="text-copper">up</span>
+              </h2>
+              {pendingBonus > 0 && (
+                <span className="rounded-full bg-amber-50 px-3.5 py-1.5 text-sm font-extrabold tabular-nums text-amber-800 ring-1 ring-amber-200">
+                  ₹{fmtPoints(pendingBonus)} on the way
+                </span>
+              )}
+            </div>
+            <p className="mt-1.5 text-sm text-ink/55">
+              The sales bonus is added on {closing} at {closeAt}, and the monthly bonus every month. Not in your balance until then.
+            </p>
+            <ul className="mt-5 space-y-2.5">
+              {comingDays.slice(0, 8).map((d) => (
+                <li key={d.at} className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-black/5">
+                  <span className="min-w-[7.5rem] text-sm font-bold text-ink">{fmtDate(d.at)}</span>
+                  <span className="flex flex-wrap gap-1.5">
+                    {d.parts.map((x) => (
+                      <span key={x.kind} className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${KINDS[x.kind]?.tone ?? "bg-stone-200 text-stone-700"}`}>
+                        {KINDS[x.kind]?.label ?? x.kind}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="ml-auto text-base font-extrabold tabular-nums text-copper-dark">+{fmtPoints(d.total)}</span>
+                </li>
+              ))}
+            </ul>
+            {comingDays.length > 8 && <p className="mt-3 text-xs text-ink/50">and {comingDays.length - 8} more dates after these.</p>}
+          </section>
+        </Reveal>
+      )}
+            </div>
+          ),
+          bonuses: (
+            <div className="space-y-8">
+      <PlanGuide
+        c={c}
+        rules={rules}
+        activatedOn={partner.activatedOn ?? ""}
+        monthly={{ done: monthlyDone, next: nextMonthly, nextAt: nextMonthlyAt ? fmtDate(nextMonthlyAt) : "" }}
+      />
+
       {/* How it works */}
       <Reveal>
         <section className={card}>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="min-w-0 whitespace-nowrap font-display text-2xl font-bold text-ink sm:text-3xl">
-              How you <span className="text-copper">earn</span>
+            <h2 className="min-w-0 font-display text-xl font-bold leading-tight text-ink min-[380px]:text-2xl sm:text-3xl">
+              How you get <span className="text-copper">paid</span>
             </h2>
             <a
               href="/opportunities#rewards"
-              className="group inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-copper-dark shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white hover:ring-copper sm:px-4"
+              className="group inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-[13px] font-semibold text-copper-dark shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white hover:ring-copper sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
             >
               Learn more
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
@@ -241,10 +441,11 @@ export default async function CommissionPage() {
           </ol>
         </section>
       </Reveal>
-
-      {/* Rank and monthly bonus */}
-      <Reveal>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.45fr_1fr]">
+            </div>
+          ),
+          rank: (
+            <div className="space-y-8">
+<Reveal>
           {/* your rank */}
           <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
             <div
@@ -333,206 +534,9 @@ export default async function CommissionPage() {
               )}
             </div>
           </section>
+</Reveal>
 
-          {/* monthly bonus */}
-          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
-            <GiftArt className="pointer-events-none absolute -bottom-2 -right-2 hidden h-40 w-52 sm:block" />
-
-            <div className="relative flex flex-col items-start gap-3.5 sm:flex-row sm:justify-between sm:gap-3">
-              <div className="flex min-w-0 items-center gap-3.5">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fde0d0] text-copper shadow-sm">
-                  <Gift className="h-6 w-6" />
-                </span>
-                <div className="min-w-0 leading-tight">
-                  <h2 className="font-display text-2xl font-bold text-ink">Monthly bonus</h2>
-                  <p className="mt-1 text-xs text-ink/55">For 12 months after you reach a rank</p>
-                </div>
-              </div>
-              <a
-                href="/opportunities#rewards"
-                className="group inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-copper-dark shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white hover:ring-copper"
-              >
-                View details
-                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-              </a>
-            </div>
-
-            <p className="relative mt-5 flex items-baseline gap-2 text-4xl font-extrabold tabular-nums text-ink">
-              {fmtPoints(c.rank?.monthlyBonus)}
-              <span className="text-sm font-semibold text-ink/50">points a month</span>
-            </p>
-
-            <ul className="relative mt-5 grid max-w-[22rem] grid-cols-6 justify-items-center gap-2 sm:gap-2.5">
-              {Array.from({ length: 12 }, (_, i) => {
-                const done = i < monthsDone;
-                const now = i === monthsDone && monthsDone < 12;
-                return (
-                  <li key={i}>
-                    <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold sm:h-10 sm:w-10 ${
-                        done || now
-                          ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
-                          : "bg-[#ece5dc] text-ink/45"
-                      } ${now ? "ring-4 ring-copper/20" : ""}`}
-                    >
-                      {done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="relative mt-5 flex items-center gap-3.5 rounded-2xl bg-white/80 p-3.5 ring-1 ring-black/5 sm:max-w-[20rem]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-copper shadow-sm ring-1 ring-black/5">
-                <CalendarClock className="h-5 w-5" />
-              </span>
-              <span className="leading-tight">
-                <span className="block text-sm font-bold text-ink">{monthsDone} of 12 months credited.</span>
-                <span className="mt-0.5 block text-xs text-ink/55">Our team adds each month&apos;s bonus to your points.</span>
-              </span>
-            </div>
-          </section>
-        </div>
-      </Reveal>
-
-      {/* The four numbers */}
-      <Reveal>
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-          {[
-            { icon: Coins, art: BarsArt, value: fmtPoints(c.earned), label: "Total earned", hint: "All the points you have earned so far.", bg: "from-[#e1f7ec] to-white", chip: "bg-emerald-100 text-emerald-600", artTone: "text-emerald-500" },
-            { icon: Wallet, art: Wallet, value: fmtPoints(c.paid), label: "Points redeemed", hint: "Points our team has already paid you.", bg: "from-[#ffeadf] to-white", chip: "bg-[#fdd9c6] text-copper", artTone: "text-copper" },
-            { icon: Users, art: BarsArt, value: `${fmtArea(c.teamArea)} sq. yd`, label: "Land sold by team", hint: "Land sold by you and your whole team.", bg: "from-[#e4f0ff] to-white", chip: "bg-sky-100 text-sky-600", artTone: "text-sky-500" },
-            { icon: Star, art: Crown, value: fmtPoints(monthPoints), label: "Current month points", hint: "Points you earned this month.", bg: "from-[#efe8ff] to-white", chip: "bg-violet-100 text-violet-600", artTone: "text-violet-500" },
-          ].map(({ icon: Icon, art: Art, value, label, hint, bg, chip, artTone }) => (
-            <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${bg} p-4 shadow-[0_14px_30px_-22px_rgba(110,60,20,0.5)] ring-1 ring-black/5`}>
-              <Art className={`pointer-events-none absolute right-3 top-3 h-12 w-12 opacity-20 sm:bottom-2 sm:top-auto sm:h-14 sm:w-14 ${artTone}`} strokeWidth={1.3} />
-              <div className="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-sm ${chip}`}>
-                  <Icon className="h-6 w-6" />
-                </span>
-                <span className="min-w-0 leading-tight">
-                  <span className="block [overflow-wrap:anywhere] text-2xl font-extrabold tabular-nums text-ink">{value}</span>
-                  <span className="mt-1 flex items-start gap-1.5 text-xs text-ink/60 sm:mt-0.5 sm:items-center">
-                    {label}
-                    <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-ink/35">
-                      <title>{hint}</title>
-                    </Info>
-                  </span>
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Reveal>
-
-      {/* The rules in plain words */}
-      <Reveal>
-        <section className={card}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="flex items-start gap-3 font-display text-2xl font-bold text-ink sm:items-center sm:text-3xl">
-                <CircleHelp className="mt-1 h-6 w-6 shrink-0 text-copper sm:mt-0 sm:h-7 sm:w-7" />
-                <span>
-                  How your commission is <span className="text-copper">worked out</span>
-                </span>
-              </h2>
-              <p className="mt-1.5 text-sm text-ink/55">Examples use a sale of ₹10,00,000 and your current rank.</p>
-            </div>
-            <a
-              href="/opportunities#rewards"
-              className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-copper-dark shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white hover:ring-copper"
-            >
-              Learn more
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            </a>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {/* 1: your own sale */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#e3f7ec] to-white p-5 ring-1 ring-emerald-200/60">
-              <CoinPileArt className="pointer-events-none absolute -bottom-2 -right-2 hidden h-28 w-36 sm:block" />
-              <div className="relative flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-500/30">1</span>
-                <span className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-bold text-emerald-800">Your own sale</span>
-              </div>
-              <p className="relative mt-4 text-sm leading-relaxed text-ink/70">
-                You get your rank&apos;s percentage of the sale value. As <b className="text-ink">{c.rank?.title}</b> that is{" "}
-                <b className="text-emerald-700">{myRate}%</b>.
-              </p>
-              <p className="relative mt-4 w-fit max-w-full rounded-xl sm:max-w-[75%] bg-white px-4 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
-                ₹10,00,000 × {myRate}% = <b className="text-emerald-700">{fmtPoints(own)} points</b>
-              </p>
-            </div>
-
-            {/* 2: your team's sale */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#e6f1ff] to-white p-5 ring-1 ring-sky-200/60">
-              <OrgChartArt className="pointer-events-none absolute right-3 top-3 hidden h-20 w-24 text-sky-400/30 sm:block" />
-              <div className="relative flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-sky-400 to-sky-600 text-sm font-bold text-white shadow-md shadow-sky-500/30">2</span>
-                <span className="rounded-full bg-sky-100 px-4 py-1.5 text-sm font-bold text-sky-800">Your team&apos;s sale</span>
-              </div>
-              <p className="relative mt-4 text-sm leading-relaxed text-ink/70 sm:pr-16">
-                When someone in your team sells, you get the <b className="text-ink">difference</b> between your rate and theirs, if your rank is higher.
-              </p>
-              <p className="relative mt-4 flex items-center gap-3 rounded-xl bg-white px-3.5 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
-                  <Users className="h-[18px] w-[18px]" />
-                </span>
-                <span>
-                  {teamDiff > 0 ? (
-                    <>
-                      A new partner ({baseRate}%) sells: ₹10,00,000 × {Number(teamDiff.toFixed(3))}% ={" "}
-                      <b className="text-sky-700">{fmtPoints(team)} points</b>
-                    </>
-                  ) : (
-                    <>
-                      Reach <b className="text-ink">Sales Associate</b> to start earning on your team&apos;s sales.
-                    </>
-                  )}
-                </span>
-              </p>
-            </div>
-
-            {/* 3: monthly bonus */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#efe7ff] to-white p-5 ring-1 ring-violet-200/60">
-              <VioletGiftArt className="pointer-events-none absolute -bottom-1 -right-1 hidden h-28 w-28 sm:block" />
-              <div className="relative flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-violet-400 to-violet-600 text-sm font-bold text-white shadow-md shadow-violet-500/30">3</span>
-                <span className="rounded-full bg-violet-100 px-4 py-1.5 text-sm font-bold text-violet-800">Monthly bonus</span>
-              </div>
-              <p className="relative mt-4 text-sm leading-relaxed text-ink/70">
-                Every rank gives a fixed bonus each month for 12 months, plus a reward when you reach it.
-              </p>
-              <p className="relative mt-4 w-fit max-w-full rounded-xl sm:max-w-[75%] bg-white px-4 py-3 text-sm text-ink/75 shadow-sm ring-1 ring-black/5">
-                {c.rank?.title}: <b className="text-violet-700">{fmtPoints(c.rank?.monthlyBonus)} × 12</b> ={" "}
-                {fmtPoints((c.rank?.monthlyBonus ?? 0) * 12)} points
-              </p>
-            </div>
-          </div>
-        </section>
-      </Reveal>
-
-      {/* History */}
-      <Reveal>
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
-          <ClipboardArt className="pointer-events-none absolute right-36 top-0 hidden h-36 w-40 opacity-50 lg:block" />
-          <CoinPileArt className="pointer-events-none absolute right-4 top-1 hidden h-40 w-52 sm:block" />
-
-          <div className="relative">
-            <h2 className="font-display text-3xl font-bold text-ink sm:text-4xl">
-              Points <span className="text-copper">history</span>
-            </h2>
-            <p className="mt-1.5 text-sm text-ink/55 sm:text-base">Every point that came in or was redeemed, newest first.</p>
-          </div>
-          <div className="relative mt-6">
-            <PointsHistory rows={timeline} />
-          </div>
-        </section>
-      </Reveal>
-
-      {/* Rewards and sales */}
-      <Reveal>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+<Reveal>
           <section className={card}>
             <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:justify-between sm:gap-3">
               <div className="min-w-0">
@@ -561,37 +565,112 @@ export default async function CommissionPage() {
                   </span>
                   <span className="min-w-0 flex-1 basis-40 leading-tight">
                     <span className="block [overflow-wrap:anywhere] text-base font-bold text-ink">{r.reward}</span>
-                    <span className="mt-1 block [overflow-wrap:anywhere] text-sm text-ink/55">{r.title}</span>
+                    <span className="mt-1 block [overflow-wrap:anywhere] text-sm text-ink/55">
+                      {r.title}
+                      {r.value > 0 && <> · worth ₹{fmtPoints(r.value)}</>}
+                    </span>
+                    {!r.given && !r.ready && !r.legs && (
+                      <span className="mt-1.5 block text-xs leading-snug text-rose-700">
+                        {fmtArea(r.counted)} of {fmtArea(r.need)} sq. yd count so far: the strongest leg counts for at most half, the rest must come from your other
+                        legs.
+                      </span>
+                    )}
                   </span>
                   {r.given ? (
                     <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-800">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                       Received
                     </span>
-                  ) : (
+                  ) : r.ready ? (
                     <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#fdeab8] px-3.5 py-1.5 text-xs font-bold text-amber-800">
                       <Clock className="h-3.5 w-3.5" />
                       On the way
                     </span>
+                  ) : (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-700 ring-1 ring-rose-200">
+                      <Lock className="h-3.5 w-3.5" />
+                      Needs 50:50
+                    </span>
+                  )}
+                  {!r.given && !r.ready && r.legs && (
+                    <div className="w-full space-y-3 rounded-xl bg-white/70 p-3 ring-1 ring-rose-100">
+                      {[
+                        {
+                          name: "Power leg",
+                          hint: "your strongest leg (counts up to half)",
+                          have: Math.min(r.legs.power, r.legs.powerCap),
+                          need: r.legs.powerCap,
+                          bar: "bg-copper",
+                        },
+                        {
+                          name: "Weaker legs",
+                          hint: "all your other legs and your own sales, together",
+                          have: Math.min(r.legs.other, r.legs.otherNeed),
+                          need: r.legs.otherNeed,
+                          bar: "bg-violet-500",
+                        },
+                      ].map((row) => {
+                        const left = Math.max(0, row.need - row.have);
+                        return (
+                          <div key={row.name}>
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-xs">
+                              <span className="font-bold text-ink">{row.name}</span>
+                              <span className={left > 0 ? "font-semibold text-rose-700" : "font-semibold text-emerald-700"}>
+                                {left > 0 ? `${fmtArea(left)} sq. yd to go` : "Done"}
+                              </span>
+                            </div>
+                            <div className="mt-1 h-2 overflow-hidden rounded-full bg-black/5">
+                              <div
+                                className={`h-full rounded-full ${row.bar}`}
+                                style={{ width: `${row.need > 0 ? Math.min(100, (row.have / row.need) * 100) : 100}%` }}
+                              />
+                            </div>
+                            <p className="mt-1 text-[11px] leading-snug text-ink/50">
+                              {fmtArea(row.have)} of {fmtArea(row.need)} sq. yd · {row.hint}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </li>
               ))}
             </ul>
 
             {c.next && (
-              <a
-                href="/opportunities#rewards"
-                className="group mt-3 flex items-center gap-3 rounded-2xl border-2 border-dashed border-copper/30 px-4 py-3.5 text-sm text-ink/60 transition hover:border-copper/60 hover:bg-copper/5"
-              >
+              <div className="mt-3 flex items-center gap-3 rounded-2xl border-2 border-dashed border-copper/30 px-4 py-3.5 text-sm text-ink/60">
                 <Lock className="h-5 w-5 shrink-0 text-copper/70" />
                 <span className="min-w-0 flex-1">
-                  Next reward: <b className="text-ink">{c.next.reward}</b> at {c.next.title}
+                  Next reward: <b className="text-ink">{c.next.reward}</b>
+                  {c.next.rewardValue > 0 && <> (₹{fmtPoints(c.next.rewardValue)})</>} at {c.next.title}
                 </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-ink/40 transition group-hover:translate-x-0.5 group-hover:text-copper" />
-              </a>
+              </div>
             )}
           </section>
+</Reveal>
+            </div>
+          ),
+          history: (
+            <div className="space-y-8">
+      {/* History */}
+      <Reveal>
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
+          <ClipboardArt className="pointer-events-none absolute right-36 top-0 hidden h-36 w-40 opacity-50 lg:block" />
+          <CoinPileArt className="pointer-events-none absolute right-4 top-1 hidden h-40 w-52 sm:block" />
 
+          <div className="relative">
+            <h2 className="font-display text-3xl font-bold text-ink sm:text-4xl">
+              Points <span className="text-copper">history</span>
+            </h2>
+            <p className="mt-1.5 text-sm text-ink/55 sm:text-base">Every point that came in or was redeemed, newest first.</p>
+          </div>
+          <div className="relative mt-6">
+            <PointsHistory rows={timeline} />
+          </div>
+        </section>
+      </Reveal>
+
+<Reveal>
           <section id="your-sales" className={`${card} scroll-mt-24`}>
             <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:justify-between sm:gap-3">
               <div className="min-w-0">
@@ -683,8 +762,11 @@ export default async function CommissionPage() {
               </>
             )}
           </section>
-        </div>
-      </Reveal>
+</Reveal>
+            </div>
+          ),
+        }}
+      />
     </div>
   );
 }

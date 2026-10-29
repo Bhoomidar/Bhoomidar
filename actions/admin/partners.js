@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { decryptAadhaar } from "@/lib/aadhaarCrypto";
+import { decryptAadhaar, decryptText } from "@/lib/aadhaarCrypto";
 import { formatAadhaar } from "@/lib/aadhaar";
 import { getPayment } from "@/lib/payment";
 
@@ -95,6 +95,20 @@ export async function revealAadhaar(id) {
   }
 }
 
+// The full bank account number, for paying a partner. Only on request, like the Aadhaar.
+export async function revealBankAccount(id) {
+  await requireAdmin();
+  if (!/^[0-9a-f-]{36}$/i.test(String(id))) return { success: false, error: "Partner not found." };
+  const { data } = await createAdminClient().from("profiles").select("bank_account_encrypted").eq("id", id).maybeSingle();
+  if (!data?.bank_account_encrypted) return { success: false, error: "No bank account saved." };
+  try {
+    return { success: true, account: decryptText(data.bank_account_encrypted) };
+  } catch (err) {
+    console.error("Bank account decrypt error:", err.message);
+    return { success: false, error: "Could not read the account number." };
+  }
+}
+
 // Everything about one partner, for the admin's full profile page: their profile
 // (never the stored Aadhaar, that is revealed on request), sign in details, who
 // referred them and their whole team, level by level.
@@ -106,7 +120,7 @@ export async function getPartnerDetail(id) {
   const { data: profile } = await db
     .from("profiles")
     .select(
-      "id, full_name, email, phone, role, is_active, created_at, activated_at, activation_amount, activation_note, avatar_url, dob, address_line, city, state, pincode, aadhaar_last4, father_name, nominee_name, referral_code, referred_by",
+      "id, full_name, email, phone, role, is_active, created_at, activated_at, activation_amount, activation_note, avatar_url, dob, address_line, city, state, pincode, aadhaar_last4, father_name, nominee_name, referral_code, referred_by, bank_holder, bank_name, bank_branch, bank_ifsc, bank_account_last4, upi_id, bank_updated_at",
     )
     .eq("id", id)
     .maybeSingle();

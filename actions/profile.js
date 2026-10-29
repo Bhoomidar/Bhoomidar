@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { phoneError } from "@/lib/phone";
 import { findState, pincodeError } from "@/lib/india";
+import { encryptText } from "@/lib/aadhaarCrypto";
+import { accountDigits, accountError, cleanIfsc, holderError, ifscError, upiError } from "@/lib/bank";
 
 // Who is asking. Every action below works only on the logged-in partner's own
 // account: the id always comes from the session, never from the form.
@@ -61,6 +63,68 @@ export async function updateProfile(input) {
   }
 
   revalidatePath("/dashboard", "layout");
+  return { success: true };
+}
+
+// The bank details the team pays the partner's points to. The account number is stored encrypted
+// and only the last 4 digits come back to the partner. Leave the account number empty to keep the
+// one already saved.
+export async function updateBank(input) {
+  const { user } = await currentUser();
+  if (!user) return { success: false, error: "Please log in again." };
+
+  const clean = (v, max) => String(v ?? "").trim().slice(0, max);
+  const holder = clean(input?.holder, 80);
+  const bankName = clean(input?.bank_name, 80);
+  const branch = clean(input?.branch, 100);
+  const ifsc = cleanIfsc(input?.ifsc);
+  const upi = clean(input?.upi, 60).toLowerCase();
+  const account = accountDigits(input?.account);
+  const again = accountDigits(input?.account_again);
+
+  const holderErr = holderError(holder);
+  if (holderErr) return { success: false, error: holderErr };
+  if (!bankName) return { success: false, error: "Enter the bank name." };
+  const ifscErr = ifscError(ifsc);
+  if (ifscErr) return { success: false, error: ifscErr };
+  const upiErr = upiError(upi);
+  if (upiErr) return { success: false, error: upiErr };
+
+  const admin = createAdminClient();
+  const { data: current } = await admin.from("profiles").select("bank_account_last4").eq("id", user.id).maybeSingle();
+
+  const update = {
+    bank_holder: holder,
+    bank_name: bankName,
+    bank_branch: branch || null,
+    bank_ifsc: ifsc,
+    upi_id: upi || null,
+    bank_updated_at: new Date().toISOString(),
+  };
+
+  if (account) {
+    const accountErr = accountError(account);
+    if (accountErr) return { success: false, error: accountErr };
+    if (account !== again) return { success: false, error: "The two account numbers do not match." };
+    try {
+      update.bank_account_encrypted = encryptText(account);
+    } catch (err) {
+      console.error("Bank account encryption error:", err.message);
+      return { success: false, error: "We could not save your bank details. Please try again later." };
+    }
+    update.bank_account_last4 = account.slice(-4);
+  } else if (!current?.bank_account_last4) {
+    return { success: false, error: "Enter your account number." };
+  }
+
+  const { error } = await admin.from("profiles").update(update).eq("id", user.id);
+  if (error) {
+    console.error("Update bank error:", error.message);
+    return { success: false, error: "We could not save your bank details. Please try again." };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/admin", "layout");
   return { success: true };
 }
 
