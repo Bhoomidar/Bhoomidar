@@ -24,7 +24,7 @@ export async function getReferralTree() {
   await requireAdmin();
   const { data } = await createAdminClient()
     .from("profiles")
-    .select("id, full_name, email, phone, role, is_active, created_at, activated_at, avatar_url, referral_code, referred_by")
+    .select("id, full_name, email, phone, role, is_active, created_at, activated_at, avatar_url, referral_code, referred_by, city, state")
     .order("created_at", { ascending: true });
   return data ?? [];
 }

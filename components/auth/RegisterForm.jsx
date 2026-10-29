@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useActionState, useEffect, useRef, useState } from "react";
+import { Fragment, createContext, useActionState, useContext, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Building2,
@@ -20,7 +20,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { register, sendRegisterCode, verifyRegisterCode } from "@/actions/auth";
+import { checkRegisterEmail, register, sendRegisterCode, verifyRegisterCode } from "@/actions/auth";
 import { lookupReferral } from "@/actions/referral";
 import { lookupPincode } from "@/actions/pincode";
 import { PHONE_PATTERN, keepDigits } from "@/lib/phone";
@@ -91,11 +91,35 @@ function Panel({ n, icon: Icon, title, hint, delay = 0, flat = false, children }
   );
 }
 
+// The field a server error is about, so the page can scroll to it and show the message in red there.
+const FieldErrorContext = createContext(null);
+
+// Which field a message from the server belongs to (null when it is about the form as a whole).
+function fieldOfError(message) {
+  const m = String(message ?? "").toLowerCase();
+  const rules = [
+    [/verify your email|this email/, "email"],
+    [/referral/, "referral_code"],
+    [/aadhaar/, "aadhaar"],
+    [/phone|mobile/, "phone"],
+    [/password/, "password"],
+    [/date of birth|18 years/, "dob"],
+    [/pincode|pin code/, "pincode"],
+    [/state/, "state"],
+    [/father/, "father_name"],
+    [/nominee/, "nominee_name"],
+    [/confirm that your details/, "consent"],
+  ];
+  return rules.find(([re]) => re.test(m))?.[1] ?? null;
+}
+
 // A label above its input. `span` is the width on wide screens (out of 6 columns).
 // The icon at the start of the field lights up while the field is in use.
 function Field({ id, label, span = "col-span-2 sm:col-span-3", note, required = false, children }) {
+  const fieldErr = useContext(FieldErrorContext);
+  const err = fieldErr?.id === id ? fieldErr.message : "";
   return (
-    <div className={span}>
+    <div className={`${span} ${err ? "[&_input]:!border-rose-500 [&_input]:!bg-rose-50 [&_select]:!border-rose-500 [&_select]:!bg-rose-50" : ""}`}>
       <label htmlFor={id} className="mb-2.5 block text-sm font-semibold text-ink/80 lg:mb-1.5 lg:text-[13px]">
         {label}
         {required && (
@@ -108,6 +132,11 @@ function Field({ id, label, span = "col-span-2 sm:col-span-3", note, required = 
         {children}
       </div>
       {note}
+      {err && (
+        <p role="alert" className="mt-2 text-sm font-semibold text-rose-600 lg:text-xs">
+          {err}
+        </p>
+      )}
     </div>
   );
 }
@@ -119,6 +148,24 @@ export default function RegisterForm({
   maxDob,
 }) {
   const [state, formAction, pending] = useActionState(register, {});
+
+  // When the server refuses the form, go to the field it is about and show the message there in red.
+  const [fieldErr, setFieldErr] = useState(null);
+  useEffect(() => {
+    if (!state.error) return setFieldErr(null);
+    let id = fieldOfError(state.error);
+    if (!id) {
+      // "fill in all the fields": the first required field that is still empty
+      const empty = [...document.querySelectorAll("form [required]")].find((el) => el.type !== "checkbox" && !el.value);
+      id = empty?.id || null;
+    }
+    if (!id) return setFieldErr(null);
+    setFieldErr({ id, message: state.error });
+    const target = id === "consent" ? document.getElementById("consent-box") : document.querySelector(`label[for="${id}"]`);
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const input = document.getElementById(id);
+    if (input && id !== "consent") setTimeout(() => input.focus({ preventScroll: true }), 400);
+  }, [state]);
   const [show, setShow] = useState(false);
 
   // Which of the three blocks is being read, for the steps at the top.
@@ -142,6 +189,14 @@ export default function RegisterForm({
   // Email: proved with a 6-digit code sent to it. The server also checks this when the form is sent.
   const [email, setEmail] = useState(v.email ?? "");
   const [mail, setMail] = useState("idle"); // idle | sending | sent | verifying | verified
+  // The email error is over as soon as the email is verified (that is a button press, not typing).
+  useEffect(() => {
+    if (mail === "verified") setFieldErr((f) => (f?.id === "email" ? null : f));
+  }, [mail]);
+  // The server says the email is not verified (the 30 minutes ran out): ask for the code again.
+  useEffect(() => {
+    if (/verify your email/i.test(state.error ?? "")) setMail("idle");
+  }, [state]);
   const [mailError, setMailError] = useState("");
   const [mailCode, setMailCode] = useState("");
   const [mailWait, setMailWait] = useState(0);
@@ -159,9 +214,25 @@ export default function RegisterForm({
       setMail(mail === "sent" ? "sent" : "idle");
       return setMailError(res.error);
     }
+    if (res.verified) return setMail("verified");
     setMail("sent");
     setMailWait(45);
   }
+
+  // An email that was verified a moment ago (an earlier try, or this page was reloaded) needs no new code.
+  useEffect(() => {
+    const typed = email.trim();
+    if (mail !== "idle" || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(typed)) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const res = await checkRegisterEmail(typed);
+      if (!cancelled && res.verified) setMail("verified");
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [email, mail]);
 
   async function checkMailCode() {
     if (mailCode.length !== 6) return setMailError("Enter the 6-digit code.");
@@ -184,7 +255,10 @@ export default function RegisterForm({
     const code = ref.trim().toUpperCase();
     if (!code) return setRefCheck({ status: "idle" });
     // codes made now have no dash (UP810011), older ones do (UP-8101): the same shapes the server accepts
-    if (!/^[A-Z]{2,5}-?[A-Z0-9]{4,}$/.test(code)) return setRefCheck({ status: "typing" });
+    if (!/^[A-Z]{2,5}-?[A-Z0-9]{4,}$/.test(code)) {
+      // a code of this length that does not have the shape is wrong; shorter ones may still be typed
+      return setRefCheck({ status: code.length >= 6 ? "invalid" : "typing" });
+    }
     if (refCheck.status === "valid" && refCheck.code === code) return;
     if (code === refCode && referrerName) {
       return setRefCheck({ status: "valid", name: referrerName, code });
@@ -271,8 +345,12 @@ export default function RegisterForm({
       </div>
 
       {/* Form */}
+      <FieldErrorContext.Provider value={fieldErr}>
       <form
         action={formAction}
+        onChange={(e) => {
+          if (fieldErr && (e.target.id === fieldErr.id || e.target.name === fieldErr.id)) setFieldErr(null);
+        }}
         className="space-y-5 lg:space-y-4"
       >
         <input type="hidden" name="redirect_to" value={redirectTo} />
@@ -539,7 +617,7 @@ export default function RegisterForm({
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="6-digit pincode"
-              className={input}
+              className={`${input} ${pinInfo?.status === "missing" ? "!border-rose-500 !bg-rose-50" : ""}`}
             />
           </Field>
 
@@ -552,8 +630,8 @@ export default function RegisterForm({
                 </p>
               )}
               {pinInfo.status === "missing" && (
-                <p className="flex items-center gap-2 font-medium text-amber-700">
-                  <XCircle className="h-4 w-4" />
+                <p role="alert" className="flex items-center gap-2 font-semibold text-rose-600">
+                  <XCircle className="h-4 w-4 shrink-0" />
                   We could not find this pincode. Please check it.
                 </p>
               )}
@@ -595,8 +673,12 @@ export default function RegisterForm({
                 {refCheck.status === "valid" && (
                   <span className="text-emerald-700">Referred by {refCheck.name}</span>
                 )}
+                {refCheck.status === "checking" && <span className="text-ink/55">Checking the code...</span>}
+                {refCheck.status === "typing" && (
+                  <span className="text-ink/55">Keep typing, the code looks like UP810011.</span>
+                )}
                 {refCheck.status === "invalid" && (
-                  <span className="text-rose-600">This referral code is not valid.</span>
+                  <span className="text-rose-600">This referral code is not valid. Check it with the partner who invited you.</span>
                 )}
               </p>
             }
@@ -646,9 +728,15 @@ export default function RegisterForm({
         </Panel>
 
         <div className="fade-up space-y-5 px-1 sm:px-2 lg:space-y-3 lg:px-7 lg:pb-4 lg:pt-0" style={{ animationDelay: "360ms" }}>
-          <label className="flex cursor-pointer items-start gap-4 rounded-2xl bg-white p-5 text-sm leading-relaxed text-ink/75 shadow-sm ring-1 ring-black/5 transition hover:ring-copper/40 lg:gap-3 lg:rounded-none lg:bg-transparent lg:p-0 lg:text-[13px] lg:leading-snug lg:shadow-none lg:ring-0 lg:hover:ring-0">
+          <label
+            id="consent-box"
+            className={`flex cursor-pointer items-start gap-4 rounded-2xl bg-white p-5 text-sm leading-relaxed text-ink/75 shadow-sm ring-1 ring-black/5 transition hover:ring-copper/40 lg:gap-3 lg:rounded-none lg:bg-transparent lg:p-0 lg:text-[13px] lg:leading-snug lg:shadow-none lg:ring-0 lg:hover:ring-0 ${
+              fieldErr?.id === "consent" ? "!bg-rose-50 !ring-2 !ring-rose-500" : ""
+            }`}
+          >
             <input
               required
+              id="consent"
               type="checkbox"
               name="consent"
               defaultChecked={false}
@@ -701,6 +789,7 @@ export default function RegisterForm({
         </div>
         </div>
       </form>
+      </FieldErrorContext.Provider>
     </div>
   );
 }

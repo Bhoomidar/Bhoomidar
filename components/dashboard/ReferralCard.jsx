@@ -106,7 +106,7 @@ export default function ReferralCard({ code, link }) {
               aria-label="Copy referral link"
               className="group mt-3 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-white to-[#fff6ea] p-1.5 pl-4 text-left shadow-[0_12px_26px_-16px_rgba(110,60,20,0.5)] ring-1 ring-copper/25 transition hover:-translate-y-0.5 hover:ring-copper/60"
             >
-              <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap py-1 font-mono text-[11px] leading-snug [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:text-xs">
+              <span className="min-w-0 flex-1 break-all py-1 font-mono text-[11px] leading-snug [overflow-wrap:anywhere] sm:text-xs">
                 <span className="text-ink/45">{linkBase}</span>
                 <span className="font-bold text-copper-dark">{linkQuery}</span>
               </span>

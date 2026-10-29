@@ -141,7 +141,7 @@ export default async function DashboardOverview() {
               <p className="mt-1.5 text-sm text-ink/60 sm:text-base">Welcome to your Bhoomidar partner account.</p>
 
               <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                {partner.referralCode && (
+                {partner.referralCode && partner.active && !partner.pending && (
                   <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs text-ink/60 shadow-sm ring-1 ring-black/10">
                     <Ticket className="h-3.5 w-3.5 text-copper" />
                     Your code
@@ -228,6 +228,52 @@ export default async function DashboardOverview() {
           <Reveal>
             <ReferralCard code={partner.referralCode} link={link} />
           </Reveal>
+
+          {/* Referrals whose joining payment is still pending */}
+          {unpaidReferrals > 0 && (
+            <Reveal>
+              <section className="rounded-3xl bg-gradient-to-br from-[#fff7e0] via-[#fffaf0] to-white p-6 shadow-[0_24px_50px_-28px_rgba(180,110,10,0.4)] ring-1 ring-amber-300/40 sm:p-7">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="flex items-center gap-3 font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-200/80 text-amber-700">
+                      <Clock className="h-5 w-5" />
+                    </span>
+                    Activation <span className="text-amber-600">pending</span>
+                  </h2>
+                  <span className="rounded-full bg-amber-100 px-4 py-1.5 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
+                    {unpaidReferrals} {unpaidReferrals === 1 ? "partner" : "partners"}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-ink/60">
+                  These partners joined with your code but have not paid the joining fee yet. They start counting in your
+                  team once our team activates them.
+                </p>
+                <ul className="mt-5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                  {referrals
+                    .filter((p) => p.pending)
+                    .map((p) => (
+                      <li
+                        key={p.id}
+                        className="flex items-center gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-amber-200"
+                      >
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-sm font-bold text-white shadow-md">
+                          {initials(p.name || "?")}
+                        </span>
+                        <span className="min-w-0 flex-1 leading-tight">
+                          <span className="block [overflow-wrap:anywhere] text-base font-bold text-ink">{p.name || "Partner"}</span>
+                          <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-ink/55">
+                            {p.code} · Joined {p.joined}
+                          </span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-amber-100 px-3.5 py-1.5 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
+                          Waiting for payment
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              </section>
+            </Reveal>
+          )}
 
           {/* Latest referrals and quick actions */}
           <Reveal>

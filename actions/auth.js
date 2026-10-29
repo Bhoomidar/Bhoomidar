@@ -257,8 +257,17 @@ export async function sendRegisterCode(emailRaw) {
   if (!EMAIL_PATTERN.test(email)) return { error: "Enter a valid email address." };
   const { data: taken } = await createAdminClient().from("profiles").select("id").eq("email", email).maybeSingle();
   if (taken) return { error: "An account with this email already exists. Please log in." };
+  // Verified a moment ago (the form may be sent for 30 minutes after that): no new code is needed.
+  if (await isEmailVerified(email)) return { ok: true, verified: true };
   const res = await sendEmailCode(email, "register");
   return res.error ? res : { ok: true };
+}
+
+// Registration: has this email already been verified (not long ago)? So the form can skip the code.
+export async function checkRegisterEmail(emailRaw) {
+  const email = cleanEmail(emailRaw);
+  if (!EMAIL_PATTERN.test(email)) return { verified: false };
+  return { verified: await isEmailVerified(email) };
 }
 
 // Registration: checks the code. Right: the email counts as verified for a while.
@@ -283,7 +292,16 @@ export async function sendLoginCode(typedRaw) {
       if (res.error) return res;
     }
   }
-  return { ok: true };
+  // Says where the code went. An email the person typed is shown as typed; for a referral code only a masked
+  // address comes back (h***l@gmail.com), so the full email of a partner never leaves the server.
+  const typed = String(typedRaw).trim();
+  let sentTo = "";
+  if (typed.includes("@")) sentTo = cleanEmail(typed);
+  else if (email) {
+    const [name, domain] = email.split("@");
+    sentTo = `${name.length > 2 ? `${name[0]}***${name[name.length - 1]}` : `${name[0]}***`}@${domain}`;
+  }
+  return { ok: true, sentTo };
 }
 
 // Login with a code from the email: checks the code and logs the partner in.

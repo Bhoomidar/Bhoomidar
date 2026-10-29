@@ -2,9 +2,8 @@
 
 import { useActionState, useEffect, useState } from "react";
 import Image from "next/image";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, Lock, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, Lock, UserRound } from "lucide-react";
 import { login, loginWithCode, sendLoginCode } from "@/actions/auth";
-import Logo from "../Logo";
 import ErrorToast from "./ErrorToast";
 import { iconClass, inputClass, submitClass } from "./fields";
 
@@ -25,7 +24,7 @@ function Field({ id, label, children }) {
 }
 
 const tabClass = (on) =>
-  `flex-1 rounded-xl px-3 py-2.5 text-sm font-bold transition ${
+  `flex-1 whitespace-nowrap rounded-xl px-2 py-2.5 text-[13px] font-bold transition min-[380px]:px-3 min-[380px]:text-sm ${
     on ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30" : "text-ink/65 hover:text-copper-dark"
   }`;
 
@@ -34,6 +33,7 @@ function CodeLogin({ redirectTo }) {
   const [state, formAction, pending] = useActionState(loginWithCode, {});
   const [who, setWho] = useState("");
   const [sent, setSent] = useState(false);
+  const [sentTo, setSentTo] = useState(""); // the address the code went to
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState({ text: "", n: 0 });
   const [wait, setWait] = useState(0);
@@ -51,6 +51,7 @@ function CodeLogin({ redirectTo }) {
     const res = await sendLoginCode(who);
     setSending(false);
     if (res.error) return setProblem((p) => ({ text: res.error, n: p.n + 1 }));
+    setSentTo(res.sentTo || "");
     setSent(true);
     setWait(45);
   }
@@ -97,7 +98,10 @@ function CodeLogin({ redirectTo }) {
         <>
           <p className="flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-3 text-[13px] leading-snug text-emerald-900 ring-1 ring-emerald-600/15">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-            If this account exists, we have sent a 6-digit code to its email. It works for 10 minutes.
+            <span className="min-w-0">
+              If this account exists, we have sent a 6-digit code to{" "}
+              {sentTo ? <b className="[overflow-wrap:anywhere] font-bold">{sentTo}</b> : "its email"}. It works for 10 minutes.
+            </span>
           </p>
 
           <Field id="login-code" label="6-digit code">
@@ -185,11 +189,7 @@ export default function LoginForm({ redirectTo, notice = "" }) {
       </div>
 
       {/* The form */}
-      <div className="rounded-3xl bg-gradient-to-b from-white to-[#fffaf3] p-6 shadow-[0_40px_80px_-36px_rgba(110,60,20,0.55)] ring-1 ring-black/5 sm:p-8 lg:rounded-[2rem] lg:px-11 lg:py-11 [@media(max-height:820px)]:lg:py-7">
-        <div className="mb-7 hidden justify-center lg:flex [@media(max-height:820px)]:mb-4 [@media(max-height:820px)]:[&_img]:h-12">
-          <Logo dark size="h-[72px]" />
-        </div>
-
+      <div className="rounded-3xl bg-gradient-to-b from-white to-[#fffaf3] p-6 shadow-[0_40px_80px_-36px_rgba(110,60,20,0.55)] ring-1 ring-black/5 sm:p-8 lg:rounded-[2rem] lg:px-11 lg:py-8 [@media(max-height:820px)]:lg:py-6">
         <div className="text-center">
           <h1 className="font-display text-[2rem] font-bold leading-tight text-ink sm:text-4xl lg:text-[2.7rem]">
             Welcome <span className="text-copper">back</span>
@@ -209,7 +209,8 @@ export default function LoginForm({ redirectTo, notice = "" }) {
             Password
           </button>
           <button type="button" role="tab" aria-selected={mode === "code"} onClick={() => setMode("code")} className={tabClass(mode === "code")}>
-            Email code (OTP)
+            <span className="sm:hidden">Email OTP</span>
+            <span className="hidden sm:inline">Email code (OTP)</span>
           </button>
         </div>
 
@@ -282,12 +283,7 @@ export default function LoginForm({ redirectTo, notice = "" }) {
           </button>
         </form>
 
-        <p className="mt-6 flex items-center justify-center gap-2 text-sm text-ink/55">
-          <ShieldCheck className="h-[18px] w-[18px] text-emerald-600" />
-          Your login is secure
-        </p>
-
-        <div className="mt-5 border-t border-black/10 pt-5 text-center text-[15px] text-ink/70">
+        <div className="mt-5 border-t border-black/10 pt-4 text-center text-[15px] text-ink/70">
           New here?{" "}
           <a
             href={`/register?redirect=${encodeURIComponent(redirectTo)}`}

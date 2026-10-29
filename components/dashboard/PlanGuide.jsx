@@ -1,5 +1,6 @@
 import { Check, Clock, Crown, Gift, Handshake, Lock, Network, TrendingUp, Wallet } from "lucide-react";
 import RewardPic from "@/components/RewardPic";
+import LegsMeter from "@/components/dashboard/LegsMeter";
 import { fmtArea, fmtPoints } from "@/lib/points";
 import { closeDaysList, hourText, monthlyShare, ordinal, pctText } from "@/lib/planRules";
 
@@ -354,7 +355,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
               : got.given
                 ? { text: "Received", cls: "bg-emerald-100 text-emerald-800", icon: Check }
                 : got.ready
-                  ? { text: "On the way", cls: "bg-[#fdeab8] text-amber-800", icon: Clock }
+                  ? { text: "Ready, we will hand it over", cls: "bg-[#fdeab8] text-amber-800", icon: Clock }
                   : { text: "Needs 50:50", cls: "bg-rose-50 text-rose-700 ring-1 ring-rose-200", icon: Lock };
             const Icon = status.icon;
             return (
@@ -516,10 +517,7 @@ function Fact({ label, value, note, good }) {
 function LegsExample({ reward, need, legs, half }) {
   const strongest = Math.max(...legs);
   const at = legs.indexOf(strongest);
-  const powerCounts = Math.min(strongest, need * half);
   const weaker = legs.reduce((t, v, i) => (i === at ? t : t + v), 0);
-  const counted = powerCounts + weaker;
-  const ok = counted >= need;
   return (
     <div className="rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5">
       <p className="text-sm font-bold text-ink">
@@ -544,14 +542,9 @@ function LegsExample({ reward, need, legs, half }) {
           ))}
         </ul>
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-ink/70">
-        Power leg counts {fmtArea(powerCounts)}
-        {strongest > powerCounts && <> (not {fmtArea(strongest)})</>} + weaker legs {fmtArea(weaker)} = <b className="text-ink">{fmtArea(counted)}</b>
-      </p>
-      <p className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${ok ? "bg-emerald-100 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>
-        {ok ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <Lock className="h-3.5 w-3.5" />}
-        {ok ? "Reward unlocked" : `Not yet: ${fmtArea(need - counted)} more from weaker legs`}
-      </p>
+      <div className="mt-4">
+        <LegsMeter need={need} power={strongest} weaker={weaker} cap={need * half} compact />
+      </div>
     </div>
   );
 }

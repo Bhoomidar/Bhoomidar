@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
@@ -55,6 +55,10 @@ const LEVEL_TONES = [
 ];
 
 const PAGE = 10;
+
+// The admin sees the same tree on a partner's profile page. In that mode the words speak about "this partner"
+// instead of "you", and a member's popup has a link to their full profile.
+const TeamModeContext = createContext({ admin: false, noPoints: false, rootLabel: "This partner" });
 
 const initialsOf = (name) =>
   name
@@ -159,6 +163,7 @@ function Tile({ icon: Icon, label, value, side, onClick }) {
 }
 
 function Details({ p, tree, onClose, onFull }) {
+  const { admin, noPoints } = useContext(TeamModeContext);
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -212,6 +217,7 @@ function Details({ p, tree, onClose, onFull }) {
             <div className="min-w-0 leading-tight">
               <h3 className="[overflow-wrap:anywhere] font-display text-3xl font-bold text-ink">{p.name}</h3>
               <p className="mt-1.5 font-mono text-base font-semibold text-copper-dark">{p.code}</p>
+              {p.contact && <p className="mt-1 [overflow-wrap:anywhere] text-sm text-ink/60">{p.contact}</p>}
               <p className="mt-3 flex flex-wrap items-center gap-2.5">
                 <StatusPill status={p.status} />
                 <span className="rounded-full bg-white/80 px-4 py-1 text-sm font-semibold text-ink/70 shadow-sm ring-1 ring-black/5">
@@ -231,12 +237,14 @@ function Details({ p, tree, onClose, onFull }) {
               value={`${fmtArea(p.soldArea ?? 0)} sq. yd`}
               side={<BarsArt className="h-10 w-12 shrink-0 text-copper" />}
             />
-            <Tile
-              icon={Coins}
-              label="Points you earned"
-              value={fmtPoints(p.earned ?? 0)}
-              side={<Trophy className="h-8 w-8 shrink-0 text-copper/40" strokeWidth={1.4} />}
-            />
+            {!noPoints && (
+              <Tile
+                icon={Coins}
+                label={admin ? "Points earned" : "Points you earned"}
+                value={fmtPoints(p.earned ?? 0)}
+                side={<Trophy className="h-8 w-8 shrink-0 text-copper/40" strokeWidth={1.4} />}
+              />
+            )}
             <Tile
               icon={Users}
               label="Their team"
@@ -270,15 +278,26 @@ function Details({ p, tree, onClose, onFull }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onFull(p.id)}
-            className="group mx-auto flex w-fit items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-copper-light to-copper-dark px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
-          >
-            <Users className="h-5 w-5" />
-            View full details
-            <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {admin && (
+              <a
+                href={`/admin/partners/${p.id}`}
+                className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-white px-6 py-3.5 text-base font-semibold text-ink shadow-md ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:text-copper hover:ring-copper"
+              >
+                <UserRound className="h-5 w-5 text-copper" />
+                Open full profile
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => onFull(p.id)}
+              className="group flex w-fit items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-copper-light to-copper-dark px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+            >
+              <Users className="h-5 w-5" />
+              View full details
+              <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -449,22 +468,30 @@ export function ReferralsTable({ nodes, rootId, children }) {
           </ul>
 
           <div className="hidden overflow-x-auto rounded-2xl ring-1 ring-black/5 md:block">
-            <table className="w-full min-w-[780px] text-left text-sm">
+            <table className="w-full min-w-[780px] table-fixed text-center text-sm">
+              <colgroup>
+                <col className="w-[7%]" />
+                <col className="w-[27%]" />
+                <col className="w-[16%]" />
+                <col className="w-[16%]" />
+                <col className="w-[14%]" />
+                <col className="w-[20%]" />
+              </colgroup>
               <thead className="bg-[#f6f0e7] text-xs font-semibold text-ink/60">
                 <tr>
-                  <th className="px-5 py-3.5">#</th>
-                  <th className="px-4 py-3.5">Name</th>
-                  <th className="px-4 py-3.5">Partner ID</th>
-                  <th className="px-4 py-3.5">Joined on</th>
-                  <th className="px-4 py-3.5">Status</th>
-                  <th className="px-5 py-3.5">Actions</th>
+                  <th className="px-3 py-3.5 text-center">#</th>
+                  <th className="px-4 py-3.5 text-left">Name</th>
+                  <th className="px-3 py-3.5 text-center">Partner ID</th>
+                  <th className="px-3 py-3.5 text-center">Joined on</th>
+                  <th className="px-3 py-3.5 text-center">Status</th>
+                  <th className="px-3 py-3.5 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5 bg-white">
                 {rows.slice(0, shown).map((p, i) => (
-                  <tr key={p.id} className="transition hover:bg-[#fdf7ef]">
-                    <td className="px-5 py-4 text-ink/60">{i + 1}</td>
-                    <td className="px-4 py-3">
+                  <tr key={p.id} className="align-middle transition hover:bg-[#fdf7ef]">
+                    <td className="px-3 py-3.5 text-center text-ink/60">{i + 1}</td>
+                    <td className="px-4 py-3.5 text-left">
                       <span className="flex items-center gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-sm">
                           {p.avatar ? (
@@ -480,13 +507,13 @@ export function ReferralsTable({ nodes, rootId, children }) {
                         </span>
                       </span>
                     </td>
-                    <td className="px-4 py-4 font-mono text-[13px] text-ink/75">{p.code}</td>
-                    <td className="whitespace-nowrap px-4 py-4 text-ink/70">{p.joined}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-3 py-3.5 text-center font-mono text-[13px] text-ink/75">{p.code}</td>
+                    <td className="whitespace-nowrap px-3 py-3.5 text-center text-[13px] text-ink/70">{p.joined}</td>
+                    <td className="px-3 py-3.5 text-center">
                       <StatusPill status={p.status} />
                     </td>
-                    <td className="px-5 py-3">
-                      <span className="relative flex items-center gap-2">
+                    <td className="px-3 py-3.5 text-center">
+                      <span className="relative flex items-center justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => setDetailsId(p.id)}
@@ -575,6 +602,7 @@ export function ReferralsTable({ nodes, rootId, children }) {
 /* ─────────────────────────────── list view ─────────────────────────────── */
 
 function ListNode({ id, tree, open, toggle, forceOpen, visible, nested }) {
+  const { admin } = useContext(TeamModeContext);
   const p = tree.byId.get(id);
   const kids = (tree.children.get(id) ?? []).filter((k) => !visible || visible.has(k));
   const isOpen = forceOpen || open.has(id);
@@ -635,6 +663,7 @@ function ListNode({ id, tree, open, toggle, forceOpen, visible, nested }) {
               <CalendarDays className="h-3.5 w-3.5" />
               Joined {p.joined}
             </span>
+            {p.contact && <span className="[overflow-wrap:anywhere]">{p.contact}</span>}
             {p.soldArea > 0 && (
               <span className="inline-flex items-center gap-1 font-semibold text-ink/70">
                 <Ruler className="h-3.5 w-3.5" />
@@ -644,7 +673,7 @@ function ListNode({ id, tree, open, toggle, forceOpen, visible, nested }) {
             {p.earned !== 0 && (
               <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                 <Coins className="h-3.5 w-3.5" />
-                You earned {fmtPoints(p.earned)} pts
+                {admin ? "Earned" : "You earned"} {fmtPoints(p.earned)} pts
               </span>
             )}
           </p>
@@ -776,6 +805,7 @@ function OrgNode({ id, tree, open, toggle, forceOpen, visible, onDetails }) {
 }
 
 function YouCard({ me, teamSize, isOpen, onToggle, hasKids }) {
+  const { admin } = useContext(TeamModeContext);
   return (
     <div className="relative w-[250px] rounded-2xl bg-gradient-to-br from-copper-light via-copper to-copper-dark px-4 pb-6 pt-5 text-center text-white shadow-[0_26px_50px_-18px_rgba(140,72,33,0.75)] ring-1 ring-white/20">
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
@@ -796,12 +826,12 @@ function YouCard({ me, teamSize, isOpen, onToggle, hasKids }) {
           )}
         </span>
       </div>
-      <p className="relative mt-3 [overflow-wrap:anywhere] text-lg font-bold">{me.name} (You)</p>
+      <p className="relative mt-3 [overflow-wrap:anywhere] text-lg font-bold">{me.name}{admin ? "" : " (You)"}</p>
       <p className="relative mt-0.5 font-mono text-xs font-semibold text-white/80">{me.code}</p>
       {me.rankTitle && (
         <p className="relative mt-2.5 inline-flex rounded-full bg-black/30 px-3.5 py-1 text-xs font-semibold">{me.rankTitle}</p>
       )}
-      <p className="relative mt-2 text-xs text-white/85">{teamSize} in your team</p>
+      <p className="relative mt-2 text-xs text-white/85">{teamSize} in {admin ? "the" : "your"} team</p>
 
       <div className="relative">
         <CardStats team={teamSize} sold={me.sold ?? 0} light />
@@ -814,10 +844,11 @@ function YouCard({ me, teamSize, isOpen, onToggle, hasKids }) {
 
 // The colours of the status dots, explained.
 function Legend() {
+  const { admin, rootLabel } = useContext(TeamModeContext);
   return (
     <ul className="space-y-2 rounded-2xl bg-white/90 px-4 py-3.5 text-[13px] text-ink/75 shadow-md ring-1 ring-black/5 backdrop-blur-sm">
       {[
-        ["bg-copper", "You (Current User)"],
+        ["bg-copper", admin ? rootLabel : "You (Current User)"],
         ["bg-emerald-500", "Active Partner"],
         ["bg-amber-400", "Unpaid Partner"],
         ["bg-stone-400", "Inactive Partner"],
@@ -880,7 +911,7 @@ function Birds({ className = "" }) {
 
 // The whole team as an org chart (tree view) or a list, with search, filters,
 // zoom and a big view. Shows rank, sold area and what the partner earned.
-export default function TeamTree({ nodes, rootId, me }) {
+function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) {
   const [view, setView] = useState("tree");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -892,6 +923,7 @@ export default function TeamTree({ nodes, rootId, me }) {
   const [detailsId, setDetailsId] = useState(null);
   const [focus, setFocus] = useState(null); // show only this member and the people below them
   const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 }); // how far the tree was dragged with the mouse, in any direction
   const [full, setFull] = useState(false);
   const canvas = useRef(null);
   const inner = useRef(null);
@@ -985,6 +1017,7 @@ export default function TeamTree({ nodes, rootId, me }) {
   const zoomBy = (delta) => setScale((s) => Math.min(1.5, Math.max(0.4, Math.round((s + delta) * 100) / 100)));
   const centre = () => {
     const el = canvas.current;
+    setPan({ x: 0, y: 0 });
     if (el) el.scrollTo({ left: Math.max(0, (el.scrollWidth - el.clientWidth) / 2), top: 0, behavior: "smooth" });
   };
   const fit = () => {
@@ -1016,17 +1049,23 @@ export default function TeamTree({ nodes, rootId, me }) {
     // only when the tree view opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
+  // Dragging with the mouse moves the tree freely in every direction, even when the whole tree fits on the screen.
+  // A finger still scrolls the tree the normal way.
   const onDown = (e) => {
-    if (e.target.closest("button, a, input, select")) return;
+    if (e.pointerType === "touch" || e.button !== 0 || e.target.closest("button, a, input, select")) return;
     const el = canvas.current;
-    drag.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
+    drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
     el.setPointerCapture?.(e.pointerId);
   };
   const onMove = (e) => {
     if (!drag.current) return;
     const el = canvas.current;
-    el.scrollLeft = drag.current.left - (e.clientX - drag.current.x);
-    el.scrollTop = drag.current.top - (e.clientY - drag.current.y);
+    const limitX = el.clientWidth;
+    const limitY = el.clientHeight;
+    setPan({
+      x: Math.max(-limitX, Math.min(limitX, drag.current.px + (e.clientX - drag.current.x))),
+      y: Math.max(-limitY, Math.min(limitY, drag.current.py + (e.clientY - drag.current.y))),
+    });
   };
   const onUp = () => (drag.current = null);
 
@@ -1034,8 +1073,8 @@ export default function TeamTree({ nodes, rootId, me }) {
     { art: PeopleArt, label: "Team members", value: nodes.length, icon: Users, tone: "bg-copper/10 text-copper", artTone: "text-copper" },
     { art: OrgChartArt, label: "Levels deep", value: totals.levels, icon: Network, tone: "bg-sky-100 text-sky-600", artTone: "text-sky-500" },
     { art: BarsArt, label: "Sq. yards sold by team", value: fmtArea(totals.sold), icon: Ruler, tone: "bg-violet-100 text-violet-600", artTone: "text-violet-500" },
-    { art: CoinsArt, label: "Points you earned from team", value: fmtPoints(totals.earned), icon: Coins, tone: "bg-emerald-100 text-emerald-600", artTone: "text-emerald-500" },
-  ];
+    { art: CoinsArt, label: admin ? "Points earned from team" : "Points you earned from team", value: fmtPoints(totals.earned), icon: Coins, tone: "bg-emerald-100 text-emerald-600", artTone: "text-emerald-500" },
+  ].filter((c) => !(noPoints && c.art === CoinsArt));
 
   const detailsNode = detailsId ? tree.byId.get(detailsId) : null;
 
@@ -1069,10 +1108,15 @@ export default function TeamTree({ nodes, rootId, me }) {
           <Network className="mt-2 hidden h-8 w-8 shrink-0 text-copper sm:block" strokeWidth={1.5} />
           <div>
             <h2 className="font-display text-3xl font-bold text-ink sm:text-[2.5rem] sm:leading-tight">
-              Your <span className="text-copper-dark">team</span>
+              {title ?? (
+                <>
+                  {admin ? `${me.name}'s ` : "Your "}
+                  <span className="text-copper-dark">team</span>
+                </>
+              )}
             </h2>
             <p className="mt-1 max-w-lg text-sm text-ink/60">
-              Everyone under you. Open a partner to see the people they brought in.
+              {subtitle ?? `${admin ? "Everyone under this partner." : "Everyone under you."} Open a partner to see the people they brought in.`}
             </p>
           </div>
         </div>
@@ -1097,10 +1141,11 @@ export default function TeamTree({ nodes, rootId, me }) {
           <span className="flex h-20 w-20 items-center justify-center rounded-full bg-copper/10 text-copper ring-8 ring-copper/5">
             <Users className="h-9 w-9" strokeWidth={1.6} />
           </span>
-          <p className="mt-5 font-display text-2xl font-bold text-ink">Your team is empty for now</p>
+          <p className="mt-5 font-display text-2xl font-bold text-ink">{admin ? "This team is empty for now" : "Your team is empty for now"}</p>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-ink/60">
-            Share your referral link above. Every partner who joins with your code shows up here,
-            along with the people they bring in.
+            {admin
+              ? "Nobody has joined with this partner's code yet."
+              : "Share your referral link above. Every partner who joins with your code shows up here, along with the people they bring in."}
           </p>
         </div>
       ) : (
@@ -1122,8 +1167,8 @@ export default function TeamTree({ nodes, rootId, me }) {
           </div>
 
           {/* tools */}
-          <div className="relative z-20 mt-5 flex flex-col gap-3 rounded-2xl bg-white/70 p-3 ring-1 ring-black/5 lg:flex-row lg:items-center">
-            <div className="inline-flex shrink-0 rounded-xl bg-white p-1 shadow-sm ring-1 ring-black/10">
+          <div className="relative z-20 mt-5 flex flex-col gap-2.5 rounded-2xl bg-white/70 p-2.5 ring-1 ring-black/5 sm:gap-3 sm:p-3 lg:flex-row lg:flex-wrap lg:items-center">
+            <div className="grid shrink-0 grid-cols-2 rounded-xl bg-white p-1 shadow-sm ring-1 ring-black/10 lg:inline-flex">
               {[
                 ["tree", "Tree view", Network],
                 ["list", "List view", LayoutList],
@@ -1133,7 +1178,7 @@ export default function TeamTree({ nodes, rootId, me }) {
                   type="button"
                   onClick={() => setView(key)}
                   aria-pressed={view === key}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition lg:py-2 ${
                     view === key
                       ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
                       : "text-ink/65 hover:text-copper"
@@ -1145,7 +1190,7 @@ export default function TeamTree({ nodes, rootId, me }) {
               ))}
             </div>
 
-            <div className="relative lg:max-w-xs lg:flex-1">
+            <div className="relative lg:min-w-[240px] lg:max-w-xs lg:flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-copper/70" />
               <input
                 value={search}
@@ -1155,7 +1200,7 @@ export default function TeamTree({ nodes, rootId, me }) {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-wrap">
               {[
                 ["all", "All", null],
                 ["active", "Active", "bg-emerald-500"],
@@ -1166,7 +1211,7 @@ export default function TeamTree({ nodes, rootId, me }) {
                   type="button"
                   onClick={() => setFilter(key)}
                   aria-pressed={filter === key}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[13px] font-semibold transition sm:gap-2 sm:px-4 sm:text-sm ${
                     filter === key
                       ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
                       : "bg-white text-ink/70 shadow-sm ring-1 ring-black/10 hover:ring-copper"
@@ -1185,12 +1230,13 @@ export default function TeamTree({ nodes, rootId, me }) {
               ))}
             </div>
 
-            <div className="relative">
+            <div className="flex items-center gap-2 lg:contents">
+            <div className="relative flex-1 lg:flex-none">
               <button
                 type="button"
                 onClick={() => setFiltersOpen((v) => !v)}
                 aria-expanded={filtersOpen}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper w-full lg:w-auto"
               >
                 <Filter className="h-4 w-4" />
                 More filters
@@ -1241,14 +1287,16 @@ export default function TeamTree({ nodes, rootId, me }) {
               )}
             </div>
 
-            <div className="flex gap-2 lg:ml-auto [&>button]:flex-1 lg:[&>button]:flex-none">
+            <div className="flex shrink-0 gap-2 lg:ml-auto">
               <button
                 type="button"
                 onClick={() => setOpen(new Set(tree.children.keys()))}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                aria-label="Expand all"
+                title="Expand all"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper max-sm:w-11 max-sm:px-0"
               >
                 <Maximize2 className="h-4 w-4" />
-                Expand all
+                <span className="max-sm:sr-only">Expand all</span>
               </button>
               <button
                 type="button"
@@ -1256,11 +1304,14 @@ export default function TeamTree({ nodes, rootId, me }) {
                   setOpen(new Set());
                   setRootOpen(true);
                 }}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
+                aria-label="Collapse all"
+                title="Collapse all"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink/80 shadow-sm ring-1 ring-black/10 transition hover:text-copper hover:ring-copper max-sm:w-11 max-sm:px-0"
               >
                 <Minimize2 className="h-4 w-4" />
-                Collapse all
+                <span className="max-sm:sr-only">Collapse all</span>
               </button>
+            </div>
             </div>
           </div>
 
@@ -1325,8 +1376,9 @@ export default function TeamTree({ nodes, rootId, me }) {
                     onPointerMove={onMove}
                     onPointerUp={onUp}
                     onPointerCancel={onUp}
-                    className="no-scrollbar absolute inset-0 cursor-grab overflow-auto active:cursor-grabbing"
+                    className="no-scrollbar absolute inset-0 cursor-grab select-none overflow-auto active:cursor-grabbing"
                   >
+                    <div style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }} className="mx-auto w-max min-w-full">
                     <div ref={inner} style={{ zoom: scale }} className="org-tree mx-auto w-max min-w-full px-10 pb-16 pt-12">
                       <ul>
                         <li>
@@ -1355,6 +1407,7 @@ export default function TeamTree({ nodes, rootId, me }) {
                           )}
                         </li>
                       </ul>
+                    </div>
                     </div>
                   </div>
 
@@ -1435,5 +1488,14 @@ export default function TeamTree({ nodes, rootId, me }) {
         />
       )}
     </section>
+  );
+}
+
+// The tree of a partner's team. `admin` is for the admin's view of someone else's team.
+export default function TeamTree({ admin = false, noPoints = false, rootLabel = "This partner", ...props }) {
+  return (
+    <TeamModeContext.Provider value={{ admin, noPoints, rootLabel }}>
+      <TeamTreeInner admin={admin} noPoints={noPoints} {...props} />
+    </TeamModeContext.Provider>
   );
 }

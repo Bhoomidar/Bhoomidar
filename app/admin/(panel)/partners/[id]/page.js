@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock,
   ExternalLink,
-  Fingerprint,
   Gift,
   IdCard,
   Landmark,
@@ -30,7 +29,9 @@ import Reveal from "@/components/Reveal";
 import AadhaarReveal from "@/components/admin/AadhaarReveal";
 import BankReveal from "@/components/admin/BankReveal";
 import PartnerControls from "@/components/admin/PartnerControls";
-import TeamView from "@/components/admin/TeamView";
+import TeamTree from "@/components/dashboard/TeamTree";
+import { getDownline } from "@/lib/profile";
+import { getPartnerCommission, getTeamStats } from "@/lib/commission";
 import { card } from "@/components/admin/ui";
 import { AwardArt, BarsArt, OrgChartArt, PeopleArt } from "@/components/dashboard/StatArt";
 import { getPartnerDetail } from "@/actions/admin/partners";
@@ -209,6 +210,12 @@ export default async function PartnerPage({ params }) {
   if (!detail) notFound();
 
   const { profile: p, referrer, team, signedUpAt, lastSignInAt } = detail;
+
+  // The same team tree a partner sees on their own dashboard: rank, land sold and points for each member.
+  const downline = team.length ? await getDownline(p.id) : [];
+  const teamStats = downline.length ? await getTeamStats(p.id, downline.map((n) => n.id)) : {};
+  const treeNodes = downline.map((n) => ({ ...n, ...teamStats[n.id] }));
+  const mine = p.activated_at ? await getPartnerCommission(p.id) : null;
   const pay = await getPayment();
   const feeText = pay.amountText;
   const paidText = formatRupees(p.activation_amount ?? pay.amount);
@@ -572,9 +579,6 @@ export default async function PartnerPage({ params }) {
             <Row icon={LogIn} label="Last login">
               {lastSignInAt ? dayTime(lastSignInAt) : "Never logged in"}
             </Row>
-            <Row icon={Fingerprint} label="User ID">
-              <span className="break-all font-mono text-xs font-normal text-ink/70">{p.id}</span>
-            </Row>
           </Section>
 
           <Section icon={Gift} title="Referral" note="Code, who referred them and their team.">
@@ -610,12 +614,30 @@ export default async function PartnerPage({ params }) {
         </div>
       </Reveal>
 
-      {/* Team */}
+      {/* Team tree */}
+      {treeNodes.length > 0 && (
+        <Reveal>
+          <TeamTree
+            admin
+            nodes={treeNodes}
+            rootId={p.id}
+            me={{
+              name: p.full_name?.split(" ")[0] || "Partner",
+              avatar: p.avatar_url || "",
+              code: p.referral_code,
+              rankTitle: mine?.rank?.title ?? "",
+              sold: mine?.teamArea ?? 0,
+            }}
+          />
+        </Reveal>
+      )}
+
+      {/* Team contacts */}
       <Reveal>
         <section className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5">
           <div className="flex items-center justify-between gap-4 border-b border-black/5 bg-gradient-to-b from-white to-[#fcf6ee] px-6 py-5 sm:px-7">
             <h2 className="font-display text-2xl font-bold text-ink">
-              Team under <span className="text-copper">{p.full_name?.split(" ")[0] || "this partner"}</span>
+              Team <span className="text-copper">contacts</span>
             </h2>
             <span className="rounded-full bg-copper/10 px-3.5 py-1.5 text-sm font-bold text-copper-dark ring-1 ring-copper/20">
               {team.length}
@@ -625,10 +647,6 @@ export default async function PartnerPage({ params }) {
           {team.length === 0 ? (
             <p className="px-6 py-12 text-center text-sm text-ink/55">Nobody has joined under this partner yet.</p>
           ) : (
-            <TeamView
-              team={team}
-              rootId={p.id}
-              list={
             <>
               {/* Phones: one card per partner, so nothing needs to scroll sideways */}
               <ul className="divide-y divide-black/5 md:hidden">
@@ -725,8 +743,6 @@ export default async function PartnerPage({ params }) {
               </tbody>
             </table>
             </>
-              }
-            />
           )}
         </section>
       </Reveal>

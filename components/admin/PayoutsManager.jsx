@@ -64,12 +64,16 @@ function Stat({ icon: Icon, art: Art, label, value, note, theme }) {
         <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-sm ${theme.chip}`}>
           <Icon className="h-6 w-6" />
         </span>
-        <div className="min-w-0 leading-tight">
-          <p className="text-sm font-medium text-ink/70">{label}</p>
-          <p className="mt-1 text-4xl font-extrabold tabular-nums text-ink">{value}</p>
-        </div>
+        <p className="min-w-0 text-sm font-medium leading-tight text-ink/70">{label}</p>
       </div>
-      <p className="relative mt-3 max-w-[62%] text-xs text-ink/55">{note}</p>
+      <p
+        className={`relative mt-3 font-extrabold tabular-nums leading-none text-ink ${
+          String(value).length > 11 ? "text-2xl" : String(value).length > 8 ? "text-[1.7rem]" : "text-4xl"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="relative mt-2.5 max-w-[62%] text-xs text-ink/55">{note}</p>
     </div>
   );
 }
@@ -409,6 +413,14 @@ export default function PayoutsManager({ overview }) {
                         ? "50:50 condition met"
                         : `50:50 not met: ${fmtPoints(r.counted)} of ${fmtPoints(r.need)} sq. yd count`}
                     </span>
+                    {!r.ready && r.need > 0 && (
+                      <span className="mt-2 block h-1.5 max-w-[240px] overflow-hidden rounded-full bg-black/10">
+                        <span
+                          className="block h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500"
+                          style={{ width: `${Math.min(100, Math.max(0, (r.counted / r.need) * 100))}%` }}
+                        />
+                      </span>
+                    )}
                   </span>
                   <button
                     onClick={() => setGiving(r)}

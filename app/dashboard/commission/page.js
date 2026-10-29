@@ -2,6 +2,7 @@ import Image from "next/image";
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   ChevronRight,
   Clock,
   Coins,
@@ -38,6 +39,7 @@ import { rankTiers } from "@/lib/data";
 import { rewardIcon } from "@/lib/rankIcons";
 import RewardPic from "@/components/RewardPic";
 import CommissionTabs from "@/components/dashboard/CommissionTabs";
+import LegsMeter from "@/components/dashboard/LegsMeter";
 import PlanGuide from "@/components/dashboard/PlanGuide";
 
 export const metadata = { title: "Commission | Bhoomidar" };
@@ -142,6 +144,8 @@ export default async function CommissionPage() {
 
   // The next three things to aim for, all in one place: rank, level and reward.
   const waitingReward = c.rewards.find((r) => !r.given && !r.ready && r.legs);
+  // where the power leg and the weaker legs stand now (the same for every reward)
+  const legsNow = c.rewards.find((r) => r.legs)?.legs ?? null;
   const rewardLeft = waitingReward
     ? [
         { name: "your power leg", left: Math.max(0, waitingReward.legs.powerCap - waitingReward.legs.power) },
@@ -367,7 +371,7 @@ export default async function CommissionPage() {
               The sales bonus is added on {closing} at {closeAt}, and the monthly bonus every month. Not in your balance until then.
             </p>
             <ul className="mt-5 space-y-2.5">
-              {comingDays.slice(0, 8).map((d) => (
+              {comingDays.slice(0, 4).map((d) => (
                 <li key={d.at} className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-black/5">
                   <span className="min-w-[7.5rem] text-sm font-bold text-ink">{fmtDate(d.at)}</span>
                   <span className="flex flex-wrap gap-1.5">
@@ -381,7 +385,12 @@ export default async function CommissionPage() {
                 </li>
               ))}
             </ul>
-            {comingDays.length > 8 && <p className="mt-3 text-xs text-ink/50">and {comingDays.length - 8} more dates after these.</p>}
+            {comingDays.length > 4 && (
+              <p className="mt-3 rounded-xl bg-[#fbf7f0] px-3.5 py-2.5 text-xs text-ink/65">
+                <b className="text-ink">{comingDays.length - 4} more dates</b> after these, up to {fmtDate(comingDays[comingDays.length - 1].at)}:{" "}
+                <b className="tabular-nums text-copper-dark">+{fmtPoints(comingDays.slice(4).reduce((t, d) => t + d.total, 0))}</b> in all.
+              </p>
+            )}
           </section>
         </Reveal>
       )}
@@ -504,7 +513,7 @@ export default async function CommissionPage() {
                       </span>
                     </span>
                     <span className="rounded-full bg-[#fdeab8] px-3.5 py-1.5 text-xs font-bold text-amber-800">
-                      {c.next.rate}% commission
+                      Your rate becomes {c.next.rate}%
                     </span>
                     <span className="inline-flex items-center gap-2 text-xs text-ink/70">
                       <Gift className="h-4 w-4 text-copper" />
@@ -512,19 +521,37 @@ export default async function CommissionPage() {
                     </span>
                   </div>
 
-                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-black/10">
-                    <div className={`h-full rounded-full bg-gradient-to-r from-copper to-copper-light`} style={{ width: `${Math.max(c.progress, 8)}%` }} />
-                  </div>
-                  <div className="mt-2.5 flex items-center justify-between gap-3 text-xs">
-                    <b className="text-ink">{fmtArea(c.areaToNext)} sq. yards to go</b>
-                    <span className="text-ink/50">
-                      {fmtArea(c.teamArea)} of {fmtArea(c.next.minArea)} sq. yd sold
-                    </span>
-                  </div>
-                  <p className="mt-3.5 flex items-center gap-2.5 rounded-xl bg-[#fde8da] px-3.5 py-2.5 text-xs text-ink/65">
-                    <UserRound className="h-4 w-4 shrink-0 text-copper" />
-                    Your rank grows with the land sold by you and everyone in your team together.
-                  </p>
+                  {legsNow && c.next.minArea > 0 ? (
+                    // one bar for the rank and the reward: the land that counts for the reward, and the rest that counts for the rank
+                    <div className="mt-4">
+                      <LegsMeter
+                        need={c.next.minArea}
+                        power={legsNow.power}
+                        weaker={legsNow.other}
+                        cap={(c.next.minArea * c.rules.powerPct) / 100}
+                        teamTotal={c.teamArea}
+                        compact
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-4 h-3 overflow-hidden rounded-full bg-black/10">
+                        <div className={`h-full rounded-full bg-gradient-to-r from-copper to-copper-light`} style={{ width: `${Math.max(c.progress, 8)}%` }} />
+                      </div>
+                      <div className="mt-2.5 flex items-center justify-between gap-3 text-xs">
+                        <b className="text-ink">{fmtArea(c.areaToNext)} sq. yards to go</b>
+                        <span className="text-ink/50">
+                          {fmtArea(c.teamArea)} of {fmtArea(c.next.minArea)} sq. yd sold
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {!(legsNow && c.next.minArea > 0) && (
+                    <p className="mt-3.5 flex items-center gap-2.5 rounded-xl bg-[#fde8da] px-3.5 py-2.5 text-xs text-ink/65">
+                      <UserRound className="h-4 w-4 shrink-0 text-copper" />
+                      Your rank grows with the land sold by you and everyone in your team together.
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="flex items-center gap-2 text-sm font-semibold text-copper">
@@ -584,7 +611,7 @@ export default async function CommissionPage() {
                   ) : r.ready ? (
                     <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#fdeab8] px-3.5 py-1.5 text-xs font-bold text-amber-800">
                       <Clock className="h-3.5 w-3.5" />
-                      On the way
+                      Ready, we will hand it over
                     </span>
                   ) : (
                     <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-700 ring-1 ring-rose-200">
@@ -592,46 +619,26 @@ export default async function CommissionPage() {
                       Needs 50:50
                     </span>
                   )}
-                  {!r.given && !r.ready && r.legs && (
-                    <div className="w-full space-y-3 rounded-xl bg-white/70 p-3 ring-1 ring-rose-100">
-                      {[
-                        {
-                          name: "Power leg",
-                          hint: "your strongest leg (counts up to half)",
-                          have: Math.min(r.legs.power, r.legs.powerCap),
-                          need: r.legs.powerCap,
-                          bar: "bg-copper",
-                        },
-                        {
-                          name: "Weaker legs",
-                          hint: "all your other legs and your own sales, together",
-                          have: Math.min(r.legs.other, r.legs.otherNeed),
-                          need: r.legs.otherNeed,
-                          bar: "bg-violet-500",
-                        },
-                      ].map((row) => {
-                        const left = Math.max(0, row.need - row.have);
-                        return (
-                          <div key={row.name}>
-                            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-xs">
-                              <span className="font-bold text-ink">{row.name}</span>
-                              <span className={left > 0 ? "font-semibold text-rose-700" : "font-semibold text-emerald-700"}>
-                                {left > 0 ? `${fmtArea(left)} sq. yd to go` : "Done"}
-                              </span>
-                            </div>
-                            <div className="mt-1 h-2 overflow-hidden rounded-full bg-black/5">
-                              <div
-                                className={`h-full rounded-full ${row.bar}`}
-                                style={{ width: `${row.need > 0 ? Math.min(100, (row.have / row.need) * 100) : 100}%` }}
-                              />
-                            </div>
-                            <p className="mt-1 text-[11px] leading-snug text-ink/50">
-                              {fmtArea(row.have)} of {fmtArea(row.need)} sq. yd · {row.hint}
-                            </p>
-                          </div>
-                        );
-                      })}
+                  {/* The 50:50 condition: open while it is not met, a tap away once it is */}
+                  {!r.given && !r.ready && r.legs && r.need > 0 && (
+                    <div className="w-full rounded-2xl bg-white/80 p-4 ring-1 ring-rose-100">
+                      <p className="mb-1 text-xs font-bold text-ink/70">The 50:50 condition for this reward</p>
+                      <LegsMeter need={r.need} power={r.legs.power} weaker={r.legs.other} cap={r.legs.powerCap} />
                     </div>
+                  )}
+                  {!r.given && r.ready && r.legs && r.need > 0 && (
+                    <details className="group w-full rounded-2xl bg-white/80 ring-1 ring-emerald-100">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-xs font-bold text-emerald-800 [&::-webkit-details-marker]:hidden">
+                        <span className="inline-flex items-center gap-2">
+                          <Check className="h-4 w-4" strokeWidth={3} />
+                          50:50 condition met. See how your power leg and weaker legs count
+                        </span>
+                        <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+                      </summary>
+                      <div className="px-4 pb-4">
+                        <LegsMeter need={r.need} power={r.legs.power} weaker={r.legs.other} cap={r.legs.powerCap} />
+                      </div>
+                    </details>
                   )}
                 </li>
               ))}

@@ -79,12 +79,16 @@ function Stat({ icon: Icon, art: Art, label, value, note, theme }) {
         <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-sm ${theme.chip}`}>
           <Icon className="h-6 w-6" />
         </span>
-        <div className="min-w-0 leading-tight">
-          <p className="text-sm font-medium text-ink/70">{label}</p>
-          <p className="mt-1 text-3xl font-extrabold tabular-nums text-ink">{value}</p>
-        </div>
+        <p className="min-w-0 text-sm font-medium leading-tight text-ink/70">{label}</p>
       </div>
-      <p className="relative mt-3 max-w-[62%] text-xs text-ink/55">{note}</p>
+      <p
+        className={`relative mt-3 font-extrabold tabular-nums leading-none text-ink ${
+          String(value).length > 11 ? "text-2xl" : String(value).length > 8 ? "text-[1.7rem]" : "text-3xl"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="relative mt-2.5 max-w-[62%] text-xs text-ink/55">{note}</p>
     </div>
   );
 }
