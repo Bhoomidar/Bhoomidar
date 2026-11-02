@@ -4,6 +4,7 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { latestDobISO, normalizeReferralCode } from "@/lib/referral";
+import { noPartnersYet } from "@/lib/firstPartner";
 
 export const metadata = { title: "Become a Partner | Bhoomidar" };
 
@@ -39,6 +40,7 @@ export default async function RegisterPage({ searchParams }) {
         refCode={referrerName ? refCode : ""}
         referrerName={referrerName}
         maxDob={latestDobISO()}
+        firstPartner={await noPartnersYet()}
       />
     </AuthShell>
   );

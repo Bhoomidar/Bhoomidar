@@ -99,7 +99,7 @@ function CodeLogin({ redirectTo }) {
           <p className="flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-3 text-[13px] leading-snug text-emerald-900 ring-1 ring-emerald-600/15">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
             <span className="min-w-0">
-              If this account exists, we have sent a 6-digit code to{" "}
+              We have sent a 6-digit code to{" "}
               {sentTo ? <b className="[overflow-wrap:anywhere] font-bold">{sentTo}</b> : "its email"}. It works for 10 minutes.
             </span>
           </p>

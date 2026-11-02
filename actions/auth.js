@@ -9,6 +9,7 @@ import { aadhaarDigits, aadhaarError, formatAadhaar } from "@/lib/aadhaar";
 import { encryptAadhaar, hashAadhaar } from "@/lib/aadhaarCrypto";
 import { findState, pincodeError } from "@/lib/india";
 import { dobError, loginCodeCandidates } from "@/lib/referral";
+import { noPartnersYet } from "@/lib/firstPartner";
 import {
   EMAIL_PATTERN,
   checkEmailCode,
@@ -154,20 +155,24 @@ export async function register(_prevState, formData) {
 
   // The referral code is needed to register: it must belong to an activated partner (one whose
   // joining payment has been received). That partner becomes the one who referred this person.
-  if (!rawRef) return fail("Please enter the referral code of the partner who invited you.");
-  const codes = loginCodeCandidates(rawRef);
-  const { data: referrer } = codes.length
-    ? await admin
-        .from("profiles")
-        .select("id, is_active, activated_at")
-        .in("referral_code", codes)
-        .limit(1)
-        .maybeSingle()
-    : { data: null };
-  if (!referrer || referrer.is_active === false || !referrer.activated_at) {
-    return fail("This referral code is not valid. Check it with the partner who invited you.");
+  // Only the very first partner (nobody registered yet) joins without a code.
+  let referrerId = null;
+  if (!(await noPartnersYet())) {
+    if (!rawRef) return fail("Please enter the referral code of the partner who invited you.");
+    const codes = loginCodeCandidates(rawRef);
+    const { data: referrer } = codes.length
+      ? await admin
+          .from("profiles")
+          .select("id, is_active, activated_at")
+          .in("referral_code", codes)
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
+    if (!referrer || referrer.is_active === false || !referrer.activated_at) {
+      return fail("This referral code is not valid. Check it with the partner who invited you.");
+    }
+    referrerId = referrer.id;
   }
-  const referrerId = referrer.id;
 
   let aadhaarHash;
   let aadhaarEncrypted;
@@ -277,27 +282,27 @@ export async function verifyRegisterCode(emailRaw, code) {
 }
 
 // Login with a code from the email instead of the password: sends the code.
-// The answer is the same whether the partner exists or not.
+// No account for what was typed: no code is sent and the person is told to create an account first.
 export async function sendLoginCode(typedRaw) {
   if (!String(typedRaw ?? "").trim()) return { error: "Please enter your email or referral code." };
+  const noAccount = { error: "No account found with this email or referral code. Please create an account first." };
   const email = await resolveEmail(typedRaw);
-  if (email) {
-    const { data: profile } = await createAdminClient()
-      .from("profiles")
-      .select("id, is_active")
-      .eq("email", email)
-      .maybeSingle();
-    if (profile && profile.is_active !== false) {
-      const res = await sendEmailCode(email, "login");
-      if (res.error) return res;
-    }
-  }
+  if (!email) return noAccount;
+  const { data: profile } = await createAdminClient()
+    .from("profiles")
+    .select("id, is_active")
+    .eq("email", email)
+    .maybeSingle();
+  if (!profile) return noAccount;
+  if (profile.is_active === false) return { error: "This account is switched off. Please contact us." };
+  const res = await sendEmailCode(email, "login");
+  if (res.error) return res;
+
   // Says where the code went. An email the person typed is shown as typed; for a referral code only a masked
   // address comes back (h***l@gmail.com), so the full email of a partner never leaves the server.
   const typed = String(typedRaw).trim();
-  let sentTo = "";
-  if (typed.includes("@")) sentTo = cleanEmail(typed);
-  else if (email) {
+  let sentTo = cleanEmail(typed);
+  if (!typed.includes("@")) {
     const [name, domain] = email.split("@");
     sentTo = `${name.length > 2 ? `${name[0]}***${name[name.length - 1]}` : `${name[0]}***`}@${domain}`;
   }

@@ -146,6 +146,7 @@ export default function RegisterForm({
   refCode = "",
   referrerName = "",
   maxDob,
+  firstPartner = false, // nobody has registered yet: this person joins without a referral code
 }) {
   const [state, formAction, pending] = useActionState(register, {});
 
@@ -660,10 +661,16 @@ export default function RegisterForm({
           flat
           n={3}
           icon={KeyRound}
-          title="Referral and password"
-          hint="Got a code from a friend? Add it here."
+          title={firstPartner ? "Password" : "Referral and password"}
+          hint={firstPartner ? "Choose a password for your account." : "Got a code from a friend? Add it here."}
           delay={240}
         >
+          {firstPartner ? (
+          <p className="col-span-2 flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-3 text-sm font-medium leading-snug text-emerald-900 ring-1 ring-emerald-600/15 sm:col-span-3">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            <span className="min-w-0">You are the first partner, so no referral code is needed.</span>
+          </p>
+          ) : (
           <Field
             id="referral_code"
             label="Referral code"
@@ -703,6 +710,7 @@ export default function RegisterForm({
               )}
             </span>
           </Field>
+          )}
 
           <Field id="password" label="Create password" required>
             <Lock className={iconClass} />
