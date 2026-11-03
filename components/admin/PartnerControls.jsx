@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Power, RotateCcw, Wallet } from "lucide-react";
-import { deactivatePartner, setPartnerActive } from "@/actions/admin/partners";
+import { BadgeCheck, Power, RotateCcw, Wallet } from "lucide-react";
+import { deactivatePartner, markCreditPaid, setPartnerActive } from "@/actions/admin/partners";
 import ConfirmDialog from "../ConfirmDialog";
 import MarkPaidModal from "./MarkPaidModal";
 
@@ -31,11 +31,23 @@ export default function PartnerControls({ partner, fee }) {
     });
 
   const paid = !!partner.activated_at;
+  const onCredit = paid && partner.credit_amount != null && !partner.credit_paid_at;
   const label = partner.full_name || partner.email;
 
   return (
     <div>
       <div className="flex flex-wrap gap-3">
+        {onCredit && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setAsk("credit")}
+            className={`${base} bg-gradient-to-b from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-600/30`}
+          >
+            <BadgeCheck className="h-4 w-4" />
+            Mark credit as paid
+          </button>
+        )}
         {paid ? (
           <button
             type="button"
@@ -73,6 +85,24 @@ export default function PartnerControls({ partner, fee }) {
       </div>
 
       {error && <p className="mt-3 text-sm font-medium text-rose-700">{error}</p>}
+
+      {ask === "credit" && (
+        <ConfirmDialog
+          tone="warn"
+          icon={BadgeCheck}
+          title="Credit paid?"
+          text={
+            <>
+              <b className="text-ink">{label}</b> has paid the <b className="text-ink">₹{Number(partner.credit_owed ?? partner.credit_amount ?? 0).toLocaleString("en-IN")}</b> that is still due.
+              The balance goes back to zero and the referrer&apos;s bonus is given.
+            </>
+          }
+          confirmText="Yes, it is paid"
+          busy={pending}
+          onConfirm={() => run(() => markCreditPaid(partner.id))}
+          onCancel={() => setAsk(null)}
+        />
+      )}
 
       {ask === "unpaid" && (
         <ConfirmDialog

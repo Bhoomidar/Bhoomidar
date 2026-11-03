@@ -9,7 +9,7 @@ const TABS = [
   ["all", "All", null],
   ["sales", "My sales", ["sale", "self_monthly"]],
   ["team", "Team", ["team", "team_monthly"]],
-  ["bonus", "Bonus", ["monthly", "partnership", "cto"]],
+  ["bonus", "Bonus", ["monthly", "partnership", "cto", "referral"]],
   ["paid", "Redeemed", ["payout"]],
 ];
 
@@ -21,7 +21,9 @@ const statusOf = (kind) =>
     ? { text: "Redeemed", tone: "bg-teal-100 text-teal-800" }
     : kind === "reversal"
       ? { text: "Cancelled", tone: "bg-rose-100 text-rose-800" }
-      : { text: "Credited", tone: "bg-emerald-100 text-emerald-800" };
+      : kind === "credit_due"
+        ? { text: "On credit", tone: "bg-rose-100 text-rose-800" }
+        : { text: "Credited", tone: "bg-emerald-100 text-emerald-800" };
 
 // Every point that came in or went out, newest first, with the balance after each.
 // rows: [{ id, kind, points, note, from, rate, at, balance }]
@@ -71,7 +73,7 @@ export default function PointsHistory({ rows }) {
               setShown(PAGE);
             }}
             aria-pressed={tab === key}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition sm:gap-2.5 sm:px-5 sm:py-2.5 ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[15px] font-semibold transition sm:gap-2.5 sm:px-5 sm:py-2.5 ${
               tab === key
                 ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
                 : "bg-white text-ink/70 shadow-sm ring-1 ring-black/10 hover:ring-copper"
@@ -79,7 +81,7 @@ export default function PointsHistory({ rows }) {
           >
             {label}
             <span
-              className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-bold tabular-nums ${
+              className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold tabular-nums ${
                 tab === key ? "bg-white/25 text-white" : "bg-black/5 text-ink/60"
               }`}
             >
@@ -99,10 +101,10 @@ export default function PointsHistory({ rows }) {
               <li key={r.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/10">
                 <div className="flex items-start justify-between gap-3">
                   <span className="min-w-0 leading-tight">
-                    <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${kind.tone}`}>{kind.label}</span>
-                    {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-xs text-ink/45">{r.rate}%</span>}
-                    {r.level ? <span className="ml-2 text-xs text-ink/45">level {r.level}</span> : null}
-                    <span className="mt-2 block text-xs text-ink/50">{fmtDate(r.at)}</span>
+                    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${kind.tone}`}>{kind.label}</span>
+                    {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-[13px] text-ink/45">{r.rate}%</span>}
+                    {r.level ? <span className="ml-2 text-[13px] text-ink/45">level {r.level}</span> : null}
+                    <span className="mt-2 block text-[13px] text-ink/50">{fmtDate(r.at)}</span>
                   </span>
                   <span className="shrink-0 text-right leading-tight">
                     <span
@@ -113,13 +115,13 @@ export default function PointsHistory({ rows }) {
                       {out ? "−" : "+"}
                       {fmtPoints(Math.abs(r.points))}
                     </span>
-                    <span className="mt-0.5 block text-[11px] text-ink/45">Balance {fmtPoints(r.balance)}</span>
+                    <span className="mt-0.5 block text-xs text-ink/45">Balance {fmtPoints(r.balance)}</span>
                   </span>
                 </div>
-                {r.note && <p className="mt-3 [overflow-wrap:anywhere] text-sm leading-relaxed text-ink/75">{r.note}</p>}
+                {r.note && <p className="mt-3 [overflow-wrap:anywhere] text-[15px] leading-relaxed text-ink/75">{r.note}</p>}
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="min-w-0 [overflow-wrap:anywhere] text-xs text-ink/55">{r.from ? `From ${r.from}` : ""}</span>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${status.tone}`}>{status.text}</span>
+                  <span className="min-w-0 [overflow-wrap:anywhere] text-[13px] text-ink/55">{r.from ? `From ${r.from}` : ""}</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-[13px] font-bold ${status.tone}`}>{status.text}</span>
                 </div>
               </li>
             );
@@ -129,8 +131,8 @@ export default function PointsHistory({ rows }) {
 
       <div className={`mt-5 overflow-hidden rounded-2xl bg-white/70 ring-1 ring-black/5 ${list.length > 0 ? "hidden md:block" : ""}`}>
         <div className={`overflow-x-auto ${list.length === 0 ? "hidden md:block" : ""}`}>
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-[#f6f0e7] text-xs text-ink/60">
+          <table className="w-full min-w-[760px] text-left text-[15px]">
+            <thead className="bg-[#f6f0e7] text-[13px] text-ink/60">
               <tr>
                 <th className="px-5 py-3.5 font-semibold">#</th>
                 <th className="px-4 py-3.5">
@@ -156,9 +158,9 @@ export default function PointsHistory({ rows }) {
                       <td className="px-5 py-4 text-ink/55">{i + 1}</td>
                       <td className="whitespace-nowrap px-4 py-4 text-ink/70">{fmtDate(r.at)}</td>
                       <td className="px-4 py-4">
-                        <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${kind.tone}`}>{kind.label}</span>
-                        {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-xs text-ink/45">{r.rate}%</span>}
-                        {r.level ? <span className="ml-2 text-xs text-ink/45">level {r.level}</span> : null}
+                        <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${kind.tone}`}>{kind.label}</span>
+                        {r.rate !== null && r.kind !== "payout" && <span className="ml-2 text-[13px] text-ink/45">{r.rate}%</span>}
+                        {r.level ? <span className="ml-2 text-[13px] text-ink/45">level {r.level}</span> : null}
                       </td>
                       <td className="max-w-[260px] [overflow-wrap:anywhere] px-4 py-4 text-ink/75" title={r.note}>
                         {r.note}
@@ -166,17 +168,17 @@ export default function PointsHistory({ rows }) {
                       <td className="px-4 py-4 text-ink/70">{r.from || "—"}</td>
                       <td className="px-4 py-3 text-right leading-tight">
                         <span
-                          className={`block text-base font-extrabold tabular-nums ${
+                          className={`block text-[17px] font-extrabold tabular-nums ${
                             r.kind === "payout" ? "text-teal-700" : out ? "text-rose-600" : "text-emerald-600"
                           }`}
                         >
                           {out ? "−" : "+"}
                           {fmtPoints(Math.abs(r.points))}
                         </span>
-                        <span className="mt-0.5 block text-[11px] text-ink/45">Balance {fmtPoints(r.balance)}</span>
+                        <span className="mt-0.5 block text-xs text-ink/45">Balance {fmtPoints(r.balance)}</span>
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${status.tone}`}>{status.text}</span>
+                        <span className={`whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-bold ${status.tone}`}>{status.text}</span>
                       </td>
                     </tr>
                   );
@@ -194,12 +196,12 @@ export default function PointsHistory({ rows }) {
               <FileText className="h-7 w-7" strokeWidth={1.6} />
             </span>
             <p className="relative mt-4 text-lg font-bold text-ink">Nothing here yet</p>
-            <p className="relative mt-1.5 max-w-xs text-sm leading-relaxed text-ink/55">
+            <p className="relative mt-1.5 max-w-xs text-[15px] leading-relaxed text-ink/55">
               Your points show up here as soon as a sale is confirmed by our team.
             </p>
             <a
               href="/properties"
-              className="group relative mt-5 inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+              className="group relative mt-5 inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-b from-copper-light to-copper-dark px-6 py-3 text-[15px] font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
             >
               <Building2 className="h-4 w-4" />
               Explore properties
@@ -213,7 +215,7 @@ export default function PointsHistory({ rows }) {
         <button
           type="button"
           onClick={() => setShown((n) => n + PAGE)}
-          className="mx-auto mt-4 block rounded-xl border border-black/10 bg-white px-5 py-2.5 text-sm font-semibold text-ink/75 transition hover:border-copper hover:text-copper"
+          className="mx-auto mt-4 block rounded-xl border border-black/10 bg-white px-5 py-2.5 text-[15px] font-semibold text-ink/75 transition hover:border-copper hover:text-copper"
         >
           Show more ({list.length - shown} left)
         </button>

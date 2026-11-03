@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Banknote, Check, Clock, Ellipsis, Info, Landmark, Smartphone, Wallet } from "lucide-react";
-import { activatePartner } from "@/actions/admin/partners";
+import { activatePartner, activatePartnerOnCredit } from "@/actions/admin/partners";
 import { formatRupees } from "@/lib/partnerFee";
 import Modal from "./Modal";
 import { btnGhost, btnPrimary, inputCls, labelCls } from "./ui";
@@ -23,6 +23,7 @@ const joinedOn = (iso) =>
 // and switches the partner's account on in one step.
 export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
   const ACTIVATION_FEE_TEXT = formatRupees(fee);
+  const [credit, setCredit] = useState(false); // activate now, the joining amount is paid later
   const [mode, setMode] = useState("UPI");
   const [reference, setReference] = useState("");
   const [amount, setAmount] = useState(String(fee ?? ""));
@@ -38,19 +39,19 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
     setError("");
     start(async () => {
       const note = reference.trim() ? `${mode} · ${reference.trim()}` : mode;
-      const res = await activatePartner(partner.id, note, amount);
+      const res = credit ? await activatePartnerOnCredit(partner.id, reference.trim()) : await activatePartner(partner.id, note, amount);
       if (!res.success) return setError(res.error);
       onDone();
     });
   };
 
   return (
-    <Modal title="Mark payment as paid" subtitle="Confirm that the joining fee has been received" icon={Wallet} onClose={onClose}>
-      <form onSubmit={submit} className="space-y-6">
+    <Modal compact fullOnPhone title="Mark payment as paid" subtitle="Confirm that the joining fee has been received" icon={Wallet} onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3.5">
         {/* Who is being activated, and what the fee is */}
-        <div className="rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5 sm:p-5">
-          <div className="flex items-center gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-base font-bold text-white shadow-md">
+        <div className="rounded-2xl bg-[#fbf7f0] px-4 py-3 ring-1 ring-black/5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-base font-bold text-white shadow-md">
               {partner.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={partner.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -59,50 +60,102 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
               )}
             </span>
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="[overflow-wrap:anywhere] text-base font-bold text-ink">{name}</p>
-              <p className="mt-1 [overflow-wrap:anywhere] text-sm text-ink/55">{partner.email}</p>
-              {partner.phone && <p className="mt-0.5 text-sm text-ink/55">{partner.phone}</p>}
+              <p className="[overflow-wrap:anywhere] text-[15px] font-bold text-ink">{name}</p>
+              <p className="mt-0.5 text-[13px] text-ink/55">
+                <span className="block [overflow-wrap:anywhere] sm:inline">{partner.email}</span>
+                {partner.phone && (
+                  <>
+                    <span className="hidden sm:inline"> · </span>
+                    <span className="block sm:inline">{partner.phone}</span>
+                  </>
+                )}
+              </p>
             </div>
+            <span className="shrink-0 text-right text-[11px] font-semibold uppercase tracking-wide text-ink/50">
+              Joining fee
+              <b className="block text-xl font-extrabold normal-case tabular-nums tracking-normal text-copper">{ACTIVATION_FEE_TEXT}</b>
+            </span>
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-black/10 pt-4">
+          <div className="mt-2.5 border-t border-black/10 pt-2.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
               <Clock className="h-3.5 w-3.5" />
               Payment pending{partner.created_at ? ` · joined ${joinedOn(partner.created_at)}` : ""}
             </span>
-            <span className="text-sm text-ink/60">
-              Joining fee <b className="ml-1 text-xl font-extrabold tabular-nums text-copper">{ACTIVATION_FEE_TEXT}</b>
+          </div>
+        </div>
+
+        {/* Paid now, or activate on credit */}
+        <div role="tablist" aria-label="Payment" className="flex gap-1.5 rounded-xl bg-[#f4ece0] p-1">
+          {[
+            [false, "Payment received"],
+            [true, "Activate on credit"],
+          ].map(([value, text]) => (
+            <button
+              key={text}
+              type="button"
+              role="tab"
+              aria-selected={credit === value}
+              onClick={() => setCredit(value)}
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold transition ${
+                credit === value ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30" : "text-ink/65 hover:text-copper-dark"
+              }`}
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+
+        {credit && (
+          <div className="flex items-start gap-2.5 rounded-xl bg-rose-50 px-3.5 py-2.5 text-[13px] leading-snug text-rose-900 ring-1 ring-rose-200">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+            <span>
+              The account is activated now, but its balance starts at <b>−{ACTIVATION_FEE_TEXT}</b>. Everything the partner earns fills this up first.
+              Until the balance is back to zero there is no Partnership bonus, no payout, and the referrer&apos;s bonus waits.
             </span>
           </div>
-        </div>
+        )}
 
-        {/* Amount */}
-        <div>
-          <label className={labelCls} htmlFor="payment-amount">
-            Amount received
-          </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-copper">₹</span>
+        {/* Amount and reference side by side */}
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <div hidden={credit}>
+            <label className={labelCls} htmlFor="payment-amount">
+              Amount received
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-copper">₹</span>
+              <input
+                id="payment-amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                inputMode="numeric"
+                placeholder={String(fee ?? "")}
+                className={`${inputCls} !py-2.5 !pl-9 text-base font-bold tabular-nums`}
+              />
+            </div>
+          </div>
+          <div className={credit ? "sm:col-span-2" : ""}>
+            <label className={labelCls} htmlFor="payment-ref">
+              Reference or note <span className="font-normal text-ink/45">(optional)</span>
+            </label>
             <input
-              id="payment-amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
-              inputMode="numeric"
-              placeholder={String(fee ?? "")}
-              className={`${inputCls} !py-3.5 !pl-10 text-lg font-bold tabular-nums`}
+              id="payment-ref"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              maxLength={150}
+              placeholder="UPI transaction ID, receipt no."
+              className={`${inputCls} !py-2.5`}
             />
           </div>
-          {differs ? (
-            <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 ring-1 ring-amber-200">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              This is different from the joining fee of {ACTIVATION_FEE_TEXT}. The amount you enter is saved with the partner.
-            </p>
-          ) : (
-            <p className="mt-2 text-xs text-ink/50">The joining fee is filled in. Change it only if the partner paid a different amount.</p>
-          )}
         </div>
+        {differs && !credit && (
+          <p className="flex items-start gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 ring-1 ring-amber-200">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            This is different from the joining fee of {ACTIVATION_FEE_TEXT}. The amount you enter is saved with the partner.
+          </p>
+        )}
 
         {/* How it was paid */}
-        <div>
+        <div hidden={credit}>
           <p className={labelCls}>How was it paid?</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {PAY_MODES.map(({ name: m, icon: Icon }) => (
@@ -111,7 +164,7 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
                 type="button"
                 onClick={() => setMode(m)}
                 aria-pressed={mode === m}
-                className={`inline-flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+                className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                   mode === m
                     ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
                     : "bg-white text-ink/70 ring-1 ring-black/10 hover:ring-copper"
@@ -124,42 +177,28 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
           </div>
         </div>
 
-        {/* Reference */}
-        <div>
-          <label className={labelCls} htmlFor="payment-ref">
-            Reference or note <span className="font-normal text-ink/45">(optional)</span>
-          </label>
-          <input
-            id="payment-ref"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            maxLength={150}
-            placeholder="UPI transaction ID, receipt number..."
-            className={inputCls}
-          />
-        </div>
-
         {/* What happens next */}
-        <div className="flex items-start gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-snug text-emerald-900 ring-1 ring-emerald-600/15">
+        <div className="flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-[13px] leading-snug text-emerald-900 ring-1 ring-emerald-600/15">
           <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={3} />
           <span>
-            The account is activated right away and the partner&apos;s referral code starts working. You can mark it unpaid
-            again at any time.
+            {credit
+              ? "The account is activated right away and the referral code starts working. You can mark the credit as paid later."
+              : "The account is activated right away and the referral code starts working. You can mark it unpaid again at any time."}
           </span>
         </div>
 
         {error && (
-          <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
+          <p role="alert" className="rounded-xl bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
             {error}
           </p>
         )}
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2.5 max-sm:sticky max-sm:bottom-0 max-sm:-mx-5 max-sm:border-t max-sm:border-black/10 max-sm:bg-[#fffaf3]/95 max-sm:px-5 max-sm:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-sm:pt-3 max-sm:backdrop-blur sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={`${btnGhost} sm:min-w-28`}>
             Cancel
           </button>
-          <button type="submit" disabled={pending} className={`${btnPrimary} py-3 sm:min-w-56`}>
-            {pending ? "Saving..." : `Mark ${typed > 0 ? formatRupees(typed) : ACTIVATION_FEE_TEXT} as paid`}
+          <button type="submit" disabled={pending} className={`${btnPrimary} py-2.5 sm:min-w-56`}>
+            {pending ? "Saving..." : credit ? `Activate on credit (−${ACTIVATION_FEE_TEXT})` : `Mark ${typed > 0 ? formatRupees(typed) : ACTIVATION_FEE_TEXT} as paid`}
           </button>
         </div>
       </form>

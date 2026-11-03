@@ -56,7 +56,7 @@ export default function CommissionTabs({ tabs, panels }) {
             >
               <Icon className="h-5 w-5 shrink-0" />
               <span className="min-w-0 leading-tight">
-                <span className="block text-[11px] font-bold sm:text-sm">
+                <span className="block text-xs font-bold sm:text-[15px]">
                   {t.short ? (
                     <>
                       <span className="sm:hidden">{t.short}</span>
@@ -66,7 +66,7 @@ export default function CommissionTabs({ tabs, panels }) {
                     t.label
                   )}
                 </span>
-                {t.hint && <span className={`hidden text-[11px] sm:block ${on ? "text-white/80" : "text-ink/45"}`}>{t.hint}</span>}
+                {t.hint && <span className={`hidden text-xs sm:block ${on ? "text-white/80" : "text-ink/45"}`}>{t.hint}</span>}
               </span>
             </button>
           );

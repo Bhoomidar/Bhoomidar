@@ -203,6 +203,7 @@ export async function savePlanRules(input) {
     ctoRank: int("ctoRank", "The C.T.O. rank", 1, Math.max(1, ranks ?? 20)),
     powerPct: dec("powerPct", "The strongest leg %", 0, 100),
     poolDay: int("poolDay", "The day the pool bonus is shared", 1, 28),
+    referralPct: dec("referralPct", "The referral bonus %", 0, 100),
     poolAuto: { n: String(input?.poolAuto) === "0" ? 0 : 1 },
   };
   for (const c of Object.values(checks)) if (c.error) return { success: false, error: c.error };

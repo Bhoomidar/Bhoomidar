@@ -238,7 +238,18 @@ export default function PartnersTable({ partners, fee }) {
 
   // The joining payment: paid with its details, or unpaid with the button to mark it.
   const payBlock = (p) =>
-    p.activated_at ? (
+    p.activated_at && p.credit_amount != null && !p.credit_paid_at ? (
+      <div className="leading-tight">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-100 px-3.5 py-1.5 text-[13px] font-bold text-rose-800 ring-1 ring-rose-200">
+          <Clock className="h-3.5 w-3.5" />
+          On credit · {formatRupees(p.credit_owed ?? p.credit_amount)} due
+        </span>
+        <p className="mt-2 max-w-[220px] break-words text-xs leading-snug text-ink/55">{date(p.activated_at)}</p>
+        <a href={`/admin/partners/${p.id}`} className="mt-1 inline-block text-xs font-medium text-copper underline underline-offset-2 transition hover:text-copper-dark">
+          Open to mark credit paid
+        </a>
+      </div>
+    ) : p.activated_at ? (
       <div className="leading-tight">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1.5 text-[13px] font-bold text-emerald-800 ring-1 ring-emerald-200">
           <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -259,7 +270,7 @@ export default function PartnersTable({ partners, fee }) {
       </div>
     ) : (
       <div className="leading-tight">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1.5 text-[13px] font-bold text-amber-800 ring-1 ring-amber-200">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-100 px-3.5 py-1.5 text-[13px] font-bold text-amber-800 ring-1 ring-amber-200">
           <Clock className="h-3.5 w-3.5" />
           Payment pending
         </span>
@@ -460,7 +471,12 @@ export default function PartnersTable({ partners, fee }) {
                       <CodeChip p={p} />
                     </div>
                     <span className="hidden whitespace-nowrap text-xs text-ink/55 xl:block">{date(p.created_at)}</span>
-                    {p.activated_at ? (
+                    {p.activated_at && p.credit_amount != null && !p.credit_paid_at ? (
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-100 px-3 py-1.5 text-xs font-bold text-rose-800 ring-1 ring-rose-200">
+                        <Clock className="h-3 w-3" />
+                        On credit {formatRupees(p.credit_owed ?? p.credit_amount)}
+                      </span>
+                    ) : p.activated_at ? (
                       <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
                         <Check className="h-3 w-3" strokeWidth={3} />
                         Paid {formatRupees(p.activation_amount ?? fee)}

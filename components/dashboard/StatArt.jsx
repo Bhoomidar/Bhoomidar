@@ -260,7 +260,7 @@ export function CoinsArt({ className = "" }) {
 }
 
 // A pile of gold coins with a big rupee coin in front, for the balance card.
-export function CoinPileArt({ className = "" }) {
+export function CoinPileArt({ className = "", style }) {
   const stack = (cx, rx, count, base) =>
     Array.from({ length: count }, (_, i) => {
       const cy = base - i * 11;
@@ -274,7 +274,7 @@ export function CoinPileArt({ className = "" }) {
     });
 
   return (
-    <svg viewBox="0 0 200 150" fill="none" aria-hidden className={className}>
+    <svg viewBox="0 0 200 150" fill="none" aria-hidden className={className} style={style}>
       <defs>
         <linearGradient id="pile-top" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#fbe3a0" />

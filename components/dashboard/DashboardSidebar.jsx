@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   PhoneCall,
+  UserCheck,
   UserRound,
   Users,
   Wallet,
@@ -25,6 +26,7 @@ const groups = [
     items: [
       { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
       { icon: Users, label: "My Network", href: "/dashboard/network" },
+      { icon: UserCheck, label: "My Customers", href: "/dashboard/customers" },
       { icon: UserRound, label: "My Profile", href: "/dashboard/profile" },
       { icon: Wallet, label: "Commission", href: "/dashboard/commission" },
     ],

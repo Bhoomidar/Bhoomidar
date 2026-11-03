@@ -12,10 +12,20 @@ export async function getPartners() {
   const { data } = await createAdminClient()
     .from("profiles")
     .select(
-      "id, full_name, email, phone, role, is_active, created_at, activated_at, activation_amount, activation_note, avatar_url, dob, address_line, city, state, pincode, aadhaar_last4, father_name, nominee_name, referral_code, referred_by",
+      "id, full_name, email, phone, role, is_active, created_at, activated_at, activation_amount, activation_note, credit_amount, credit_paid_at, avatar_url, dob, address_line, city, state, pincode, aadhaar_last4, father_name, nominee_name, referral_code, referred_by",
     )
     .order("created_at", { ascending: false });
-  return data ?? [];
+  // A partner activated on credit who still owes: how much is left.
+  const rows = data ?? [];
+  const db = createAdminClient();
+  await Promise.all(
+    rows
+      .filter((p) => p.credit_amount != null && !p.credit_paid_at)
+      .map(async (p) => {
+        p.credit_owed = Number((await db.rpc("credit_owed", { p: p.id })).data ?? 0);
+      }),
+  );
+  return rows;
 }
 
 // Everyone on the platform with just enough to draw the referral tree:
@@ -56,10 +66,15 @@ export async function activatePartner(id, note, amount) {
       activated_at: new Date().toISOString(),
       activation_amount: paid,
       activation_note: String(note ?? "").trim().slice(0, 200) || null,
+      credit_amount: null,
+      credit_paid_at: null,
     })
     .eq("id", id);
   if (error) return { success: false, error: "Could not activate the partner." };
-  await createAdminClient().rpc("sync_ranks", { p: id });
+  const db = createAdminClient();
+  await db.rpc("sync_ranks", { p: id });
+  // The partner who referred this one gets their share of the joining amount (once).
+  await db.rpc("pay_referral_bonus", { p_referee: id });
   revalidatePath("/admin", "layout");
   return { success: true };
 }
@@ -67,12 +82,99 @@ export async function activatePartner(id, note, amount) {
 // Put an activated partner back to "waiting for payment".
 export async function deactivatePartner(id) {
   await requireAdmin();
-  const { error } = await createAdminClient()
+  const db = createAdminClient();
+  // On credit and not paid yet: the debt goes away together with the activation.
+  const { data: now } = await db.from("profiles").select("credit_amount, credit_paid_at").eq("id", id).maybeSingle();
+  if (now?.credit_amount != null && !now.credit_paid_at) {
+    await db.from("commission_entries").delete().eq("partner_id", id).eq("kind", "credit_due");
+  }
+  const { error } = await db
     .from("profiles")
-    .update({ activated_at: null, activation_amount: null, activation_note: null })
+    .update({ activated_at: null, activation_amount: null, activation_note: null, credit_amount: null, credit_paid_at: null })
     .eq("id", id);
   if (error) return { success: false, error: "Could not deactivate the partner." };
   revalidatePath("/admin", "layout");
+  return { success: true };
+}
+
+// The partner cannot pay the joining amount now: activate the account on credit. The joining
+// amount becomes a debt (the balance starts below zero) and what the partner earns pays it off.
+// Until it is paid off there is no partnership bonus, and the referrer's bonus waits too.
+export async function activatePartnerOnCredit(id, note) {
+  await requireAdmin();
+  if (!/^[0-9a-f-]{36}$/i.test(String(id))) return { success: false, error: "Partner not found." };
+  const db = createAdminClient();
+  const fee = (await getPayment()).amount;
+  if (!(fee > 0)) return { success: false, error: "Set the joining amount on the Payment Details page first." };
+
+  const { data: p } = await db.from("profiles").select("activated_at").eq("id", id).maybeSingle();
+  if (!p) return { success: false, error: "Partner not found." };
+  if (p.activated_at) return { success: false, error: "This partner is already activated." };
+
+  const { error } = await db
+    .from("profiles")
+    .update({
+      activated_at: new Date().toISOString(),
+      activation_amount: null,
+      activation_note: String(note ?? "").trim().slice(0, 200) || "On credit",
+      credit_amount: fee,
+      credit_paid_at: null,
+    })
+    .eq("id", id);
+  if (error) return { success: false, error: "Could not activate the partner." };
+
+  const { error: entryError } = await db.from("commission_entries").insert({
+    partner_id: id,
+    kind: "credit_due",
+    points: -fee,
+    note: "Joining amount on credit",
+  });
+  if (entryError) {
+    console.error("credit entry:", entryError.message);
+    await db.from("profiles").update({ activated_at: null, activation_note: null, credit_amount: null }).eq("id", id);
+    return { success: false, error: "Could not put the joining amount on credit." };
+  }
+
+  await db.rpc("sync_ranks", { p: id });
+  revalidatePath("/admin", "layout");
+  revalidatePath("/dashboard", "layout");
+  return { success: true };
+}
+
+// The partner paid what is still owed from the credit (cash, UPI...): the debt is closed.
+export async function markCreditPaid(id, note) {
+  await requireAdmin();
+  if (!/^[0-9a-f-]{36}$/i.test(String(id))) return { success: false, error: "Partner not found." };
+  const db = createAdminClient();
+  const { data: p } = await db.from("profiles").select("credit_amount, credit_paid_at").eq("id", id).maybeSingle();
+  if (!p || p.credit_amount == null) return { success: false, error: "This partner is not on credit." };
+  if (p.credit_paid_at) return { success: false, error: "The credit was already marked as paid." };
+
+  // Only what is still owed: earnings may have paid a part of it already.
+  const owed = Number((await db.rpc("credit_owed", { p: id })).data ?? 0);
+  if (owed > 0) {
+    const { error } = await db.from("commission_entries").insert({
+      partner_id: id,
+      kind: "credit_paid",
+      points: owed,
+      note: "Joining amount paid",
+    });
+    if (error) return { success: false, error: "Could not save the payment." };
+  }
+  const text = String(note ?? "").trim().slice(0, 150);
+  const { error } = await db
+    .from("profiles")
+    .update({
+      credit_paid_at: new Date().toISOString(),
+      activation_amount: p.credit_amount,
+      activation_note: text ? "Credit paid · " + text : "Credit paid",
+    })
+    .eq("id", id);
+  if (error) return { success: false, error: "Could not update the partner." };
+
+  await db.rpc("pay_referral_bonus", { p_referee: id });
+  revalidatePath("/admin", "layout");
+  revalidatePath("/dashboard", "layout");
   return { success: true };
 }
 
@@ -120,11 +222,14 @@ export async function getPartnerDetail(id) {
   const { data: profile } = await db
     .from("profiles")
     .select(
-      "id, full_name, email, phone, role, is_active, created_at, activated_at, activation_amount, activation_note, avatar_url, dob, address_line, city, state, pincode, aadhaar_last4, father_name, nominee_name, referral_code, referred_by, bank_holder, bank_name, bank_branch, bank_ifsc, bank_account_last4, upi_id, bank_updated_at",
+      "id, full_name, email, phone, role, is_active, created_at, activated_at, activation_amount, activation_note, credit_amount, credit_paid_at, avatar_url, dob, address_line, city, state, pincode, aadhaar_last4, father_name, nominee_name, referral_code, referred_by, bank_holder, bank_name, bank_branch, bank_ifsc, bank_account_last4, upi_id, bank_updated_at",
     )
     .eq("id", id)
     .maybeSingle();
   if (!profile) return null;
+  if (profile.credit_amount != null && !profile.credit_paid_at) {
+    profile.credit_owed = Number((await db.rpc("credit_owed", { p: id })).data ?? 0);
+  }
 
   const { data: authData } = await db.auth.admin.getUserById(id);
 

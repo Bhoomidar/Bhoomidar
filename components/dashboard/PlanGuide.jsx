@@ -71,9 +71,9 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
   return (
     <div className="space-y-6">
       <div className="rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-5 text-ink shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-copper">Your partner plan</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-copper">Your partner plan</p>
         <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">How you earn at Bhoomidar</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/65">
+        <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink/65">
           Every rule of the plan in one place, with an example and where you stand today. 1 point = ₹1.
         </p>
         <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -88,14 +88,14 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
               key={n}
               className="group relative flex flex-col rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-md max-sm:last:flex-row max-sm:last:items-center max-sm:last:gap-3.5 last:col-span-2 sm:last:col-span-1"
             >
-              <span className="absolute right-3 top-2.5 text-xs font-bold text-ink/20 max-sm:group-last:top-1/2 max-sm:group-last:-translate-y-1/2">
+              <span className="absolute right-3 top-2.5 text-[13px] font-bold text-ink/20 max-sm:group-last:top-1/2 max-sm:group-last:-translate-y-1/2">
                 {n}
               </span>
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ${TONES[tone].chip}`}>
                 <Icon className="h-5 w-5" />
               </span>
               <span className="mt-3 block min-w-0 max-sm:group-last:mt-0">
-                <span className="block text-xs font-medium text-ink/60">{name}</span>
+                <span className="block text-[13px] font-medium text-ink/60">{name}</span>
                 <span className="mt-0.5 block text-xl font-extrabold leading-tight tabular-nums text-ink">{value}</span>
               </span>
             </li>
@@ -110,7 +110,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
           <Fact label="ID activation" value={inr(c.fee)} note="one time" />
           <Fact label="Your ID" value="Active" note={activatedOn ? `since ${activatedOn}` : ""} good />
         </ul>
-        <p className="text-sm text-ink/65">You start earning once your ID is activated.</p>
+        <p className="text-[15px] text-ink/65">You start earning once your ID is activated.</p>
       </Section>
 
       {/* 1: Partnership bonus */}
@@ -134,13 +134,13 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         <You tone="orange">
           {cap > 0 ? (
             <>
-              <p className="text-sm text-ink/75">
+              <p className="text-[15px] text-ink/75">
                 You have got <b className="text-ink">{inr(c.partnership.got)}</b> of {inr(cap)}.
               </p>
               <Bar tone="orange" pct={(c.partnership.got / cap) * 100} />
             </>
           ) : (
-            <p className="text-sm text-ink/75">
+            <p className="text-[15px] text-ink/75">
               You have got <b className="text-ink">{inr(c.partnership.got)}</b> so far.
             </p>
           )}
@@ -158,7 +158,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         />
 
         <div className="overflow-hidden rounded-2xl ring-1 ring-black/10">
-          <div className="hidden grid-cols-[2.25rem_1.5fr_1.2fr_0.7fr_0.9fr] gap-3 bg-[#fbf3e8] px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-copper-dark sm:grid">
+          <div className="hidden grid-cols-[2.25rem_1.5fr_1.2fr_0.7fr_0.9fr] gap-3 bg-[#fbf3e8] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-copper-dark sm:grid">
             <span>#</span>
             <span>Rank</span>
             <span>Team land (sq. yd)</span>
@@ -179,22 +179,22 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
                   }`}
                 >
                   <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold ${
                       r.no <= myNo ? "bg-gradient-to-b from-emerald-400 to-emerald-600 text-white" : "bg-[#ece5dc] text-ink/50"
                     }`}
                   >
                     {r.no < myNo ? <Check className="h-4 w-4" strokeWidth={3} /> : r.no}
                   </span>
                   <span className="min-w-0 leading-tight">
-                    <span className="block [overflow-wrap:anywhere] text-sm font-bold text-ink">{r.title}</span>
-                    {me && <span className="mt-0.5 block text-[11px] font-bold text-emerald-700">You are here</span>}
-                    <span className="mt-0.5 block text-[11px] text-ink/55 sm:hidden">
+                    <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">{r.title}</span>
+                    {me && <span className="mt-0.5 block text-xs font-bold text-emerald-700">You are here</span>}
+                    <span className="mt-0.5 block text-xs text-ink/55 sm:hidden">
                       {area} sq. yd · team {diff}
                     </span>
                   </span>
-                  <span className="hidden text-sm tabular-nums text-ink/70 sm:block">{area}</span>
-                  <span className="text-right text-base font-extrabold tabular-nums text-emerald-700">{pctText(r.rate)}%</span>
-                  <span className="hidden text-right text-sm tabular-nums text-ink/70 sm:block">{diff}</span>
+                  <span className="hidden text-[15px] tabular-nums text-ink/70 sm:block">{area}</span>
+                  <span className="text-right text-[17px] font-extrabold tabular-nums text-emerald-700">{pctText(r.rate)}%</span>
+                  <span className="hidden text-right text-[15px] tabular-nums text-ink/70 sm:block">{diff}</span>
                 </li>
               );
             })}
@@ -213,33 +213,33 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         </Example>
 
         <div>
-          <p className="text-sm font-bold text-ink">Closing dates: when the sales bonus is added</p>
+          <p className="text-[15px] font-bold text-ink">Closing dates: when the sales bonus is added</p>
           <ul className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
             {periods.map((p) => (
               <li key={p.sales} className="rounded-xl bg-[#fbf7f0] px-3.5 py-3 ring-1 ring-black/5">
-                <span className="block text-[11px] text-ink/55">Sales of the {p.sales}</span>
-                <span className="mt-0.5 block text-sm font-bold text-ink">
+                <span className="block text-xs text-ink/55">Sales of the {p.sales}</span>
+                <span className="mt-0.5 block text-[15px] font-bold text-ink">
                   Added on the {p.on}, {hour}
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-ink/55">Until then the points show under Coming up on the Overview tab.</p>
+          <p className="mt-2 text-[13px] text-ink/55">Until then the points show under Coming up on the Overview tab.</p>
         </div>
 
         <You tone="emerald">
-          <p className="text-sm text-ink/75">
+          <p className="text-[15px] text-ink/75">
             You are <b className="text-ink">{c.rank?.title}</b> and earn <b className="text-ink">{pctText(myRate)}%</b> on your own sales.
           </p>
           {c.next ? (
             <>
               <Bar tone="emerald" pct={c.progress} />
-              <p className="mt-1.5 text-xs text-ink/60">
+              <p className="mt-1.5 text-[13px] text-ink/60">
                 {fmtArea(c.teamArea)} of {fmtArea(c.next.minArea)} sq. yd: {fmtArea(c.areaToNext)} more to become {c.next.title} ({pctText(c.next.rate)}%).
               </p>
             </>
           ) : (
-            <p className="mt-1 text-xs text-ink/60">You are at the top rank.</p>
+            <p className="mt-1 text-[13px] text-ink/60">You are at the top rank.</p>
           )}
         </You>
       </Section>
@@ -262,13 +262,13 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         </Example>
 
         <div>
-          <p className="text-sm font-bold text-ink">How a level opens (whichever way opens more)</p>
+          <p className="text-[15px] font-bold text-ink">How a level opens (whichever way opens more)</p>
           <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="rounded-2xl bg-[#f6f1ff] p-4 ring-1 ring-violet-200/70">
-              <p className="text-xs font-bold uppercase tracking-wider text-violet-800">Way 1: your own sales</p>
+              <p className="text-[13px] font-bold uppercase tracking-wider text-violet-800">Way 1: your own sales</p>
               <ul className="mt-2.5 space-y-1.5">
                 {areaSteps.map((s) => (
-                  <li key={s.area} className="flex flex-wrap items-center justify-between gap-x-3 text-sm">
+                  <li key={s.area} className="flex flex-wrap items-center justify-between gap-x-3 text-[15px]">
                     <span className="text-ink/75">{fmtArea(s.area)} sq. yd sold</span>
                     <b className="text-ink">{s.upTo === 1 ? "Level 1" : `Levels 1 – ${s.upTo}`} open</b>
                   </li>
@@ -276,13 +276,13 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
               </ul>
             </div>
             <div className="rounded-2xl bg-[#f6f1ff] p-4 ring-1 ring-violet-200/70">
-              <p className="text-xs font-bold uppercase tracking-wider text-violet-800">Way 2: your direct partners</p>
-              <p className="mt-1 text-xs text-ink/55">Partners you added yourself, with an active ID.</p>
+              <p className="text-[13px] font-bold uppercase tracking-wider text-violet-800">Way 2: your direct partners</p>
+              <p className="mt-1 text-[13px] text-ink/55">Partners you added yourself, with an active ID.</p>
               <ul className="mt-2.5 grid grid-cols-4 gap-2">
                 {Array.from({ length: rules.levels }, (_, i) => (
                   <li key={i} className="rounded-xl bg-white px-2 py-2 text-center ring-1 ring-violet-200/70">
-                    <span className="block text-base font-extrabold text-violet-700">{i + 1}</span>
-                    <span className="block text-[10px] leading-tight text-ink/55">
+                    <span className="block text-[17px] font-extrabold text-violet-700">{i + 1}</span>
+                    <span className="block text-[11px] leading-tight text-ink/55">
                       direct{i ? "s" : ""} = {i + 1} level{i ? "s" : ""}
                     </span>
                   </li>
@@ -290,7 +290,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
               </ul>
             </div>
           </div>
-          <p className="mt-2 text-xs text-ink/55">The levels are checked when a sale is recorded. A level opened later pays on the new sales.</p>
+          <p className="mt-2 text-[13px] text-ink/55">The levels are checked when a sale is recorded. A level opened later pays on the new sales.</p>
         </div>
 
         <When>
@@ -298,7 +298,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         </When>
 
         <You tone="violet">
-          <p className="text-sm text-ink/75">
+          <p className="text-[15px] text-ink/75">
             Your own sales: <b className="text-ink">{fmtArea(c.levels.selfArea)} sq. yd</b> · Direct partners:{" "}
             <b className="text-ink">{c.levels.directs}</b> · Levels open: <b className="text-ink">{c.levels.open} of {c.levels.max}</b>
           </p>
@@ -309,7 +309,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
                 <li
                   key={i}
                   title={open ? `Level ${i + 1} is open` : `Level ${i + 1} is not open yet`}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold ${
                     open ? "bg-gradient-to-b from-violet-400 to-violet-600 text-white" : "bg-[#ece5dc] text-ink/45"
                   }`}
                 >
@@ -318,14 +318,14 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
               );
             })}
           </ul>
-          <p className="mt-2 text-xs text-ink/60">
+          <p className="mt-2 text-[13px] text-ink/60">
             {c.levels.hint.target
               ? `To open level ${c.levels.hint.target}: sell ${fmtArea(c.levels.hint.moreArea)} more sq. yd yourself, or add ${c.levels.hint.moreDirects} more direct partner${
                   c.levels.hint.moreDirects === 1 ? "" : "s"
                 }.`
               : "Every level is open. You are paid on your whole team."}
           </p>
-          <p className="mt-2 text-xs text-ink/60">
+          <p className="mt-2 text-[13px] text-ink/60">
             Monthly bonus so far: <b className="text-ink">{inr(monthly.done)}</b>
             {monthly.next > 0 && monthly.nextAt && (
               <>
@@ -364,15 +364,15 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
                   <RewardPic image={r.image} icon={r.icon} alt={r.reward} iconClassName="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1 basis-40 leading-tight">
-                  <span className="block [overflow-wrap:anywhere] text-sm font-bold text-ink">
+                  <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink">
                     {r.reward}
                     {r.rewardValue > 0 && <span className="font-semibold text-ink/50"> · {inr(r.rewardValue)}</span>}
                   </span>
-                  <span className="mt-0.5 block [overflow-wrap:anywhere] text-xs text-ink/55">
+                  <span className="mt-0.5 block [overflow-wrap:anywhere] text-[13px] text-ink/55">
                     {r.title} · {fmtArea(r.minArea)} sq. yd
                   </span>
                 </span>
-                <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>
+                <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${status.cls}`}>
                   <Icon className="h-3.5 w-3.5" />
                   {status.text}
                 </span>
@@ -382,7 +382,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         </ul>
 
         <div>
-          <p className="text-sm font-bold text-ink">The 50:50 condition, with examples</p>
+          <p className="text-[15px] font-bold text-ink">The 50:50 condition, with examples</p>
           <div className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-3">
             <LegsExample reward={findReward(500, "Smart Watch")} need={500} legs={[250, 100, 150]} half={half} />
             <LegsExample reward={findReward(1000, "Smart Phone")} need={1000} legs={[900, 200, 200, 100]} half={half} />
@@ -391,7 +391,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         </div>
 
         <You tone="amber">
-          <p className="text-sm text-ink/75">
+          <p className="text-[15px] text-ink/75">
             Your power leg and weaker legs, for every reward you have reached, are on the{" "}
             <a href="#rank" className="font-bold text-copper-dark underline underline-offset-2">
               Rank &amp; rewards
@@ -414,10 +414,10 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
         </When>
         <You tone="amber">
           {ctoOn ? (
-            <p className="text-sm font-semibold text-emerald-700">You share the C.T.O. bonus every month.</p>
+            <p className="text-[15px] font-semibold text-emerald-700">You share the C.T.O. bonus every month.</p>
           ) : (
             <>
-              <p className="text-sm text-ink/75">
+              <p className="text-[15px] text-ink/75">
                 Opens at <b className="text-ink">{ctoRank?.title}</b> ({fmtArea(ctoRank?.minArea ?? 0)} sq. yd of team land). You have{" "}
                 <b className="text-ink">{fmtArea(c.teamArea)} sq. yd</b>.
               </p>
@@ -439,7 +439,7 @@ function Section({ tone, icon: Icon, kicker, title, big, children }) {
           <Icon className="h-6 w-6" />
         </span>
         <div className="min-w-0 flex-1 basis-40 leading-tight">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/50">{kicker}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/50">{kicker}</p>
           <h3 className="mt-0.5 font-display text-2xl font-bold text-ink sm:text-[1.7rem]">{title}</h3>
         </div>
         {big && <span className={`shrink-0 rounded-2xl px-4 py-2 text-lg font-extrabold tabular-nums ring-1 sm:text-xl ${t.big}`}>{big}</span>}
@@ -453,7 +453,7 @@ function Rules({ items }) {
   return (
     <ul className="space-y-2">
       {items.map((text) => (
-        <li key={text} className="flex items-start gap-2.5 text-sm leading-relaxed text-ink/75">
+        <li key={text} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-ink/75">
           <Check className="mt-0.5 h-4 w-4 shrink-0 text-copper" strokeWidth={3} />
           <span>{text}</span>
         </li>
@@ -465,15 +465,15 @@ function Rules({ items }) {
 function Example({ children }) {
   return (
     <div className="rounded-2xl bg-[#fbf7f0] px-4 py-3.5 ring-1 ring-black/5">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-ink/45">Example</p>
-      <p className="mt-1.5 text-sm leading-relaxed text-ink/80">{children}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-ink/45">Example</p>
+      <p className="mt-1.5 text-[15px] leading-relaxed text-ink/80">{children}</p>
     </div>
   );
 }
 
 function When({ children }) {
   return (
-    <p className="flex w-fit max-w-full items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs font-semibold leading-snug text-amber-800 ring-1 ring-amber-200">
+    <p className="flex w-fit max-w-full items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[13px] font-semibold leading-snug text-amber-800 ring-1 ring-amber-200">
       <Clock className="mt-px h-3.5 w-3.5 shrink-0" />
       <span>{children}</span>
     </p>
@@ -489,7 +489,7 @@ function You({ tone, children }) {
   }[tone];
   return (
     <div className={`rounded-2xl bg-gradient-to-br to-white p-4 ring-1 ${ring}`}>
-      <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-ink/45">Where you stand</p>
+      <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-ink/45">Where you stand</p>
       {children}
     </div>
   );
@@ -506,9 +506,9 @@ function Bar({ tone, pct }) {
 function Fact({ label, value, note, good }) {
   return (
     <li className="rounded-2xl bg-[#fbf7f0] px-4 py-3 ring-1 ring-black/5">
-      <span className="block text-[11px] text-ink/55">{label}</span>
+      <span className="block text-xs text-ink/55">{label}</span>
       <span className={`mt-0.5 block text-lg font-extrabold ${good ? "text-emerald-700" : "text-ink"}`}>{value}</span>
-      {note && <span className="block text-[11px] text-ink/50">{note}</span>}
+      {note && <span className="block text-xs text-ink/50">{note}</span>}
     </li>
   );
 }
@@ -520,11 +520,11 @@ function LegsExample({ reward, need, legs, half }) {
   const weaker = legs.reduce((t, v, i) => (i === at ? t : t + v), 0);
   return (
     <div className="rounded-2xl bg-[#fbf7f0] p-4 ring-1 ring-black/5">
-      <p className="text-sm font-bold text-ink">
+      <p className="text-[15px] font-bold text-ink">
         {reward}: {fmtArea(need)} sq. yd needed
       </p>
       <div className="mt-3 flex flex-col items-center">
-        <span className="rounded-full bg-ink px-4 py-1 text-xs font-bold text-white">You</span>
+        <span className="rounded-full bg-ink px-4 py-1 text-[13px] font-bold text-white">You</span>
         <span className="h-3 w-px bg-ink/25" />
         <ul className="flex flex-wrap justify-center gap-1.5">
           {legs.map((v, i) => (
@@ -534,8 +534,8 @@ function LegsExample({ reward, need, legs, half }) {
                 i === at ? "bg-copper/10 ring-copper/40" : "bg-violet-50 ring-violet-200"
               }`}
             >
-              <span className="block text-sm font-extrabold tabular-nums text-ink">{fmtArea(v)}</span>
-              <span className={`block text-[10px] font-semibold ${i === at ? "text-copper-dark" : "text-violet-700"}`}>
+              <span className="block text-[15px] font-extrabold tabular-nums text-ink">{fmtArea(v)}</span>
+              <span className={`block text-[11px] font-semibold ${i === at ? "text-copper-dark" : "text-violet-700"}`}>
                 {i === at ? "Power" : "Weaker"}
               </span>
             </li>

@@ -470,6 +470,14 @@ function BonusRulesCard({ initial, rankNames }) {
       </Group>
 
       <Group
+        title="Referral"
+        accent="bonus"
+        note="When a partner is activated, the partner who referred them gets this percentage of the joining amount. If the new partner was activated on credit, it is given once the credit is paid off."
+      >
+        <Num label="Share of the joining amount" value={v.referralPct} onChange={set("referralPct")} unit="%" help="10 % of ₹10,000 is ₹1,000" />
+      </Group>
+
+      <Group
         title="Partnership"
         accent="bonus"
         note="A percentage of the company's sales of a month, shared equally by all active partners. You share it from Points & Payouts once the month is over."

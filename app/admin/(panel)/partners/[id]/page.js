@@ -225,6 +225,7 @@ export default async function PartnerPage({ params }) {
   const direct = team.filter((n) => n.level === 1).length;
   const paidInTeam = team.filter((n) => statusOf(n) === "paid").length;
   const paid = !!p.activated_at;
+  const onCredit = paid && p.credit_amount != null && !p.credit_paid_at;
   const joined = shortDay(signedUpAt ?? p.created_at);
 
   const stats = [
@@ -275,10 +276,10 @@ export default async function PartnerPage({ params }) {
       {/* Banner: avatar, name, status, the controls and the referral code */}
       <div className="fade-up relative overflow-hidden rounded-3xl bg-gradient-to-r from-white via-[#fff7ec] to-[#fbeedd] shadow-[0_28px_60px_-30px_rgba(110,60,20,0.5)] ring-1 ring-black/5">
         <div
-          className="pointer-events-none absolute right-0 top-0 hidden h-full w-[58%] lg:block"
+          className="pointer-events-none absolute right-0 top-0 hidden h-full w-[40%] lg:block xl:w-[46%]"
           style={{
-            maskImage: "linear-gradient(to right, transparent, #000 48%)",
-            WebkitMaskImage: "linear-gradient(to right, transparent, #000 48%)",
+            maskImage: "linear-gradient(to right, transparent, transparent 22%, #000 66%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent, transparent 22%, #000 66%)",
           }}
           aria-hidden
         >
@@ -319,13 +320,15 @@ export default async function PartnerPage({ params }) {
                 </span>
                 <span
                   className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] ring-1 ${
-                    paid
-                      ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
-                      : "bg-amber-50 text-amber-800 ring-amber-200"
+                    onCredit
+                      ? "bg-rose-50 text-rose-800 ring-rose-200"
+                      : paid
+                        ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                        : "bg-amber-50 text-amber-800 ring-amber-200"
                   }`}
                 >
                   {paid ? <Check className="h-3 w-3" strokeWidth={3} /> : <Clock className="h-3 w-3" />}
-                  {paid ? `Paid ${paidText}` : "Payment pending"}
+                  {onCredit ? `On credit ${formatRupees(p.credit_owed ?? p.credit_amount)} due` : paid ? `Paid ${paidText}` : "Payment pending"}
                 </span>
                 {p.role === "admin" && (
                   <span className="rounded-full bg-copper/15 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-copper-dark ring-1 ring-copper/25">
@@ -337,7 +340,7 @@ export default async function PartnerPage({ params }) {
               <h1 className="mt-3 break-words font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
                 {name}
               </h1>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink/60">
+              <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[15px] font-medium text-ink/75">
                 <span className="inline-flex items-center gap-2">
                   <span className="h-4 w-0.5 rounded-full bg-copper/40" />
                   Member since {joined}
@@ -363,6 +366,9 @@ export default async function PartnerPage({ params }) {
                     email: p.email,
                     is_active: p.is_active,
                     activated_at: p.activated_at,
+                    credit_amount: p.credit_amount,
+                    credit_paid_at: p.credit_paid_at,
+                    credit_owed: p.credit_owed,
                   }}
                 />
               </div>
@@ -434,7 +440,7 @@ export default async function PartnerPage({ params }) {
                   state={paid ? "done" : "now"}
                   icon={Wallet}
                   title={`${paid ? paidText : feeText} payment`}
-                  note={paid ? "Received" : "Waiting"}
+                  note={onCredit ? `On credit · ${formatRupees(p.credit_owed ?? p.credit_amount)} due` : paid ? "Received" : "Waiting"}
                 />
                 <Line fill={paid ? "full" : "none"} />
                 <Step
@@ -556,8 +562,8 @@ export default async function PartnerPage({ params }) {
             <Row icon={Wallet} label="Joining payment">
               {paid ? (
                 <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
-                    Paid {paidText}
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${onCredit ? "bg-rose-100 text-rose-800 ring-rose-200" : "bg-emerald-100 text-emerald-800 ring-emerald-200"}`}>
+                    {onCredit ? `On credit · ${formatRupees(p.credit_owed ?? p.credit_amount)} due` : `Paid ${paidText}`}
                   </span>
                   {day(p.activated_at)}
                 </span>
