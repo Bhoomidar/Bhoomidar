@@ -440,7 +440,7 @@ export default async function PartnerPage({ params }) {
                   state={paid ? "done" : "now"}
                   icon={Wallet}
                   title={`${paid ? paidText : feeText} payment`}
-                  note={onCredit ? `On credit · ${formatRupees(p.credit_owed ?? p.credit_amount)} due` : paid ? "Received" : "Waiting"}
+                  note={onCredit ? `On credit · ${formatRupees(p.credit_owed ?? p.credit_amount)} due${p.activation_amount > 0 ? ` (${formatRupees(p.activation_amount)} paid)` : ""}` : paid ? "Received" : "Waiting"}
                 />
                 <Line fill={paid ? "full" : "none"} />
                 <Step

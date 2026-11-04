@@ -409,9 +409,6 @@ export default async function ProfilePage() {
               <InfoRow icon={MapPin} label="Address" action={!partner.address && <AddLink />}>
                 {partner.address || <span className="font-medium text-ink/45">Not added</span>}
               </InfoRow>
-              <InfoRow icon={UserPlus} label="Referred by">
-                {referrer ? referrer.name : "Direct signup"}
-              </InfoRow>
               <InfoRow icon={BadgeCheck} label="Member since">
                 {partner.joined}
               </InfoRow>

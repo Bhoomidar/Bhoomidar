@@ -233,7 +233,16 @@ export default async function CommissionPage() {
         <p className="flex items-start gap-3 rounded-2xl bg-rose-50 px-4 py-3.5 text-[15px] font-medium leading-snug text-rose-900 ring-1 ring-rose-200">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
           <span>
-            Your joining amount was left on credit. <b>₹{fmtPoints(c.credit.owed)}</b> is still to be cleared. Everything you earn pays it off first.
+            {c.credit.deposit > 0 ? (
+              <>
+                You paid ₹{fmtPoints(c.credit.deposit)} of your joining amount and the rest was left on credit. <b>₹{fmtPoints(c.credit.owed)}</b> is still to be cleared.
+              </>
+            ) : (
+              <>
+                Your joining amount was left on credit. <b>₹{fmtPoints(c.credit.owed)}</b> is still to be cleared.
+              </>
+            )}{" "}
+            Everything you earn pays it off first.
             Until it is cleared you get no Partnership bonus and cannot redeem points.
           </span>
         </p>

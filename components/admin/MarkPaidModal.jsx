@@ -27,19 +27,26 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
   const [mode, setMode] = useState("UPI");
   const [reference, setReference] = useState("");
   const [amount, setAmount] = useState(String(fee ?? ""));
+  const [deposit, setDeposit] = useState(""); // credit: what the partner pays now (empty = nothing)
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
   const name = partner.full_name || partner.email;
   const typed = Number(amount);
   const differs = typed > 0 && Number(fee) > 0 && typed !== Number(fee);
+  // credit: the part paid now, and what stays on credit
+  const paidNow = Math.max(0, Math.round(Number(deposit) || 0));
+  const left = Number(fee) - paidNow;
+  const depositBad = paidNow >= Number(fee) && Number(fee) > 0;
 
   const submit = (e) => {
     e.preventDefault();
     setError("");
     start(async () => {
       const note = reference.trim() ? `${mode} · ${reference.trim()}` : mode;
-      const res = credit ? await activatePartnerOnCredit(partner.id, reference.trim()) : await activatePartner(partner.id, note, amount);
+      // with a deposit, the note says how it was paid
+      const creditNote = paidNow > 0 ? note : reference.trim();
+      const res = credit ? await activatePartnerOnCredit(partner.id, creditNote, deposit) : await activatePartner(partner.id, note, amount);
       if (!res.success) return setError(res.error);
       onDone();
     });
@@ -109,9 +116,40 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
           <div className="flex items-start gap-2.5 rounded-xl bg-rose-50 px-3.5 py-2.5 text-[13px] leading-snug text-rose-900 ring-1 ring-rose-200">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
             <span>
-              The account is activated now, but its balance starts at <b>−{ACTIVATION_FEE_TEXT}</b>. Everything the partner earns fills this up first.
+              The account is activated now, but its balance starts at <b>−{formatRupees(left > 0 ? left : 0)}</b>. Everything the partner earns fills this up first.
               Until the balance is back to zero there is no Partnership bonus, no payout, and the referrer&apos;s bonus waits.
             </span>
+          </div>
+        )}
+
+        {/* Credit: how much the partner deposits now */}
+        {credit && (
+          <div>
+            <label className={labelCls} htmlFor="credit-deposit">
+              Deposit now <span className="font-normal text-ink/45">(optional, leave empty if nothing is paid)</span>
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-copper">₹</span>
+              <input
+                id="credit-deposit"
+                value={deposit}
+                onChange={(e) => setDeposit(e.target.value.replace(/[^0-9]/g, ""))}
+                inputMode="numeric"
+                placeholder="0"
+                className={`${inputCls} !py-2.5 !pl-9 text-base font-bold tabular-nums`}
+              />
+            </div>
+            <p className={`mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-semibold ${depositBad ? "text-rose-700" : "text-ink/65"}`}>
+              {depositBad ? (
+                <span>The deposit must be less than {ACTIVATION_FEE_TEXT}. For the full amount use Payment received.</span>
+              ) : (
+                <>
+                  <span>Joining amount {ACTIVATION_FEE_TEXT}</span>
+                  <span>− deposit {formatRupees(paidNow)}</span>
+                  <span className="text-rose-700">= credit {formatRupees(left)}</span>
+                </>
+              )}
+            </p>
           </div>
         )}
 
@@ -155,8 +193,8 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
         )}
 
         {/* How it was paid */}
-        <div hidden={credit}>
-          <p className={labelCls}>How was it paid?</p>
+        <div hidden={credit && !(paidNow > 0)}>
+          <p className={labelCls}>{credit ? "How was the deposit paid?" : "How was it paid?"}</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {PAY_MODES.map(({ name: m, icon: Icon }) => (
               <button
@@ -197,8 +235,8 @@ export default function MarkPaidModal({ partner, fee, onClose, onDone }) {
           <button type="button" onClick={onClose} className={`${btnGhost} sm:min-w-28`}>
             Cancel
           </button>
-          <button type="submit" disabled={pending} className={`${btnPrimary} py-2.5 sm:min-w-56`}>
-            {pending ? "Saving..." : credit ? `Activate on credit (−${ACTIVATION_FEE_TEXT})` : `Mark ${typed > 0 ? formatRupees(typed) : ACTIVATION_FEE_TEXT} as paid`}
+          <button type="submit" disabled={pending || (credit && depositBad)} className={`${btnPrimary} py-2.5 sm:min-w-56`}>
+            {pending ? "Saving..." : credit ? `Activate on credit (−${formatRupees(left > 0 ? left : 0)})` : `Mark ${typed > 0 ? formatRupees(typed) : ACTIVATION_FEE_TEXT} as paid`}
           </button>
         </div>
       </form>
