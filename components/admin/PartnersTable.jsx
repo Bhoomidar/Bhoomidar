@@ -246,7 +246,7 @@ export default function PartnersTable({ partners, fee }) {
         </span>
         <p className="mt-2 max-w-[220px] break-words text-xs leading-snug text-ink/55">{date(p.activated_at)}</p>
         <a href={`/admin/partners/${p.id}`} className="mt-1 inline-block text-xs font-medium text-copper underline underline-offset-2 transition hover:text-copper-dark">
-          Open to mark credit paid
+          Open to receive payment
         </a>
       </div>
     ) : p.activated_at ? (

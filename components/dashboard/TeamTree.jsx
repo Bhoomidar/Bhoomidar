@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   CalendarDays,
@@ -178,7 +179,7 @@ function Details({ p, tree, onClose, onFull }) {
   const direct = tree.children.get(p.id)?.length ?? 0;
   const team = tree.total.get(p.id) ?? 0;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm sm:items-center">
       <div className="absolute inset-0" onClick={onClose} aria-hidden />
       <div className="relative my-6 w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
@@ -300,7 +301,8 @@ function Details({ p, tree, onClose, onFull }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

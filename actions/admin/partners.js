@@ -84,10 +84,11 @@ export async function activatePartner(id, note, amount) {
 export async function deactivatePartner(id) {
   await requireAdmin();
   const db = createAdminClient();
-  // On credit and not paid yet: the debt goes away together with the activation.
+  // On credit and not paid yet: the debt goes away together with the activation, and so do the part payments
+  // taken against it (otherwise they would stay behind and count against the next credit).
   const { data: now } = await db.from("profiles").select("credit_amount, credit_paid_at").eq("id", id).maybeSingle();
   if (now?.credit_amount != null && !now.credit_paid_at) {
-    await db.from("commission_entries").delete().eq("partner_id", id).eq("kind", "credit_due");
+    await db.from("commission_entries").delete().eq("partner_id", id).in("kind", ["credit_due", "credit_paid"]);
   }
   const { error } = await db
     .from("profiles")
@@ -152,42 +153,53 @@ export async function activatePartnerOnCredit(id, note, deposit) {
   return { success: true };
 }
 
-// The partner paid what is still owed from the credit (cash, UPI...): the debt is closed.
-export async function markCreditPaid(id, note) {
+// The partner pays back some (or all) of the credit in cash, UPI...: amount in rupees, empty = all that is left.
+// A part payment leaves the rest on credit (earnings pay it off, or another payment is taken later).
+// When nothing is left, the credit is closed and the referrer's bonus is given.
+export async function receiveCreditPayment(id, amount, note) {
   await requireAdmin();
   if (!/^[0-9a-f-]{36}$/i.test(String(id))) return { success: false, error: "Partner not found." };
   const db = createAdminClient();
   const { data: p } = await db.from("profiles").select("credit_amount, credit_paid_at, activation_amount").eq("id", id).maybeSingle();
   if (!p || p.credit_amount == null) return { success: false, error: "This partner is not on credit." };
-  if (p.credit_paid_at) return { success: false, error: "The credit was already marked as paid." };
+  if (p.credit_paid_at) return { success: false, error: "The credit was already paid." };
 
-  // Only what is still owed: earnings may have paid a part of it already.
   const owed = Number((await db.rpc("credit_owed", { p: id })).data ?? 0);
+  const typed = String(amount ?? "").replace(/[^0-9.]/g, "");
+  const pay = typed === "" ? owed : Math.round(Number(typed));
   if (owed > 0) {
+    if (!Number.isFinite(pay) || pay <= 0) return { success: false, error: "Enter the amount in rupees, numbers only." };
+    if (pay > owed) return { success: false, error: `This is more than what is due (${formatRupees(owed)}).` };
+    const text = String(note ?? "").trim().slice(0, 150);
+    const full = pay >= owed;
     const { error } = await db.from("commission_entries").insert({
       partner_id: id,
       kind: "credit_paid",
-      points: owed,
-      note: "Joining amount paid",
+      points: pay,
+      note: (full ? "Joining amount paid" : "Part payment of the joining amount") + (text ? " · " + text : ""),
     });
     if (error) return { success: false, error: "Could not save the payment." };
+    if (!full) {
+      revalidatePath("/admin", "layout");
+      revalidatePath("/dashboard", "layout");
+      return { success: true, cleared: false, left: owed - pay };
+    }
   }
-  const text = String(note ?? "").trim().slice(0, 150);
+
+  // Nothing is left: close the credit. The whole joining amount is now paid (the deposit plus what was left on credit).
   const { error } = await db
     .from("profiles")
     .update({
       credit_paid_at: new Date().toISOString(),
-      // the whole joining amount: what was deposited at the start plus what was left on credit
       activation_amount: Number(p.activation_amount ?? 0) + Number(p.credit_amount),
-      activation_note: text ? "Credit paid · " + text : "Credit paid",
+      activation_note: "Credit paid",
     })
     .eq("id", id);
   if (error) return { success: false, error: "Could not update the partner." };
-
   await db.rpc("pay_referral_bonus", { p_referee: id });
   revalidatePath("/admin", "layout");
   revalidatePath("/dashboard", "layout");
-  return { success: true };
+  return { success: true, cleared: true, left: 0 };
 }
 
 // The full Aadhaar number, for checking a partner's documents. Only on request,
@@ -241,6 +253,9 @@ export async function getPartnerDetail(id) {
   if (!profile) return null;
   if (profile.credit_amount != null && !profile.credit_paid_at) {
     profile.credit_owed = Number((await db.rpc("credit_owed", { p: id })).data ?? 0);
+    // what was paid in parts after the activation
+    const { data: parts } = await db.from("commission_entries").select("points").eq("partner_id", id).eq("kind", "credit_paid");
+    profile.credit_part_paid = (parts ?? []).reduce((t, r) => t + Number(r.points), 0);
   }
 
   const { data: authData } = await db.auth.admin.getUserById(id);

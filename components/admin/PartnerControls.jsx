@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BadgeCheck, Power, RotateCcw, Wallet } from "lucide-react";
-import { deactivatePartner, markCreditPaid, setPartnerActive } from "@/actions/admin/partners";
+import { deactivatePartner, setPartnerActive } from "@/actions/admin/partners";
 import ConfirmDialog from "../ConfirmDialog";
+import CreditPaymentModal from "./CreditPaymentModal";
 import MarkPaidModal from "./MarkPaidModal";
 
 const base =
@@ -45,7 +46,7 @@ export default function PartnerControls({ partner, fee }) {
             className={`${base} bg-gradient-to-b from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-600/30`}
           >
             <BadgeCheck className="h-4 w-4" />
-            Mark credit as paid
+            Receive payment
           </button>
         )}
         {paid ? (
@@ -87,20 +88,13 @@ export default function PartnerControls({ partner, fee }) {
       {error && <p className="mt-3 text-sm font-medium text-rose-700">{error}</p>}
 
       {ask === "credit" && (
-        <ConfirmDialog
-          tone="warn"
-          icon={BadgeCheck}
-          title="Credit paid?"
-          text={
-            <>
-              <b className="text-ink">{label}</b> has paid the <b className="text-ink">₹{Number(partner.credit_owed ?? partner.credit_amount ?? 0).toLocaleString("en-IN")}</b> that is still due.
-              The balance goes back to zero and the referrer&apos;s bonus is given.
-            </>
-          }
-          confirmText="Yes, it is paid"
-          busy={pending}
-          onConfirm={() => run(() => markCreditPaid(partner.id))}
-          onCancel={() => setAsk(null)}
+        <CreditPaymentModal
+          partner={partner}
+          onClose={() => setAsk(null)}
+          onDone={() => {
+            setAsk(null);
+            router.refresh();
+          }}
         />
       )}
 

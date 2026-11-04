@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 // fullOnPhone: on a phone the popup fills the whole screen (a page of its own), on a bigger screen it is the usual card.
 export default function Modal({ title, subtitle, icon: Icon, size = "md", fullOnPhone = false, compact = false, onClose, children }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -16,7 +20,9 @@ export default function Modal({ title, subtitle, icon: Icon, size = "md", fullOn
     };
   }, [onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       className={`fixed inset-0 z-[60] flex justify-center overflow-y-auto bg-[#140d08]/65 backdrop-blur-sm sm:items-center sm:p-4 ${
         fullOnPhone ? "items-start p-0" : "items-start p-4"
@@ -66,6 +72,7 @@ export default function Modal({ title, subtitle, icon: Icon, size = "md", fullOn
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
