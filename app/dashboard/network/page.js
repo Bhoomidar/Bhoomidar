@@ -1,4 +1,4 @@
-import { ArrowUp, CalendarDays, Check, Clock, MapPin, Network, UserCheck, Users } from "lucide-react";
+import { ArrowUp, Check, Clock, Network, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import AutoRefresh from "@/components/dashboard/AutoRefresh";
 import PendingNotice from "@/components/dashboard/PendingNotice";
@@ -13,7 +13,7 @@ export const metadata = { title: "My Network | Bhoomidar" };
 
 export default async function NetworkPage() {
   const partner = await getCurrentPartner();
-  const { referrer, referrals } = await getNetwork(partner.user.id, partner.referredBy);
+  const { referrals } = await getNetwork(partner.user.id, partner.referredBy);
   const link = partner.referralCode ? await referralLink(partner.referralCode) : "";
   const downline = partner.pending ? [] : await getDownline(partner.user.id);
   // Rank, sold area and points earned for each member of the team.
@@ -123,30 +123,7 @@ export default async function NetworkPage() {
 
           {/* The people you referred */}
           <Reveal>
-            <ReferralsTable nodes={team} rootId={partner.user.id}>
-              <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-black/5 pt-4 text-xs text-ink/50">
-                <UserCheck className="h-4 w-4 text-copper/70" />
-                {referrer ? (
-                  <>
-                    <span>
-                      You joined through <b className="text-ink/70">{referrer.name}</b> ({referrer.code})
-                    </span>
-                    {referrer.place && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {referrer.place}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      Member since {referrer.joined}
-                    </span>
-                  </>
-                ) : (
-                  "You joined directly, without a referral code."
-                )}
-              </p>
-            </ReferralsTable>
+            <ReferralsTable nodes={team} rootId={partner.user.id} />
           </Reveal>
 
           {/* The whole team */}

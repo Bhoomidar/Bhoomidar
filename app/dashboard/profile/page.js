@@ -150,7 +150,7 @@ const Line = ({ fill }) => (
 
 export default async function ProfilePage() {
   const partner = await getCurrentPartner();
-  const { referrer, referrals } = await getNetwork(partner.user.id, partner.referredBy);
+  const { referrals } = await getNetwork(partner.user.id, partner.referredBy);
   const ACTIVATION_FEE_TEXT = (await getPayment()).amountText;
 
   const status = !partner.active
@@ -490,7 +490,6 @@ export default async function ProfilePage() {
           locked={!canShowCode}
           referredCount={partner.pending ? 0 : referrals.length}
           joinedThisMonth={joinedThisMonth}
-          referredBy={referrer ? referrer.name : "Direct signup"}
         />
       </Reveal>
     </div>

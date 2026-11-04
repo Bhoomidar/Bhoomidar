@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUp, ArrowUpRight, Check, Copy, Gift, Link2, Lock, Share2, UserCheck, Users } from "lucide-react";
+import { ArrowUp, Check, Copy, Gift, Link2, Lock, Share2, Users } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { GiftArt } from "@/components/dashboard/StatArt";
 
@@ -62,8 +62,8 @@ export function HeroCodeCard({ code, link }) {
 }
 
 // The "Your referral" strip at the bottom of the profile page: code, link, share
-// buttons and two numbers. `locked` is for a partner who is not activated yet.
-export function ReferralStrip({ code, link, locked, referredCount, joinedThisMonth, referredBy }) {
+// buttons and the number of people referred. `locked` is for a partner who is not activated yet.
+export function ReferralStrip({ code, link, locked, referredCount, joinedThisMonth }) {
   const [copied, copy] = useCopy();
 
   const share = async () => {
@@ -175,7 +175,7 @@ export function ReferralStrip({ code, link, locked, referredCount, joinedThisMon
           )}
         </div>
 
-        {/* two numbers, and a gift */}
+        {/* the number of people referred, and a gift */}
         <div className="relative flex flex-col justify-center gap-5 overflow-hidden lg:border-l lg:border-black/10 lg:pl-8">
           <GiftArt className="pointer-events-none absolute -bottom-2 right-0 h-28 w-36" />
           <div className="relative flex items-center gap-3.5">
@@ -195,24 +195,6 @@ export function ReferralStrip({ code, link, locked, referredCount, joinedThisMon
             </span>
           </div>
 
-          <div className="relative flex items-center gap-3.5">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper ring-1 ring-copper/15">
-              <UserCheck className="h-5 w-5" />
-            </span>
-            <span className="leading-tight">
-              <span className="block text-sm text-ink/55">Referred by</span>
-              <span className="mt-1 flex items-center gap-2 text-lg font-bold text-ink">
-                {referredBy}
-                <a
-                  href="/dashboard/network"
-                  aria-label="Open My Network"
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-copper shadow-sm ring-1 ring-copper/25 transition hover:bg-copper hover:text-white"
-                >
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </a>
-              </span>
-            </span>
-          </div>
         </div>
       </div>
     </section>
