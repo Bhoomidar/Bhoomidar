@@ -10,8 +10,11 @@ import { encryptAadhaar, hashAadhaar } from "@/lib/aadhaarCrypto";
 import { findState, pincodeError } from "@/lib/india";
 import { dobError, loginCodeCandidates } from "@/lib/referral";
 import { noPartnersYet } from "@/lib/firstPartner";
+import { getPayment } from "@/lib/payment";
+import { sendMail, welcomeMail } from "@/lib/mail";
 import {
   EMAIL_PATTERN,
+  siteUrl,
   checkEmailCode,
   cleanEmail,
   consumeResetToken,
@@ -245,6 +248,29 @@ export async function register(_prevState, formData) {
   }
 
   await finishEmailVerification(email);
+
+  // The welcome mail: partner ID, login email, password and the next steps. A failed mail never stops the registration.
+  try {
+    const { data: me } = await admin.from("profiles").select("referral_code").eq("id", created.user.id).maybeSingle();
+    const pay = await getPayment();
+    const base = await siteUrl();
+    await sendMail({
+      to: email,
+      ...welcomeMail({
+        name: fullName,
+        code: me?.referral_code ?? "",
+        email,
+        password,
+        loginUrl: `${base}/login`,
+        forgotUrl: `${base}/forgot-password`,
+        amountText: pay.amountText,
+        phone: pay.contact.phone,
+        hours: pay.contact.hours,
+      }),
+    });
+  } catch (err) {
+    console.error("Welcome mail error:", err.message);
+  }
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
