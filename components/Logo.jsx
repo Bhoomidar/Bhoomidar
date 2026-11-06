@@ -8,10 +8,10 @@ import Image from "next/image";
 export default function Logo({ className = "", dark = false, size = "h-12" }) {
   const logo = (
     <Image
-      src="/images/bhoomidar-logo.png"
+      src="/images/bhoomidar-logo-v3.png"
       alt="Bhoomidar - Trusted Land, Brighter Tomorrow"
-      width={1100}
-      height={303}
+      width={2104}
+      height={476}
       priority
       className={`${size} w-auto`}
     />
