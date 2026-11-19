@@ -273,13 +273,22 @@ export async function getPartnerDetail(id) {
   // The team under this partner: those they referred, those those partners referred, ...
   const team = [];
   let parents = [id];
-  for (let level = 1; level <= 10 && parents.length && team.length < 500; level++) {
-    const { data } = await db
-      .from("profiles")
-      .select("id, full_name, email, phone, referral_code, is_active, activated_at, created_at, avatar_url, city, state, referred_by")
-      .in("referred_by", parents)
-      .order("created_at", { ascending: true });
-    if (!data?.length) break;
+  // Same limits as the partner's own dashboard, so both show the same team. They only stop a runaway loop.
+  for (let level = 1; level <= 50 && parents.length && team.length < 3000; level++) {
+    // A wide level goes in small batches so the request URL stays short.
+    const batches = [];
+    for (let i = 0; i < parents.length; i += 80) batches.push(parents.slice(i, i + 80));
+    const results = await Promise.all(
+      batches.map((ids) =>
+        db
+          .from("profiles")
+          .select("id, full_name, email, phone, referral_code, is_active, activated_at, created_at, avatar_url, city, state, referred_by")
+          .in("referred_by", ids)
+          .order("created_at", { ascending: true }),
+      ),
+    );
+    const data = results.flatMap((r) => r.data ?? []);
+    if (!data.length) break;
     for (const p of data) team.push({ ...p, level });
     parents = data.map((p) => p.id);
   }

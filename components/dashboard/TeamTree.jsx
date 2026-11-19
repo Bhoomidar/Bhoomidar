@@ -36,7 +36,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { rankTiers } from "@/lib/data";
 import { fmtArea, fmtPoints } from "@/lib/points";
 import { BarsArt, CoinsArt, OrgChartArt, PeopleArt } from "@/components/dashboard/StatArt";
 import Select from "@/components/Select";
@@ -112,20 +111,6 @@ function Avatar({ p, size = "h-14 w-14", text = "text-base" }) {
   );
 }
 
-function RankChip({ p, dark = true }) {
-  if (!p.rankTitle) return null;
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ${
-        dark ? "bg-night text-copper-light" : "bg-copper/10 text-copper-dark"
-      }`}
-    >
-      <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${rankTiers[(p.rankNo ?? 1) - 1] ?? rankTiers[0]}`} />
-      {p.rankTitle}
-    </span>
-  );
-}
-
 function StatusPill({ status }) {
   const s = STATUS[status] ?? STATUS.active;
   return (
@@ -180,11 +165,11 @@ function Details({ p, tree, onClose, onFull }) {
   const team = tree.total.get(p.id) ?? 0;
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-[70] flex items-stretch justify-center bg-black/55 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="absolute inset-0" onClick={onClose} aria-hidden />
-      <div className="relative my-6 w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div className="relative flex h-full w-full max-w-3xl flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[92vh] sm:rounded-3xl">
         {/* the top: who, with a soft house */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#fff3e4] via-[#fff7ec] to-[#fbeedd] px-6 py-6 sm:px-8">
+        <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-[#fff3e4] via-[#fff7ec] to-[#fbeedd] px-4 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 sm:py-6">
           <div
             className="pointer-events-none absolute right-0 top-0 hidden h-full w-[56%] sm:block"
             style={{
@@ -208,16 +193,16 @@ function Details({ p, tree, onClose, onFull }) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink/80 shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:text-copper"
+            className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink/80 shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:text-copper sm:right-5 sm:top-5 sm:h-11 sm:w-11"
           >
             <X className="h-5 w-5" />
           </button>
 
-          <div className="relative flex items-center gap-5 sm:gap-6">
-            <Avatar p={p} size="h-24 w-24 sm:h-28 sm:w-28" text="text-3xl" />
-            <div className="min-w-0 leading-tight">
-              <h3 className="[overflow-wrap:anywhere] font-display text-3xl font-bold text-ink">{p.name}</h3>
-              <p className="mt-1.5 font-mono text-base font-semibold text-copper-dark">{p.code}</p>
+          <div className="relative mt-9 flex items-center gap-4 sm:mt-0 sm:gap-6">
+            <Avatar p={p} size="h-20 w-20 sm:h-28 sm:w-28" text="text-2xl sm:text-3xl" />
+            <div className="min-w-0 leading-tight sm:pr-14">
+              <h3 className="[overflow-wrap:anywhere] font-display text-2xl font-bold text-ink sm:text-3xl">{p.name}</h3>
+              <p className="mt-1.5 font-mono text-sm font-semibold text-copper-dark sm:text-base">{p.code}</p>
               {p.contact && <p className="mt-1 [overflow-wrap:anywhere] text-sm text-ink/60">{p.contact}</p>}
               <p className="mt-3 flex flex-wrap items-center gap-2.5">
                 <StatusPill status={p.status} />
@@ -229,7 +214,7 @@ function Details({ p, tree, onClose, onFull }) {
           </div>
         </div>
 
-        <div className="space-y-3 p-5 sm:p-6">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4 sm:p-6">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Tile icon={Crown} label="Rank" value={p.rankTitle || "Sales Partner"} />
             <Tile
@@ -279,11 +264,13 @@ function Details({ p, tree, onClose, onFull }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          </div>
+
+        <div className="flex shrink-0 flex-col-reverse items-stretch gap-3 border-t border-black/5 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:px-6 sm:pb-5">
             {admin && (
               <a
                 href={`/admin/partners/${p.id}`}
-                className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-white px-6 py-3.5 text-base font-semibold text-ink shadow-md ring-1 ring-black/10 transition hover:-translate-y-0.5 hover:text-copper hover:ring-copper"
+                className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-white px-6 py-3.5 text-base font-semibold text-ink shadow-md ring-1 ring-black/10 transition hover:text-copper hover:ring-copper"
               >
                 <UserRound className="h-5 w-5 text-copper" />
                 Open full profile
@@ -292,13 +279,12 @@ function Details({ p, tree, onClose, onFull }) {
             <button
               type="button"
               onClick={() => onFull(p.id)}
-              className="group flex w-fit items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-copper-light to-copper-dark px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-copper/30 transition hover:-translate-y-0.5"
+              className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-copper-light to-copper-dark px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-copper/30 transition sm:w-fit"
             >
               <Users className="h-5 w-5" />
               View full details
               <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
             </button>
-          </div>
         </div>
       </div>
     </div>,
@@ -603,30 +589,35 @@ export function ReferralsTable({ nodes, rootId, children }) {
 
 /* ─────────────────────────────── list view ─────────────────────────────── */
 
-function ListNode({ id, tree, open, toggle, forceOpen, visible, nested }) {
-  const { admin } = useContext(TeamModeContext);
+// The list steps in for the first few levels only. Deeper people stay in one straight column
+// with a "Level N" tag, so a team of any depth never squeezes the cards or runs off the screen.
+const LIST_INDENT_LEVELS = 4;
+const NO_KIDS = new Set();
+
+function ListNode({ id, tree, open, toggle, forceOpen, visible, onDetails, depth = 0 }) {
   const p = tree.byId.get(id);
+  const nested = depth > 0 && depth <= LIST_INDENT_LEVELS;
+  const flat = depth > LIST_INDENT_LEVELS;
   const kids = (tree.children.get(id) ?? []).filter((k) => !visible || visible.has(k));
   const isOpen = forceOpen || open.has(id);
-  const direct = tree.children.get(id)?.length ?? 0;
-  const team = tree.total.get(id) ?? 0;
 
+  // Only the name is shown here. Tapping it opens the full details of that partner.
   return (
     <li
       className={
         nested
-          ? "relative before:absolute before:-left-5 before:top-9 before:h-0.5 before:w-5 before:bg-copper/20"
+          ? "relative before:absolute before:-left-2 before:top-6 before:h-0.5 before:w-2 before:bg-copper/20 sm:before:-left-5 sm:before:w-5"
           : "relative"
       }
     >
-      <div className="group flex items-start gap-3 rounded-2xl bg-white p-3.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-18px_rgba(110,60,20,0.55)] hover:ring-copper/30 sm:items-center sm:p-4">
+      <div className="flex min-w-[220px] items-center gap-2.5 rounded-2xl bg-white p-2.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-[0_18px_34px_-18px_rgba(110,60,20,0.55)] hover:ring-copper/30">
         {kids.length > 0 ? (
           <button
             type="button"
             onClick={() => toggle(id)}
             aria-label={isOpen ? "Hide team" : "Show team"}
             aria-expanded={isOpen}
-            className={`mt-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 transition sm:mt-0 ${
+            className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full ring-1 transition ${
               isOpen
                 ? "bg-copper text-white ring-copper"
                 : "bg-[#fbf7f0] text-copper ring-black/5 hover:bg-copper hover:text-white"
@@ -635,69 +626,33 @@ function ListNode({ id, tree, open, toggle, forceOpen, visible, nested }) {
             <ChevronRight className={`h-4 w-4 transition duration-300 ${isOpen ? "rotate-90" : ""}`} />
           </button>
         ) : (
-          <span className="w-1 shrink-0 sm:w-2" />
+          <span className="w-8 shrink-0" />
         )}
 
-        <Avatar p={p} />
-
-        <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-center gap-2">
-            <span className="text-base font-bold text-ink">{p.name}</span>
-            <span className="rounded-full bg-copper/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-copper-dark">
-              {p.code}
+        <button
+          type="button"
+          onClick={() => onDetails(id)}
+          aria-label={`See details of ${p.name}`}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
+        >
+          <Avatar p={p} size="h-10 w-10" text="text-sm" />
+          <span className="min-w-0 [overflow-wrap:anywhere] text-base font-bold text-ink">{p.name}</span>
+          {flat && (
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${LEVEL_TONES[(p.level - 1) % LEVEL_TONES.length]}`}>
+              L{p.level}
             </span>
-          </p>
-          <p className="mt-1.5 flex flex-wrap items-center gap-2">
-            <StatusPill status={p.status} />
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${LEVEL_TONES[(p.level - 1) % LEVEL_TONES.length]}`}>
-              Level {p.level}
-            </span>
-            <RankChip p={p} />
-          </p>
-          <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/55">
-            {p.place && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                {p.place}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5" />
-              Joined {p.joined}
-            </span>
-            {p.contact && <span className="[overflow-wrap:anywhere]">{p.contact}</span>}
-            {p.soldArea > 0 && (
-              <span className="inline-flex items-center gap-1 font-semibold text-ink/70">
-                <Ruler className="h-3.5 w-3.5" />
-                Sold {fmtArea(p.soldArea)} sq. yd
-              </span>
-            )}
-            {p.earned !== 0 && (
-              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
-                <Coins className="h-3.5 w-3.5" />
-                {admin ? "Earned" : "You earned"} {fmtPoints(p.earned)} pts
-              </span>
-            )}
-          </p>
-        </div>
-
-        <div className="hidden shrink-0 gap-2 sm:flex">
-          {[
-            ["Direct", direct],
-            ["Team", team],
-          ].map(([label, value]) => (
-            <span key={label} className="min-w-[64px] rounded-xl bg-[#fbf7f0] px-3 py-2 text-center leading-tight ring-1 ring-black/5">
-              <b className="block text-xl font-extrabold tabular-nums text-ink">{value}</b>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-ink/50">{label}</span>
-            </span>
-          ))}
-        </div>
+          )}
+        </button>
       </div>
 
       {isOpen && kids.length > 0 && (
-        <ul className="relative ml-7 mt-2 space-y-2 border-l-2 border-copper/20 pl-5 sm:ml-10">
+        <ul
+          className={`relative mt-2 space-y-2 ${
+            depth + 1 > LIST_INDENT_LEVELS ? "" : "ml-2 border-l-2 border-copper/20 pl-2 sm:ml-10 sm:pl-5"
+          }`}
+        >
           {kids.map((k) => (
-            <ListNode key={k} id={k} tree={tree} open={open} toggle={toggle} forceOpen={forceOpen} visible={visible} nested />
+            <ListNode key={k} id={k} tree={tree} open={open} toggle={toggle} forceOpen={forceOpen} visible={visible} onDetails={onDetails} depth={depth + 1} />
           ))}
         </ul>
       )}
@@ -741,8 +696,8 @@ function OpenButton({ isOpen, onClick, disabled }) {
       onClick={onClick}
       aria-label={isOpen ? "Hide team" : "Show team"}
       aria-expanded={isOpen}
-      className={`absolute -bottom-4 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-white text-copper shadow-lg ring-1 ring-copper/40 transition hover:bg-copper hover:text-white ${
-        disabled ? "cursor-default" : ""
+      className={`absolute -bottom-4 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-white text-copper shadow-lg ring-1 ring-copper/40 transition-colors hover:bg-copper hover:text-white ${
+        disabled ? "cursor-default" : "cursor-pointer"
       }`}
     >
       {isOpen ? <Minus className="h-4 w-4" strokeWidth={2.5} /> : <Plus className="h-4 w-4" strokeWidth={2.5} />}
@@ -750,21 +705,22 @@ function OpenButton({ isOpen, onClick, disabled }) {
   );
 }
 
-function OrgNode({ id, tree, open, toggle, forceOpen, visible, onDetails }) {
+function OrgNode({ id, tree, open, toggle, forceOpen, visible, matches, onDetails }) {
   const p = tree.byId.get(id);
   const kids = (tree.children.get(id) ?? []).filter((k) => !visible || visible.has(k));
   const isOpen = forceOpen || open.has(id);
   const team = tree.total.get(id) ?? 0;
   const canToggle = kids.length > 0 && !forceOpen;
+  const faded = !!matches && !matches.has(id); // only here to connect the people who match
 
   return (
     <li>
-      <div className="group relative w-[196px] rounded-2xl bg-white px-3 pb-4 pt-4 text-center shadow-[0_16px_34px_-18px_rgba(110,60,20,0.55)] ring-1 ring-copper/20 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_-18px_rgba(110,60,20,0.6)] hover:ring-copper/40">
+      <div data-card={id} className={`${faded ? "opacity-50 saturate-50" : ""} group relative w-[196px] rounded-2xl bg-white px-3 pb-4 pt-4 text-center shadow-[0_16px_34px_-18px_rgba(110,60,20,0.55)] ring-1 ring-copper/20 transition-shadow duration-300 hover:shadow-[0_24px_44px_-18px_rgba(110,60,20,0.6)] hover:ring-copper/40`}>
         <button
           type="button"
           onClick={() => onDetails(id)}
           aria-label={`See details of ${p.name}`}
-          className="block w-full text-center"
+          className="block w-full cursor-pointer text-center"
         >
           <span className="flex justify-center">
             <Avatar p={p} size="h-14 w-14" />
@@ -798,7 +754,7 @@ function OrgNode({ id, tree, open, toggle, forceOpen, visible, onDetails }) {
       {isOpen && kids.length > 0 && (
         <ul>
           {kids.map((k) => (
-            <OrgNode key={k} id={k} tree={tree} open={open} toggle={toggle} forceOpen={forceOpen} visible={visible} onDetails={onDetails} />
+            <OrgNode key={k} id={k} tree={tree} open={open} toggle={toggle} forceOpen={forceOpen} visible={visible} matches={matches} onDetails={onDetails} />
           ))}
         </ul>
       )}
@@ -864,13 +820,54 @@ function Legend() {
   );
 }
 
-// A small picture of the whole team: you on top, then a row of dots per level.
-function MiniMap({ nodes, full, onToggleFull }) {
-  const levels = [];
-  for (const n of nodes) {
-    (levels[n.level - 1] ??= []).push(n);
-  }
-  const dot = { active: "bg-emerald-500", unpaid: "bg-amber-400", off: "bg-stone-400" };
+// A small picture of the whole team, drawn from the real tree: you on top, one dot per partner,
+// lines to who referred them. When a search or filter is on, the people who do not match turn faint.
+function MiniMap({ nodes, rootId, matches, full, onToggleFull }) {
+  const { dots, lines, root, width, height } = useMemo(() => {
+    const kids = new Map();
+    for (const n of nodes) {
+      if (!kids.has(n.parentId)) kids.set(n.parentId, []);
+      kids.get(n.parentId).push(n);
+    }
+    const GAP_X = 11;
+    const GAP_Y = 15;
+    const pos = new Map();
+    let leaf = 0;
+    let deepest = 0;
+    // Leaves get the next free slot; a parent sits in the middle of its children.
+    const place = (id, depth) => {
+      deepest = Math.max(deepest, depth);
+      const list = kids.get(id) ?? [];
+      if (!list.length) {
+        pos.set(id, { x: leaf++ * GAP_X, y: depth * GAP_Y });
+        return;
+      }
+      list.forEach((k) => place(k.id, depth + 1));
+      const xs = list.map((k) => pos.get(k.id).x);
+      pos.set(id, { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: depth * GAP_Y });
+    };
+    place(rootId, 0);
+
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const lines = [];
+    const dots = [];
+    for (const n of nodes) {
+      const at = pos.get(n.id);
+      const from = pos.get(n.parentId);
+      if (!at || !from) continue;
+      lines.push({ id: n.id, d: `M${from.x} ${from.y}V${from.y + GAP_Y / 2}H${at.x}V${at.y}` });
+      dots.push({ id: n.id, ...at, status: byId.get(n.id).status });
+    }
+    return { dots, lines, width: Math.max(0, (leaf - 1) * GAP_X), height: deepest * GAP_Y, root: pos.get(rootId) };
+  }, [nodes, rootId]);
+
+  const fill = { active: "#10b981", unpaid: "#fbbf24", off: "#a8a29e" };
+  // A small team is not blown up to fill the box: the picture is never smaller than this.
+  const vw = Math.max(width + 24, 150);
+  const vh = Math.max(height + 24, 80);
+  const ox = (vw - width) / 2;
+  const oy = (vh - height) / 2;
+  const faint = (id) => (matches && !matches.has(id) ? 0.2 : 1);
 
   return (
     <div className="relative w-[210px] rounded-2xl bg-white/90 p-3 shadow-md ring-1 ring-black/5 backdrop-blur-sm">
@@ -878,19 +875,24 @@ function MiniMap({ nodes, full, onToggleFull }) {
         type="button"
         onClick={onToggleFull}
         aria-label={full ? "Close the big view" : "Open the big view"}
-        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-white text-ink/70 shadow-sm ring-1 ring-black/10 transition hover:text-copper"
+        className="absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-white text-ink/70 shadow-sm ring-1 ring-black/10 transition hover:text-copper"
       >
         {full ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
       </button>
-      <div className="flex h-[96px] flex-col items-center justify-start gap-2.5 overflow-hidden rounded-xl bg-[#f3ece1] pt-3">
-        <span className="h-4 w-4 rounded-md bg-copper shadow" />
-        {levels.slice(0, 3).map((row, i) => (
-          <span key={i} className="flex max-w-[160px] flex-wrap justify-center gap-1.5">
-            {row.slice(0, 12).map((n) => (
-              <span key={n.id} className={`h-3 w-3 rounded-full ring-2 ring-white ${dot[n.status] ?? dot.off}`} />
+      <div className="h-[96px] overflow-hidden rounded-xl bg-[#f3ece1]">
+        <svg viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet" className="h-full w-full" aria-hidden>
+          <g transform={`translate(${ox} ${oy})`}>
+            <g fill="none" stroke="#b5622f" strokeOpacity="0.35" strokeWidth="1">
+              {lines.map((l) => (
+                <path key={l.id} d={l.d} opacity={faint(l.id)} />
+              ))}
+            </g>
+            <rect x={root.x - 4.5} y={root.y - 4.5} width="9" height="9" rx="2.5" fill="#b5622f" />
+            {dots.map((d) => (
+              <circle key={d.id} cx={d.x} cy={d.y} r="3.6" fill={fill[d.status] ?? fill.off} stroke="#fff" strokeWidth="1.2" opacity={faint(d.id)} />
             ))}
-          </span>
-        ))}
+          </g>
+        </svg>
       </div>
     </div>
   );
@@ -928,6 +930,7 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
   const [pan, setPan] = useState({ x: 0, y: 0 }); // how far the tree was dragged with the mouse, in any direction
   const [full, setFull] = useState(false);
   const canvas = useRef(null);
+  const stage = useRef(null);
   const inner = useRef(null);
   const drag = useRef(null);
 
@@ -987,22 +990,44 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
 
   const extraFilters = (levelFilter !== "all" ? 1 : 0) + (soldOnly ? 1 : 0);
 
-  // The matches and the people above them, so the tree still connects.
-  const visible = useMemo(() => {
+  // The people who really match the search and filters (null when nothing is filtered).
+  const matches = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term && filter === "all" && levelFilter === "all" && !soldOnly) return null;
-    const keep = new Set();
+    const hit = new Set();
     for (const n of nodes) {
       if (filter !== "all" && n.status !== filter) continue;
       if (levelFilter !== "all" && n.level !== Number(levelFilter)) continue;
       if (soldOnly && !(n.soldArea > 0)) continue;
       if (term && ![n.name, n.code, n.place].join(" ").toLowerCase().includes(term)) continue;
-      for (let id = n.id; id && id !== rootId && !keep.has(id); id = tree.byId.get(id)?.parentId) {
+      hit.add(n.id);
+    }
+    return hit;
+  }, [nodes, search, filter, levelFilter, soldOnly]);
+
+  // The matches and the people above them, so the tree still connects (those above are shown faded).
+  const visible = useMemo(() => {
+    if (!matches) return null;
+    const keep = new Set();
+    for (const m of matches) {
+      for (let id = m; id && id !== rootId && !keep.has(id); id = tree.byId.get(id)?.parentId) {
         keep.add(id);
       }
     }
     return keep;
-  }, [nodes, search, filter, levelFilter, soldOnly, rootId, tree]);
+  }, [matches, rootId, tree]);
+
+  // The list view shows just the matches, one under the other, in tree order.
+  const matchList = useMemo(() => {
+    if (!matches) return [];
+    const out = [];
+    const walk = (id) => {
+      if (matches.has(id)) out.push(id);
+      for (const k of tree.children.get(id) ?? []) walk(k);
+    };
+    (focus && tree.byId.has(focus) ? [focus] : tree.roots).forEach(walk);
+    return out;
+  }, [matches, tree, focus]);
 
   const focusNode = focus ? tree.byId.get(focus) : null;
   const roots = focusNode ? [focus] : visible ? tree.roots.filter((r) => visible.has(r)) : tree.roots;
@@ -1014,6 +1039,20 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
       else next.add(id);
       return next;
     });
+
+  // Opening a card low in the tree box: slide the box up so the people under it come into view.
+  const toggleAndShow = (id) => {
+    const opening = !open.has(id);
+    toggle(id);
+    if (!opening) return;
+    setTimeout(() => {
+      const el = canvas.current;
+      const card = el?.querySelector(`[data-card="${id}"]`);
+      if (!el || !card) return;
+      const top = card.getBoundingClientRect().top - el.getBoundingClientRect().top;
+      if (top > el.clientHeight * 0.35) el.scrollBy({ top: top - 40, behavior: "smooth" });
+    }, 60);
+  };
 
   /* zoom and panning of the tree */
   const zoomBy = (delta) => setScale((s) => Math.min(1.5, Math.max(0.4, Math.round((s + delta) * 100) / 100)));
@@ -1051,7 +1090,8 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
     // only when the tree view opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
-  // Dragging with the mouse moves the tree freely in every direction, even when the whole tree fits on the screen.
+  // Dragging with the mouse moves around the whole tree like a map, so even the deepest levels can be reached.
+  // It scrolls the box first; at an edge the tree slides a little further, even when the whole tree fits.
   // A finger still scrolls the tree the normal way.
   const onDown = (e) => {
     if (e.pointerType === "touch" || e.button !== 0 || e.target.closest("button, a, input, select")) return;
@@ -1059,15 +1099,37 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
     drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
     el.setPointerCapture?.(e.pointerId);
   };
+  // One axis of a drag: first undo any slide, then scroll, then slide with what is left.
+  const dragAxis = (move, slide, scroll, maxScroll, limit) => {
+    let d = move;
+    let p = slide;
+    if ((p > 0 && d < 0) || (p < 0 && d > 0)) {
+      const back = Math.abs(d) < Math.abs(p) ? d : -p;
+      p += back;
+      d -= back;
+    }
+    const s = Math.min(maxScroll, Math.max(0, scroll - d));
+    d -= scroll - s;
+    return [Math.max(-limit, Math.min(limit, p + d)), s];
+  };
   const onMove = (e) => {
-    if (!drag.current) return;
+    const d = drag.current;
+    if (!d) return;
     const el = canvas.current;
-    const limitX = el.clientWidth;
-    const limitY = el.clientHeight;
-    setPan({
-      x: Math.max(-limitX, Math.min(limitX, drag.current.px + (e.clientX - drag.current.x))),
-      y: Math.max(-limitY, Math.min(limitY, drag.current.py + (e.clientY - drag.current.y))),
-    });
+    const box = stage.current;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    d.x = e.clientX;
+    d.y = e.clientY;
+    const maxX = Math.max(0, (box?.offsetWidth ?? 0) - el.clientWidth);
+    const maxY = Math.max(0, (box?.offsetHeight ?? 0) - el.clientHeight);
+    const [x, left] = dragAxis(dx, d.px, el.scrollLeft, maxX, el.clientWidth * 0.5);
+    const [y, top] = dragAxis(dy, d.py, el.scrollTop, maxY, el.clientHeight * 0.5);
+    el.scrollLeft = left;
+    el.scrollTop = top;
+    d.px = x;
+    d.py = y;
+    setPan({ x, y });
   };
   const onUp = () => (drag.current = null);
 
@@ -1204,32 +1266,37 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
 
             <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-wrap">
               {[
-                ["all", "All", null],
+                ["all", "All", "bg-copper"],
                 ["active", "Active", "bg-emerald-500"],
                 ["unpaid", "Unpaid", "bg-amber-400"],
-              ].map(([key, label, dot]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setFilter(key)}
-                  aria-pressed={filter === key}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[13px] font-semibold transition sm:gap-2 sm:px-4 sm:text-sm ${
-                    filter === key
-                      ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
-                      : "bg-white text-ink/70 shadow-sm ring-1 ring-black/10 hover:ring-copper"
-                  }`}
-                >
-                  {dot && <span className={`h-2 w-2 rounded-full ${dot}`} />}
-                  {label}
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
-                      filter === key ? "bg-white/25 text-white" : "bg-black/5 text-ink/60"
+              ].map(([key, label, dot]) => {
+                const on = filter === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFilter(key)}
+                    aria-pressed={on}
+                    className={`inline-flex min-w-0 cursor-pointer items-center justify-center rounded-2xl px-2 py-2 transition max-sm:flex-col max-sm:gap-0.5 sm:gap-2 sm:rounded-full sm:px-4 ${
+                      on
+                        ? "bg-gradient-to-b from-copper-light to-copper-dark text-white shadow-md shadow-copper/30"
+                        : "bg-white text-ink/70 shadow-sm ring-1 ring-black/10 hover:ring-copper"
                     }`}
                   >
-                    {counts[key]}
-                  </span>
-                </button>
-              ))}
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold max-sm:order-2 sm:text-sm">
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${on ? "bg-white" : dot}`} />
+                      {label}
+                    </span>
+                    <span
+                      className={`font-extrabold tabular-nums max-sm:order-1 max-sm:text-xl max-sm:leading-tight sm:rounded-full sm:px-2 sm:py-0.5 sm:text-[11px] sm:font-bold ${
+                        on ? "text-white sm:bg-white/25" : "text-ink sm:bg-black/5 sm:text-ink/60"
+                      }`}
+                    >
+                      {counts[key]}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="flex items-center gap-2 lg:contents">
@@ -1334,14 +1401,14 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
 
           {/* the team */}
           <div className="relative mt-5">
-            {roots.length === 0 ? (
+            {roots.length === 0 || (view === "list" && matches && matchList.length === 0) ? (
               <p className="py-12 text-center text-sm text-ink/55">No one matches. Try a different search or filter.</p>
             ) : view === "tree" ? (
               <>
                 {full && <div className="fixed inset-0 z-[79] bg-black/50 backdrop-blur-sm" aria-hidden />}
                 <div
                   className={`overflow-hidden rounded-3xl bg-gradient-to-b from-[#fffaf3] to-[#fdf0e1] ring-1 ring-black/5 ${
-                    full ? "fixed inset-3 z-[80] shadow-2xl" : "relative h-[580px]"
+                    full ? "fixed inset-3 z-[80] shadow-2xl" : "relative h-[72vh] min-h-[440px] max-h-[920px] md:min-h-[600px]"
                   }`}
                 >
                   {/* backdrop: soft houses */}
@@ -1380,7 +1447,7 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
                     onPointerCancel={onUp}
                     className="no-scrollbar absolute inset-0 cursor-grab select-none overflow-auto active:cursor-grabbing"
                   >
-                    <div style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }} className="mx-auto w-max min-w-full">
+                    <div ref={stage} style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }} className="mx-auto w-max min-w-full">
                     <div ref={inner} style={{ zoom: scale }} className="org-tree mx-auto w-max min-w-full px-10 pb-16 pt-12">
                       <ul>
                         <li>
@@ -1399,9 +1466,10 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
                                   id={id}
                                   tree={tree}
                                   open={open}
-                                  toggle={toggle}
+                                  toggle={toggleAndShow}
                                   forceOpen={!!visible}
                                   visible={visible}
+                                  matches={matches}
                                   onDetails={setDetailsId}
                                 />
                               ))}
@@ -1418,7 +1486,7 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
                     <Legend />
                   </div>
                   <div className="absolute right-4 top-4 z-10 hidden md:block">
-                    <MiniMap nodes={nodes} full={full} onToggleFull={() => setFull((v) => !v)} />
+                    <MiniMap nodes={nodes} rootId={rootId} matches={matches} full={full} onToggleFull={() => setFull((v) => !v)} />
                   </div>
                   <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-3">
                     <div className="flex items-center gap-2">
@@ -1428,6 +1496,7 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
                           [() => zoomBy(-0.1), Minus, "Zoom out"],
                           [fit, Scan, "Fit the tree on screen"],
                           [centre, LocateFixed, "Centre on you"],
+                          [() => setFull((v) => !v), full ? Minimize2 : Maximize2, full ? "Close the big view" : "Open the big view"],
                         ].map(([run, Icon, label]) => (
                           <button
                             key={label}
@@ -1459,7 +1528,7 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
                     <button
                       type="button"
                       onClick={() => setFull(false)}
-                      className="absolute right-4 top-[7.5rem] z-10 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink/80 shadow-lg ring-1 ring-black/5 transition hover:text-copper md:hidden"
+                      className="absolute right-3 top-3 z-20 inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-ink/80 shadow-lg ring-1 ring-black/10 transition hover:text-copper md:hidden"
                     >
                       <X className="h-4 w-4" />
                       Close
@@ -1468,11 +1537,23 @@ function TeamTreeInner({ nodes, rootId, me, admin, noPoints, title, subtitle }) 
                 </div>
               </>
             ) : (
-              <ul className="space-y-2.5">
-                {roots.map((id) => (
-                  <ListNode key={id} id={id} tree={tree} open={open} toggle={toggle} forceOpen={!!visible} visible={visible} />
-                ))}
-              </ul>
+              // Deep levels are wider than a phone, so the list scrolls sideways instead of squeezing the cards.
+              <div className="-mx-1 overflow-x-auto overflow-y-hidden px-1 pb-3">
+                {matches ? (
+                  // Filtering: only the people who match, each with a level tag. An empty `visible` set keeps their teams closed.
+                  <ul className="space-y-2.5">
+                    {matchList.map((id) => (
+                      <ListNode key={id} id={id} tree={tree} open={open} toggle={toggle} forceOpen visible={NO_KIDS} onDetails={setDetailsId} depth={LIST_INDENT_LEVELS + 1} />
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-2.5">
+                    {roots.map((id) => (
+                      <ListNode key={id} id={id} tree={tree} open={open} toggle={toggle} forceOpen={false} visible={null} onDetails={setDetailsId} />
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         </>
