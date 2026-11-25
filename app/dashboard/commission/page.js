@@ -648,7 +648,7 @@ export default async function CommissionPage() {
                   key={r.no}
                   className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl bg-gradient-to-r from-white to-[#fff8ef] p-3.5 shadow-sm ring-1 ring-black/5"
                 >
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#f7c85a] to-[#d79a1c] text-white shadow-md">
+                  <span className="flex h-20 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#f7c85a] to-[#d79a1c] text-white shadow-md ring-1 ring-black/5">
                     <RewardPic image={r.image} icon={r.icon} alt={r.reward} iconClassName="h-6 w-6" />
                   </span>
                   <span className="min-w-0 flex-1 basis-40 leading-tight">

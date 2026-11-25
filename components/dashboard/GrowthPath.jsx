@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import RewardPic from "@/components/RewardPic";
+import RewardZoom from "@/components/RewardZoom";
 import { fmtArea } from "@/lib/points";
 
 // Icon, colours and number colour of each rank card, in the order of the ranks.
@@ -64,6 +65,38 @@ function RankArt({ className = "" }) {
       />
       <path d="M137 22 142 6 151 14 160 6 165 22Z" fill="#f2b84b" stroke="#d98b1c" strokeWidth="1.5" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+// The reward at the bottom of a rank card: a big photo with the name under it.
+// With a photo, the whole box opens it full size.
+function RewardRow({ image, icon, reward }) {
+  const box = "mt-4 flex w-full flex-col gap-2 rounded-xl bg-white p-2 text-left shadow-sm ring-1 ring-black/5";
+  const photo = (
+    <span
+      className={`flex h-20 w-full items-center justify-center overflow-hidden rounded-lg text-copper-dark ${
+        image ? "bg-white" : "bg-gradient-to-br from-[#f8f4ee] to-[#ece4d8]"
+      }`}
+    >
+      <RewardPic image={image} icon={icon} alt={reward} iconClassName="h-12 w-12" strokeWidth={1.4} zoom={false} />
+    </span>
+  );
+  const name = <span className="min-w-0 flex-1 [overflow-wrap:anywhere] text-[13px] font-semibold leading-tight text-ink/80">{reward}</span>;
+  if (!image)
+    return (
+      <div className={box}>
+        {photo}
+        <span className="flex min-h-9 items-center px-1">{name}</span>
+      </div>
+    );
+  return (
+    <RewardZoom image={image} alt={reward} className={`${box} transition hover:ring-copper/50`}>
+      {photo}
+      <span className="flex min-h-9 w-full items-center gap-2 border-t border-black/5 px-1 pt-1.5">
+        {name}
+        <ChevronRight className="h-4 w-4 shrink-0 text-copper" />
+      </span>
+    </RewardZoom>
   );
 }
 
@@ -235,13 +268,7 @@ export default function GrowthPath({ chart: ranks, currentRank, teamArea, next, 
                 <p className="mt-2 text-[2rem] font-extrabold leading-none text-[#a8431a]">{r.commission}</p>
                 <p className="mt-1.5 text-xs text-ink/55">{mins?.length ? range(i, mins) : r.area}</p>
 
-                <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5">
-                  <span className="flex h-10 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[#f8f4ee] to-[#ece4d8] text-copper-dark">
-                    <RewardPic image={r.image} icon={i === 0 ? "Gift" : r.icon} alt={r.reward} />
-                  </span>
-                  <span className="min-w-0 flex-1 [overflow-wrap:anywhere] text-xs font-semibold text-ink/80">{r.reward}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-copper" />
-                </div>
+                <RewardRow image={r.image} icon={i === 0 ? "Gift" : r.icon} reward={r.reward} />
               </div>
             </div>
           );

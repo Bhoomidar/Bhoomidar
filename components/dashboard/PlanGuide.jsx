@@ -360,7 +360,7 @@ export default function PlanGuide({ c, rules, activatedOn, monthly }) {
             const Icon = status.icon;
             return (
               <li key={r.no} className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-2xl bg-gradient-to-r from-white to-[#fff8ef] p-3 ring-1 ring-black/5">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#f7c85a] to-[#d79a1c] text-white">
+                <span className="flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#f7c85a] to-[#d79a1c] text-white ring-1 ring-black/5">
                   <RewardPic image={r.image} icon={r.icon} alt={r.reward} iconClassName="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1 basis-40 leading-tight">

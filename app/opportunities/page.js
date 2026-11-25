@@ -382,7 +382,7 @@ export default async function OpportunitiesPage() {
                           <td className={`${cell} px-6 py-4`}>
                             <span className="flex items-center gap-3.5">
                               <span
-                                className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${rankTiers[i % rankTiers.length]} text-white shadow-md ring-2 ring-white transition duration-300 group-hover:scale-110 group-hover:-rotate-3`}
+                                className={`flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${rankTiers[i % rankTiers.length]} text-white shadow-md ring-2 ring-white transition duration-300 group-hover:scale-110`}
                               >
                                 <RewardPic image={r.image} icon={r.icon} alt={r.reward} />
                               </span>

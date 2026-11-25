@@ -278,7 +278,7 @@ export default async function DashboardOverview() {
           {/* Latest referrals and quick actions */}
           <Reveal>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr]">
-              <section className="relative flex flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
+              <section className="relative flex min-w-0 flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-4 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
                     Latest <span className="text-copper">referrals</span>
@@ -297,34 +297,37 @@ export default async function DashboardOverview() {
                     {referrals.slice(0, 3).map((p) => (
                       <li
                         key={p.id}
-                        className="flex items-center gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30"
+                        className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_10px_24px_-18px_rgba(110,60,20,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-copper/30 sm:gap-4 sm:px-4 sm:py-3.5"
                       >
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-light to-copper-dark text-sm font-bold text-white shadow-md sm:h-12 sm:w-12">
                           {initials(p.name || "?")}
                         </span>
-                        <span className="min-w-0 flex-1 leading-tight">
-                          <span className="block [overflow-wrap:anywhere] text-base font-bold text-ink">{p.name || "Partner"}</span>
-                          <span className="mt-1 block [overflow-wrap:anywhere] text-xs text-ink/55">
-                            {p.code} · Joined {p.joined}
+                        <span className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                          <span className="min-w-0 flex-1 basis-48 leading-tight">
+                            <span className="block [overflow-wrap:anywhere] text-[15px] font-bold text-ink sm:text-base">{p.name || "Partner"}</span>
+                            <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-ink/55">
+                              <span className="font-mono font-semibold text-copper-dark/80">{p.code}</span>
+                              <span className="whitespace-nowrap">Joined {p.joined}</span>
+                            </span>
                           </span>
+                          {p.pending ? (
+                            <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 ring-1 ring-amber-200 sm:px-4 sm:py-1.5">
+                              Unpaid
+                            </span>
+                          ) : (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200 sm:px-4 sm:py-1.5">
+                              <Check className="h-3 w-3" strokeWidth={3} />
+                              Active
+                            </span>
+                          )}
                         </span>
-                        {p.pending ? (
-                          <span className="shrink-0 rounded-full bg-amber-100 px-4 py-1.5 text-xs font-bold text-amber-800 ring-1 ring-amber-200">
-                            Unpaid
-                          </span>
-                        ) : (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200">
-                            <Check className="h-3 w-3" strokeWidth={3} />
-                            Active
-                          </span>
-                        )}
                       </li>
                     ))}
                   </ul>
                 )}
 
-                <div className="mt-5 flex items-center gap-4 border-t border-black/10 pt-5">
-                  <TeamArt className="h-24 w-36 shrink-0" />
+                <div className="mt-5 flex flex-col items-center gap-3 border-t border-black/10 pt-5 text-center sm:flex-row sm:gap-4 sm:text-left">
+                  <TeamArt className="h-20 w-32 shrink-0 sm:h-24 sm:w-36" />
                   <div className="min-w-0 leading-snug">
                     {referrals.length > 0 ? (
                       <p className="text-sm font-bold text-copper-dark">
@@ -341,7 +344,7 @@ export default async function DashboardOverview() {
                   </div>
                 </div>
 
-                <p className="mt-auto pt-4 text-xs text-ink/50">
+                <p className="mt-auto pt-4 text-center text-xs text-ink/50 sm:text-left">
                   {referrer ? (
                     <>
                       You joined through <b className="text-ink/70">{referrer.name}</b> ({referrer.code})
@@ -352,7 +355,7 @@ export default async function DashboardOverview() {
                 </p>
               </section>
 
-              <section className="rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-6 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
+              <section className="min-w-0 rounded-3xl bg-gradient-to-br from-white via-[#fffaf3] to-[#fbeedd] p-4 shadow-[0_24px_50px_-28px_rgba(110,60,20,0.45)] ring-1 ring-black/5 sm:p-7">
                 <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.7rem]">
                   Quick <span className="text-copper">actions</span>
                 </h2>
